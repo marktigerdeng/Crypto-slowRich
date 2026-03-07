@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stablecoin Dashboard — $1M Portfolio Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0a0e17;color:#e2e8f0;min-height:100vh;line-height:1.5}
+a{color:#60a5fa;text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Header */
+.header{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;background:linear-gradient(135deg,#0f172a,#1e293b);border-bottom:1px solid #1e293b;flex-wrap:wrap;gap:12px}
+.header h1{font-size:22px;font-weight:800;background:linear-gradient(90deg,#f59e0b,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header-right{display:flex;gap:12px;align-items:center}
+.refresh-btn{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit;transition:all .2s}
+.refresh-btn:hover{border-color:#f59e0b;color:#f59e0b}
+.refresh-btn.loading{opacity:.5;pointer-events:none}
+.last-update{font-size:11px;color:#64748b}
+
+/* Summary Bar */
+.summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;padding:16px 24px}
+.stat-card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px 18px}
+.stat-card.highlight{border-color:#f59e0b;background:linear-gradient(135deg,#1e293b,#1a1a2e)}
+.stat-label{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px}
+.stat-value{font-size:24px;font-weight:700;color:#f1f5f9;margin-top:4px}
+.stat-sub{font-size:11px;color:#94a3b8;margin-top:2px}
+
+/* Section */
+.section{padding:16px 24px}
+.section-title{font-size:16px;font-weight:700;margin-bottom:12px;color:#f1f5f9;display:flex;align-items:center;gap:8px}
+
+/* Tier Cards */
+.tier-card{background:#1e293b;border:1px solid #334155;border-radius:12px;margin-bottom:16px;overflow:hidden}
+.tier-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:#0f172a;border-bottom:1px solid #334155}
+.tier-name{font-size:15px;font-weight:700}
+.tier-meta{display:flex;gap:16px;font-size:12px;color:#94a3b8}
+.tier-meta span{display:flex;align-items:center;gap:4px}
+.positions-table{width:100%;border-collapse:collapse;font-size:13px}
+.positions-table th{padding:10px 14px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;border-bottom:1px solid #334155}
+.positions-table td{padding:10px 14px;border-bottom:1px solid #1e293b22}
+.positions-table tr:last-child td{border-bottom:none}
+.positions-table tr:hover{background:#334155/20}
+
+/* APY colors */
+.apy{font-weight:700;font-size:14px}
+.apy-high{color:#10b981}
+.apy-mid{color:#f59e0b}
+.apy-low{color:#94a3b8}
+.apy-na{color:#475569;font-style:italic;font-weight:400}
+
+/* Source badge */
+.source-badge{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.source-live{background:#10b981}
+.source-manual{background:#f59e0b}
+.source-estimate{background:#64748b}
+.source-fixed{background:#475569}
+
+/* Rate comparison table */
+.rate-table-wrap{overflow-x:auto;border-radius:12px;border:1px solid #334155}
+.rate-table{width:100%;border-collapse:collapse;font-size:13px}
+.rate-table th{background:#0f172a;padding:10px 14px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;position:sticky;top:0}
+.rate-table td{padding:10px 14px;border-bottom:1px solid #1e293b}
+.rate-table tr:hover{background:#334155/30}
+.in-portfolio{background:#10b98110}
+.in-portfolio td:first-child{border-left:3px solid #10b981}
+.chain-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;background:#334155;color:#94a3b8}
+.chain-badge.c-ethereum{background:#627eea22;color:#627eea}
+.chain-badge.c-arbitrum{background:#28a0f022;color:#28a0f0}
+.chain-badge.c-solana{background:#9945ff22;color:#9945ff}
+.chain-badge.c-base{background:#0052ff22;color:#0052ff}
+.chain-badge.c-bsc{background:#f0b90b22;color:#f0b90b}
+.chain-badge.c-polygon{background:#8247e522;color:#8247e5}
+.chain-badge.c-optimism{background:#ff042022;color:#ff0420}
+.chain-badge.c-avalanche{background:#e8414222;color:#e84142}
+.chain-badge.c-sui{background:#4da2ff22;color:#4da2ff}
+.chain-badge.c-aptos{background:#2ed8a322;color:#2ed8a3}
+.chain-badge.c-tron{background:#ff060a22;color:#ff060a}
+.chain-badge.c-gnosis{background:#3e6957aa;color:#3e6957}
+.chain-badge.c-monad{background:#836ef922;color:#836ef9}
+.chain-badge.c-berachain{background:#b4805022;color:#b48050}
+.chain-badge.c-hyperliquid{background:#50e3c222;color:#50e3c2}
+.chain-badge.c-cefi{background:#f59e0b22;color:#f59e0b}
+
+/* Subsidy tag */
+.subsidy-tag{display:inline-block;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:600;margin-left:4px;background:#8b5cf622;color:#8b5cf6;vertical-align:middle}
+
+/* Clickable protocol links */
+.proto-link{color:#f1f5f9;text-decoration:none;border-bottom:1px dashed #475569;transition:all .15s}
+.proto-link:hover{color:#60a5fa;border-bottom-color:#60a5fa;text-decoration:none}
+.verify-link{font-size:10px;color:#64748b;text-decoration:none;margin-left:6px;opacity:.7;transition:opacity .15s}
+.verify-link:hover{opacity:1;color:#f59e0b;text-decoration:none}
+.link-group{display:flex;align-items:center;gap:0}
+
+/* Risk score badges */
+.risk-score{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.risk-low{background:#10b98118;color:#10b981}
+.risk-medium{background:#f59e0b18;color:#f59e0b}
+.risk-elevated{background:#f9731618;color:#f97316}
+.risk-high{background:#ef444418;color:#ef4444}
+.safety-legend{display:flex;gap:16px;margin-bottom:8px;font-size:11px;color:#64748b;flex-wrap:wrap}
+.safety-legend span{display:flex;align-items:center;gap:4px}
+
+/* Chain filter tabs */
+.chain-filters{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.chain-filter{padding:6px 14px;border:1px solid #334155;background:#1e293b;color:#94a3b8;border-radius:8px;cursor:pointer;font-size:12px;font-family:inherit;transition:all .2s}
+.chain-filter:hover{border-color:#64748b;color:#e2e8f0}
+.chain-filter.active{border-color:#f59e0b;color:#f59e0b;background:#f59e0b11}
+.chain-filter .count{font-size:10px;opacity:.7;margin-left:4px}
+
+/* Announcements */
+.ann-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:768px){.ann-grid{grid-template-columns:1fr}}
+.ann-column{background:#1e293b;border:1px solid #334155;border-radius:12px;overflow:hidden}
+.ann-column-header{padding:12px 16px;background:#0f172a;border-bottom:1px solid #334155;font-weight:700;font-size:14px}
+.ann-list{max-height:400px;overflow-y:auto}
+.ann-item{padding:10px 16px;border-bottom:1px solid #33415544;font-size:13px;transition:background .15s}
+.ann-item:hover{background:#33415530}
+.ann-item.highlighted{border-left:3px solid #f59e0b}
+.ann-item a{color:#e2e8f0}
+.ann-item .ann-date{font-size:11px;color:#64748b;margin-top:2px}
+.ann-empty{padding:20px 16px;color:#475569;text-align:center;font-size:13px}
+
+/* Footer */
+footer{padding:24px;text-align:center;color:#475569;font-size:12px;border-top:1px solid #1e293b;margin-top:40px}
+footer a{color:#f59e0b}
+
+/* Loading */
+.loading-msg{text-align:center;padding:40px;color:#64748b;font-size:14px}
+
+/* Responsive */
+@media(max-width:768px){
+  .header{flex-direction:column;text-align:center}
+  .summary-bar{grid-template-columns:1fr 1fr}
+  .positions-table{font-size:12px}
+  .positions-table th,.positions-table td{padding:8px 10px}
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div>
+    <h1>Stablecoin Dashboard</h1>
+    <span class="last-update" id="lastUpdate">Loading...</span>
+  </div>
+  <div class="header-right">
+    <a href="/backtest-wheel.html" style="padding:8px 16px;border:1px solid #334155;border-radius:8px;font-size:13px;color:#94a3b8;text-decoration:none">Strategy #2: Options Wheel</a>
+    <a href="/backtest-dip.html" style="padding:8px 16px;border:1px solid #334155;border-radius:8px;font-size:13px;color:#94a3b8;text-decoration:none">Strategy #3: Dip-Buying</a>
+    <a href="/backtest-allweather.html" style="padding:8px 16px;border:1px solid #334155;border-radius:8px;font-size:13px;color:#94a3b8;text-decoration:none">Strategy #4: All Weather</a>
+    <a href="/options-monitor.html" style="padding:8px 16px;border:1px solid #334155;border-radius:8px;font-size:13px;color:#94a3b8;text-decoration:none">Strategy #5: Options Monitor</a>
+    <a href="/backtest-wheel-ibit.html" style="padding:8px 16px;border:1px solid #334155;border-radius:8px;font-size:13px;color:#94a3b8;text-decoration:none">Strategy #6: IBIT Wheel</a>
+    <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">Refresh</button>
+  </div>
+</header>
+
+<!-- Summary Bar -->
+<div class="summary-bar" id="summaryBar">
+  <div class="stat-card highlight">
+    <div class="stat-label">Total Capital</div>
+    <div class="stat-value" id="totalCapital">$1,000,000</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Weighted APY</div>
+    <div class="stat-value" id="weightedApy">—</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Est. Annual Income</div>
+    <div class="stat-value" id="annualIncome">—</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Est. Monthly Income</div>
+    <div class="stat-value" id="monthlyIncome">—</div>
+  </div>
+</div>
+
+<!-- Portfolio Tiers -->
+<div class="section" id="tiersSection">
+  <div class="section-title">Portfolio Positions</div>
+  <div id="tiersContainer"><div class="loading-msg">Loading portfolio data...</div></div>
+</div>
+
+<!-- Rate Comparison -->
+<div class="section">
+  <div class="section-title">Rate Comparison — DeFi + CeFi</div>
+  <div class="safety-legend">
+    <span>Safety filter: TVL &ge; $10M | Risk score &ge; 3 | APY &le; 200%</span>
+    <span><span class="risk-score risk-low">8+</span> Low</span>
+    <span><span class="risk-score risk-medium">6-8</span> Medium</span>
+    <span><span class="risk-score risk-elevated">4-6</span> Elevated</span>
+    <span><span class="risk-score risk-high">&lt;4</span> High</span>
+  </div>
+  <div class="chain-filters" id="chainFilters"></div>
+  <div id="rateTableContainer"><div class="loading-msg">Loading rates...</div></div>
+</div>
+
+<!-- Announcements -->
+<div class="section">
+  <div class="section-title">Exchange Announcements</div>
+  <div class="ann-grid" id="annGrid">
+    <div class="ann-column">
+      <div class="ann-column-header">Binance</div>
+      <div class="ann-list" id="annBinance"><div class="ann-empty">Loading...</div></div>
+    </div>
+    <div class="ann-column">
+      <div class="ann-column-header">OKX</div>
+      <div class="ann-list" id="annOkx"><div class="ann-empty">Loading...</div></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Stablecoin Dashboard — DeFi data from <a href="https://defillama.com" target="_blank">DeFiLlama</a> |
+  Auto-refreshes every 60s | Not financial advice
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// --- Data fetching ---
+
+async function fetchJSON(url) {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  return resp.json();
+}
+
+let portfolioData = null;
+let ratesDefi = null;
+let ratesCefi = null;
+let announcements = null;
+
+async function refreshAll() {
+  const btn = $('refreshBtn');
+  btn.classList.add('loading');
+  btn.textContent = 'Refreshing...';
+
+  try {
+    const [p, rd, rc, ann] = await Promise.allSettled([
+      fetchJSON('/api/portfolio'),
+      fetchJSON('/api/rates/defi'),
+      fetchJSON('/api/rates/cefi'),
+      fetchJSON('/api/announcements'),
+    ]);
+
+    if (p.status === 'fulfilled') { portfolioData = p.value; renderPortfolio(); }
+    if (rd.status === 'fulfilled') { ratesDefi = rd.value; }
+    if (rc.status === 'fulfilled') { ratesCefi = rc.value; }
+    if (rd.status === 'fulfilled' || rc.status === 'fulfilled') renderRateTable();
+    if (ann.status === 'fulfilled') { announcements = ann.value; renderAnnouncements(); }
+  } catch (err) {
+    console.error('Refresh error:', err);
+  }
+
+  btn.classList.remove('loading');
+  btn.textContent = 'Refresh';
+  $('lastUpdate').textContent = `Last refresh: ${new Date().toLocaleTimeString()}`;
+}
+
+// --- Render Portfolio ---
+
+function renderPortfolio() {
+  if (!portfolioData) return;
+  const d = portfolioData;
+
+  $('totalCapital').textContent = formatUSD(d.totalCapital);
+  $('weightedApy').textContent = d.weightedApy != null ? d.weightedApy.toFixed(2) + '%' : '—';
+  $('annualIncome').textContent = d.annualIncome != null ? formatUSD(d.annualIncome) : '—';
+  $('monthlyIncome').textContent = d.annualIncome != null ? formatUSD(Math.round(d.annualIncome / 12)) : '—';
+
+  const container = $('tiersContainer');
+  container.innerHTML = '';
+
+  for (const tier of d.tiers) {
+    const card = document.createElement('div');
+    card.className = 'tier-card';
+    card.innerHTML = `
+      <div class="tier-header">
+        <span class="tier-name">${tier.name}</span>
+        <div class="tier-meta">
+          <span>${formatUSD(tier.amount)} (${(tier.allocation * 100).toFixed(0)}%)</span>
+          <span>APY: ${tier.weightedApy.toFixed(2)}%</span>
+          <span>Income: ${formatUSD(tier.annualIncome)}/yr</span>
+        </div>
+      </div>
+      <table class="positions-table">
+        <thead>
+          <tr>
+            <th>Protocol</th>
+            <th>Chain</th>
+            <th>Asset</th>
+            <th>Amount</th>
+            <th>Live APY</th>
+            <th>Annual Income</th>
+            <th>Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tier.positions.map(pos => `
+            <tr>
+              <td>
+                <div class="link-group">
+                  ${pos.officialUrl
+                    ? `<a class="proto-link" href="${pos.officialUrl}" target="_blank" rel="noopener"><strong>${pos.protocol}</strong></a>`
+                    : `<strong>${pos.protocol}</strong>`}
+                  ${pos.matchedPoolId
+                    ? `<a class="verify-link" href="https://defillama.com/yields/pool/${pos.matchedPoolId}" target="_blank" rel="noopener" title="Verify on DeFiLlama">&#x2197;</a>`
+                    : ''}
+                </div>
+                <span style="color:#64748b;font-size:11px">${pos.product}</span>
+              </td>
+              <td>${pos.chain ? chainBadge(pos.chain) : '<span style="color:#64748b">CeFi</span>'}</td>
+              <td>${pos.asset}</td>
+              <td>${formatUSD(pos.amount)}</td>
+              <td>${renderApy(pos.liveApy, pos.apySource)}</td>
+              <td>${formatUSD(pos.annualIncome)}</td>
+              <td>${renderSourceBadge(pos.apySource)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+    container.appendChild(card);
+  }
+}
+
+function renderApy(apy, source) {
+  if (apy === null || apy === undefined) return '<span class="apy apy-na">N/A</span>';
+  const cls = apy >= 8 ? 'apy-high' : apy >= 3 ? 'apy-mid' : 'apy-low';
+  return `<span class="apy ${cls}">${apy.toFixed(2)}%</span>`;
+}
+
+function renderSourceBadge(source) {
+  const map = {
+    live: ['source-live', 'Live'],
+    'auth-api': ['source-live', 'API'],
+    api: ['source-live', 'API'],
+    manual: ['source-manual', 'Manual'],
+    estimate: ['source-estimate', 'Est.'],
+    fixed: ['source-fixed', 'Fixed'],
+  };
+  const [cls, label] = map[source] || ['source-estimate', source || 'Unknown'];
+  return `<span class="source-badge ${cls}"></span>${label}`;
+}
+
+// --- Rate Comparison Table ---
+
+let allRateRows = [];
+let activeChainFilter = 'all';
+
+function buildRateRows() {
+  const rows = [];
+
+  // DeFi pools
+  if (ratesDefi && ratesDefi.pools) {
+    for (const p of ratesDefi.pools) {
+      rows.push({
+        type: 'DeFi',
+        protocol: p.project,
+        asset: p.symbol,
+        chain: p.chain,
+        apy: p.apy,
+        apyBase: p.apyBase || 0,
+        apyReward: p.apyReward || 0,
+        tvl: p.tvl,
+        inPortfolio: p.inPortfolio,
+        poolId: p.pool,
+        riskScore: p.riskScore,
+        riskLabel: p.riskLabel,
+        llamaUrl: `https://defillama.com/yields/pool/${p.pool}`,
+      });
+    }
+  }
+
+  // CeFi rates
+  const cefiUrls = { binance: 'https://www.binance.com/en/earn', okx: 'https://www.okx.com/earn' };
+  if (ratesCefi) {
+    for (const platform of ['binance', 'okx']) {
+      const data = ratesCefi[platform];
+      if (!data || !data.rates) continue;
+      for (const r of data.rates) {
+        rows.push({
+          type: 'CeFi',
+          protocol: platform.charAt(0).toUpperCase() + platform.slice(1),
+          asset: `${r.asset} ${r.product}`,
+          chain: 'CeFi',
+          apy: r.apy,
+          tvl: null,
+          inPortfolio: platform === 'binance' || platform === 'okx',
+          source: data.source,
+          llamaUrl: cefiUrls[platform],
+        });
+      }
+    }
+  }
+
+  rows.sort((a, b) => (b.apy || 0) - (a.apy || 0));
+  allRateRows = rows;
+}
+
+function renderChainFilters() {
+  const counts = {};
+  for (const r of allRateRows) {
+    const c = r.chain || 'Other';
+    counts[c] = (counts[c] || 0) + 1;
+  }
+  // Preferred order
+  const order = ['all', 'Ethereum', 'Solana', 'Base', 'Arbitrum', 'BSC', 'Polygon', 'Optimism', 'Avalanche', 'CeFi'];
+  const chains = ['all', ...order.filter(c => c !== 'all' && counts[c])];
+  // Add remaining chains not in the preferred order
+  for (const c of Object.keys(counts)) {
+    if (!chains.includes(c)) chains.push(c);
+  }
+
+  $('chainFilters').innerHTML = chains.map(c => {
+    const label = c === 'all' ? 'All' : c;
+    const count = c === 'all' ? allRateRows.length : (counts[c] || 0);
+    const active = c === activeChainFilter ? ' active' : '';
+    return `<button class="chain-filter${active}" onclick="setChainFilter('${c}')">${label}<span class="count">(${count})</span></button>`;
+  }).join('');
+}
+
+function setChainFilter(chain) {
+  activeChainFilter = chain;
+  renderChainFilters();
+  renderRateTableBody();
+}
+
+function renderRateTable() {
+  buildRateRows();
+  renderChainFilters();
+  renderRateTableBody();
+}
+
+function renderRateTableBody() {
+  const filtered = activeChainFilter === 'all'
+    ? allRateRows
+    : allRateRows.filter(r => r.chain === activeChainFilter);
+
+  const container = $('rateTableContainer');
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="loading-msg">No rate data for this filter</div>';
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="rate-table-wrap">
+      <table class="rate-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Type</th>
+            <th>Protocol</th>
+            <th>Asset</th>
+            <th>Chain</th>
+            <th>APY</th>
+            <th>Breakdown</th>
+            <th>TVL</th>
+            <th>Safety</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filtered.slice(0, 60).map((r, i) => `
+            <tr class="${r.inPortfolio ? 'in-portfolio' : ''}">
+              <td style="color:#64748b">${i + 1}</td>
+              <td>${r.type}</td>
+              <td><a class="proto-link" href="${r.llamaUrl}" target="_blank" rel="noopener"><strong>${r.protocol}</strong></a></td>
+              <td>${r.asset}</td>
+              <td>${chainBadge(r.chain)}</td>
+              <td>${renderApy(r.apy)}${r.apyReward > 1 ? '<span class="subsidy-tag">Reward</span>' : ''}</td>
+              <td style="font-size:11px;color:#94a3b8">${r.apyBase != null && r.type === 'DeFi' ? `Base ${r.apyBase.toFixed(1)}%${r.apyReward > 0 ? ` + Reward ${r.apyReward.toFixed(1)}%` : ''}` : '—'}</td>
+              <td>${r.tvl ? formatCompact(r.tvl) : '—'}</td>
+              <td>${renderRiskBadge(r.riskScore, r.riskLabel)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderRiskBadge(score, label) {
+  if (score == null) return '<span style="color:#64748b">—</span>';
+  const cls = `risk-${label || 'medium'}`;
+  return `<span class="risk-score ${cls}">${score.toFixed(1)}</span>`;
+}
+
+function chainBadge(chain) {
+  if (!chain || chain === '—') return '—';
+  const cls = 'c-' + chain.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  return `<span class="chain-badge ${cls}">${chain}</span>`;
+}
+
+// --- Announcements ---
+
+function renderAnnouncements() {
+  if (!announcements) return;
+
+  renderAnnList('annBinance', announcements.binance || []);
+  renderAnnList('annOkx', announcements.okx || []);
+}
+
+function renderAnnList(containerId, items) {
+  const el = $(containerId);
+  if (!items || items.length === 0) {
+    el.innerHTML = '<div class="ann-empty">No announcements loaded</div>';
+    return;
+  }
+
+  el.innerHTML = items.map(a => `
+    <div class="ann-item ${a.highlighted ? 'highlighted' : ''}">
+      <a href="${a.url}" target="_blank" rel="noopener">${escapeHtml(a.title)}</a>
+      ${a.date ? `<div class="ann-date">${formatDate(a.date)}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+// --- Helpers ---
+
+function formatUSD(n) {
+  if (n == null) return '—';
+  return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
+
+function formatCompact(n) {
+  if (n >= 1e9) return '$' + (n / 1e9).toFixed(1) + 'B';
+  if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'K';
+  return '$' + n.toFixed(0);
+}
+
+function formatDate(d) {
+  try {
+    return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch { return d; }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+// --- Auto refresh ---
+refreshAll();
+setInterval(refreshAll, 60 * 1000);
+</script>
+</body>
+</html>

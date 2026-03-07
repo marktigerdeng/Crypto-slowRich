@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strategy #6 — IBIT Options Wheel Backtest</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0a0e17;color:#e2e8f0;min-height:100vh;line-height:1.6}
+a{color:#60a5fa;text-decoration:none}
+.header{padding:16px 24px;background:linear-gradient(135deg,#0f172a,#1e293b);border-bottom:1px solid #1e293b}
+.header h1{font-size:22px;font-weight:800;background:linear-gradient(90deg,#f97316,#ef4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header .sub{color:#64748b;font-size:13px;margin-top:4px}
+.nav{display:flex;gap:12px;margin-top:8px}
+.nav a{padding:4px 12px;border:1px solid #334155;border-radius:6px;font-size:12px;color:#94a3b8}
+.nav a:hover{border-color:#f97316;color:#f97316}
+
+.controls{display:flex;gap:16px;padding:16px 24px;flex-wrap:wrap;align-items:end;border-bottom:1px solid #1e293b}
+.ctrl{display:flex;flex-direction:column;gap:4px}
+.ctrl label{font-size:11px;color:#64748b;text-transform:uppercase}
+.ctrl input,.ctrl select{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:8px 12px;border-radius:8px;font-size:14px;font-family:inherit;width:140px}
+.run-btn{background:linear-gradient(135deg,#f97316,#ef4444);color:#fff;border:none;padding:10px 28px;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px;font-family:inherit;align-self:end}
+.run-btn:hover{opacity:.9}
+
+.summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;padding:16px 24px}
+.stat{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px 18px}
+.stat.good{border-color:#10b981}.stat.warn{border-color:#f59e0b}.stat.bad{border-color:#ef4444}
+.stat-label{font-size:11px;color:#64748b;text-transform:uppercase}
+.stat-value{font-size:22px;font-weight:700;color:#f1f5f9;margin-top:4px}
+.stat-sub{font-size:11px;color:#94a3b8;margin-top:2px}
+
+.section{padding:16px 24px}
+.section-title{font-size:16px;font-weight:700;margin-bottom:12px}
+
+/* Chart */
+.chart-wrap{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;position:relative;overflow:hidden}
+canvas{width:100%!important;height:400px!important}
+#priceChart{height:480px!important}
+
+/* Trade log */
+.log-wrap{max-height:500px;overflow-y:auto;border-radius:12px;border:1px solid #334155}
+.log-table{width:100%;border-collapse:collapse;font-size:12px}
+.log-table th{background:#0f172a;padding:8px 12px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;position:sticky;top:0}
+.log-table td{padding:8px 12px;border-bottom:1px solid #1e293b}
+.log-table tr:hover{background:#33415520}
+.pnl-pos{color:#10b981;font-weight:600}.pnl-neg{color:#ef4444;font-weight:600}
+.tag-put{background:#3b82f622;color:#3b82f6;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+.tag-call{background:#f59e0b22;color:#f59e0b;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+.tag-assign{background:#ef444422;color:#ef4444;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+.tag-exercise{background:#10b98122;color:#10b981;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+.tag-adaptive{background:#8b5cf622;color:#a78bfa;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+
+/* Strategy description */
+.strat-desc{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;margin-bottom:16px;font-size:13px;color:#94a3b8;line-height:1.8}
+.strat-desc strong{color:#e2e8f0}
+.strat-desc .step{display:flex;gap:8px;margin:4px 0}
+.strat-desc .num{background:#f9731622;color:#f97316;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+
+/* VRP indicator */
+.vrp-box{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px 20px;margin-bottom:16px}
+.vrp-title{font-size:13px;font-weight:600;margin-bottom:8px}
+.vrp-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:#94a3b8}
+.vrp-legend span{display:flex;align-items:center;gap:4px}
+.vrp-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+footer{padding:24px;text-align:center;color:#475569;font-size:12px;border-top:1px solid #1e293b;margin-top:40px}
+@media(max-width:768px){.controls{flex-direction:column}.ctrl input{width:100%}}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <h1>Strategy #6 — IBIT Options Wheel</h1>
+  <div class="sub">IBIT (iShares Bitcoin ETF) — Delta-Based Wheel with BTC DVOL as IV Proxy</div>
+  <div class="nav">
+    <a href="/">Strategy #1: Stablecoin</a>
+    <a href="/backtest-wheel.html">Strategy #2: BTC Wheel</a>
+    <a href="/backtest-dip.html">Strategy #3: Dip-Buying</a>
+    <a href="/backtest-allweather.html">Strategy #4: All Weather</a>
+    <a href="/options-monitor.html">Strategy #5: Options Monitor</a>
+    <a href="/backtest-wheel-ibit.html" style="border-color:#f97316;color:#f97316">Strategy #6: IBIT Wheel</a>
+  </div>
+</header>
+
+<div class="section">
+  <div class="strat-desc">
+    <strong>IBIT Delta-Based Adaptive Wheel Strategy (Δ ≈ 0.20):</strong>
+    <div class="step"><span class="num">1</span> Calculate VRP = IV (BTC DVOL proxy) - RV (30-day realized vol of IBIT)</div>
+    <div class="step"><span class="num">2</span> VRP &gt; 20: Sell <strong>Δ base×0.50</strong> put (far OTM, IV rich → delta halved)</div>
+    <div class="step"><span class="num">3</span> VRP 10~20: Sell <strong>Δ base×0.75</strong> put (moderate OTM → delta reduced)</div>
+    <div class="step"><span class="num">4</span> VRP 0~10: Sell <strong>Δ base</strong> put (use base delta as-is)</div>
+    <div class="step"><span class="num">5</span> VRP &lt; 0: Pause selling — IV underpriced, not worth the risk</div>
+    <div class="step"><span class="num">6</span> If assigned (bought IBIT shares): sell covered call at <strong>Δ0.20</strong> call, repeat until called away</div>
+    <div class="step" style="margin-top:8px;color:#64748b;font-size:12px"><span class="num" style="background:#3b82f622;color:#3b82f6">?</span> <em>IBIT tracks BTC. Standard US equity options: 100 shares/contract, CBOE listed. IV uses BTC DVOL as proxy.</em></div>
+    <div class="step" style="color:#64748b;font-size:12px"><span class="num" style="background:#f59e0b22;color:#f59e0b">!</span> <em>IBIT launched Jan 2024. Backtest history is limited. BTC DVOL available from 2021 — used as IV proxy for the overlap period.</em></div>
+  </div>
+  <div class="strat-desc" style="border-color:#8b5cf6;margin-top:8px">
+    <strong style="color:#a78bfa">Protection (Put Spread + Stop-Loss):</strong>
+    <div class="step"><span class="num" style="background:#8b5cf622;color:#a78bfa">A</span> <strong>Put spread</strong> — buy protective put X% below sell strike. Max loss per trade capped. Crash &rarr; hedge pays, stay in cash.</div>
+    <div class="step"><span class="num" style="background:#8b5cf622;color:#a78bfa">B</span> <strong>IBIT stop-loss</strong> — holding IBIT after assignment? If price drops X% below entry, sell immediately. Cut losses, go back to selling puts.</div>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="ctrl"><label>Initial Capital ($)</label><input type="number" id="capital" value="100000" step="10000"></div>
+  <div class="ctrl"><label>Target Delta (Put)</label>
+    <select id="targetDelta">
+      <option value="0.05">Δ0.05 (deep OTM)</option>
+      <option value="0.10">Δ0.10 (far OTM)</option>
+      <option value="0.15">Δ0.15 (moderate)</option>
+      <option value="0.20" selected>Δ0.20 (standard)</option>
+      <option value="0.25">Δ0.25 (closer ATM)</option>
+      <option value="0.30">Δ0.30 (near ATM)</option>
+    </select>
+    <span style="font-size:10px;color:#64748b">≈ assignment probability</span>
+  </div>
+  <div class="ctrl"><label>Option Period</label>
+    <select id="period">
+      <option value="7">Weekly</option>
+      <option value="14">Bi-weekly</option>
+      <option value="30" selected>Monthly</option>
+    </select>
+  </div>
+  <div class="ctrl"><label>Start Date</label><input type="date" id="startDate" value="2024-02-01"></div>
+  <div class="ctrl"><label>End Date</label><input type="date" id="endDate" value="2026-02-25"></div>
+  <div class="ctrl"><label>IV Source</label>
+    <select id="ivMode">
+      <option value="dvol" selected>BTC DVOL Proxy (Deribit)</option>
+      <option value="realized">Realized Vol Only</option>
+      <option value="60">60% Fixed</option>
+      <option value="80">80% Fixed</option>
+    </select>
+  </div>
+  <div class="ctrl"><label>Strategy Mode</label>
+    <select id="stratMode">
+      <option value="adaptive" selected>VRP Adaptive Delta</option>
+      <option value="fixed">Fixed Delta</option>
+    </select>
+  </div>
+  <div class="ctrl"><label>Cash Deploy %</label>
+    <select id="cashPct">
+      <option value="0.25">25%</option>
+      <option value="0.35">35%</option>
+      <option value="0.50" selected>50%</option>
+      <option value="0.75">75%</option>
+      <option value="1.00">100%</option>
+    </select>
+    <span style="font-size:10px;color:#64748b">% of cash per trade</span>
+  </div>
+  <div class="ctrl"><label>Premium Reinvest</label>
+    <select id="compound">
+      <option value="off">OFF — Fixed Size</option>
+      <option value="on" selected>ON — Compound</option>
+    </select>
+  </div>
+  <div class="ctrl"><label>Put Spread</label>
+    <select id="putSpread">
+      <option value="off">OFF — Naked Put</option>
+      <option value="on" selected>ON — Bull Put Spread</option>
+    </select>
+  </div>
+  <div class="ctrl"><label>Spread Width</label>
+    <select id="spreadWidth">
+      <option value="0.05">5%</option>
+      <option value="0.10">10%</option>
+      <option value="0.15" selected>15%</option>
+      <option value="0.20">20%</option>
+    </select>
+  </div>
+  <div class="ctrl"><label>Stop-Loss</label>
+    <select id="stopLossToggle">
+      <option value="off">OFF</option>
+      <option value="on" selected>ON</option>
+    </select>
+  </div>
+  <div class="ctrl"><label>Stop-Loss %</label>
+    <input type="number" id="stopLoss" value="10" min="5" max="30" step="5">
+    <span style="font-size:10px;color:#64748b">% below entry → sell</span>
+  </div>
+  <button class="run-btn" id="runBtn" onclick="runBacktest()">Run Backtest</button>
+  <button class="run-btn" id="gridBtn" onclick="runGridSearch()" style="background:linear-gradient(135deg,#8b5cf6,#6366f1)">Grid Search</button>
+</div>
+
+<div class="summary-bar" id="summaryBar" style="display:none"></div>
+
+<div class="section" id="gridSection" style="display:none">
+  <div class="section-title">Parameter Grid Search — Delta x Cash% Combinations</div>
+  <div class="log-wrap"><table class="log-table" id="gridTable"><thead><tr>
+    <th>Rank</th><th>Delta</th><th>Cash %</th><th>Period</th><th>Mode</th>
+    <th>Final Equity</th><th>Ann. Return</th><th>Max DD</th><th>Sharpe</th>
+    <th>Trades</th><th>Assigned</th><th>Total Premium</th>
+  </tr></thead><tbody id="gridBody"></tbody></table></div>
+</div>
+
+<div class="section" id="vrpSection" style="display:none">
+  <div class="section-title">IV vs RV & Volatility Risk Premium</div>
+  <div class="chart-wrap"><canvas id="vrpChart"></canvas></div>
+  <div class="vrp-box" style="margin-top:12px">
+    <div class="vrp-legend">
+      <span><span class="vrp-dot" style="background:#f97316"></span> IV (Deribit DVOL)</span>
+      <span><span class="vrp-dot" style="background:#3b82f6"></span> RV (30-day Realized)</span>
+      <span><span class="vrp-dot" style="background:#10b981"></span> VRP &gt; 20 (Rich)</span>
+      <span><span class="vrp-dot" style="background:#f59e0b"></span> VRP 10~20 (Normal)</span>
+      <span><span class="vrp-dot" style="background:#ef4444"></span> VRP &lt; 0 (Pause)</span>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="priceChartSection" style="display:none">
+  <div class="section-title">IBIT Price &amp; Trade Markers</div>
+  <div class="chart-wrap"><canvas id="priceChart"></canvas></div>
+  <div style="display:flex;flex-wrap:wrap;gap:14px;padding:10px 4px 0;font-size:11px;color:#94a3b8">
+    <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#60a5fa;vertical-align:middle;margin-right:4px"></span>IBIT Price</span>
+    <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10b981;vertical-align:middle;margin-right:4px"></span>Sell Put (profit)</span>
+    <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ef4444;vertical-align:middle;margin-right:4px"></span>Sell Put (assigned)</span>
+    <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#a78bfa;vertical-align:middle;margin-right:4px"></span>Sell Put (hedged)</span>
+    <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#22d3ee;vertical-align:middle;margin-right:4px"></span>Sell Call (profit)</span>
+    <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#3b82f6;vertical-align:middle;margin-right:4px"></span>Sell Call (exercised)</span>
+    <span><span style="display:inline-block;width:8px;height:8px;color:#ef4444;font-weight:bold;vertical-align:middle;margin-right:4px">✕</span>Stop-Loss</span>
+    <span><span style="display:inline-block;width:10px;height:2px;background:#f59e0b;vertical-align:middle;margin-right:4px"></span>Strike</span>
+  </div>
+</div>
+
+<div class="section" id="chartSection" style="display:none">
+  <div class="section-title">Equity Curve vs IBIT Buy & Hold</div>
+  <div class="chart-wrap"><canvas id="chart"></canvas></div>
+</div>
+
+<div class="section" id="logSection" style="display:none">
+  <div class="section-title">Trade Log</div>
+  <div class="log-wrap"><table class="log-table"><thead><tr>
+    <th>#</th><th>Date</th><th>Action</th><th>IBIT Price</th><th>Strike</th><th>Delta</th><th>IV / RV</th><th>VRP</th><th>Premium</th><th>P&L</th><th>Equity</th>
+  </tr></thead><tbody id="logBody"></tbody></table></div>
+</div>
+
+<footer>
+  Strategy #6 Backtest — IBIT Options Wheel | Delta-based | BTC DVOL as IV proxy | Black-Scholes pricing
+</footer>
+
+<script>
+// --- Black-Scholes ---
+function normCDF(x) {
+  const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+  const sign = x < 0 ? -1 : 1;
+  x = Math.abs(x) / Math.SQRT2;
+  const t = 1 / (1 + p * x);
+  const y = 1 - (((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+  return 0.5 * (1 + sign * y);
+}
+
+function bsPrice(S, K, T, r, sigma, type) {
+  if (T <= 0) return Math.max(0, type === 'put' ? K - S : S - K);
+  const d1 = (Math.log(S/K) + (r + sigma*sigma/2)*T) / (sigma*Math.sqrt(T));
+  const d2 = d1 - sigma*Math.sqrt(T);
+  if (type === 'call') return S*normCDF(d1) - K*Math.exp(-r*T)*normCDF(d2);
+  else return K*Math.exp(-r*T)*normCDF(-d2) - S*normCDF(-d1);
+}
+
+// BS delta
+function bsDelta(S, K, T, r, sigma, type) {
+  if (T <= 0) return type === 'put' ? (S < K ? -1 : 0) : (S > K ? 1 : 0);
+  const d1 = (Math.log(S/K) + (r + sigma*sigma/2)*T) / (sigma*Math.sqrt(T));
+  return type === 'put' ? normCDF(d1) - 1 : normCDF(d1);
+}
+
+// Find strike for target delta via binary search
+function strikeForDelta(S, T, r, sigma, targetDelta, type) {
+  let lo = S * 0.1, hi = S * 3.0;
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2;
+    const d = bsDelta(S, mid, T, r, sigma, type);
+    if (type === 'put') {
+      // put delta is negative, target is like -0.20
+      // as K increases → delta more negative; if d too negative → K too high → lower hi
+      if (d < targetDelta) hi = mid; else lo = mid;
+    } else {
+      if (d > targetDelta) lo = mid; else hi = mid;
+    }
+  }
+  // IBIT uses $1 strike increments
+  return Math.round((lo + hi) / 2 * 2) / 2; // round to nearest $0.50
+}
+
+// --- Fetch IBIT prices via Yahoo Finance backend ---
+async function fetchIBITPrices(startDate, endDate) {
+  const years = Math.ceil((new Date(endDate) - new Date(startDate)) / (365.25 * 86400000)) + 1;
+  const resp = await fetch(`/api/etf-prices?symbols=IBIT&years=${Math.min(years, 5)}`);
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error || `IBIT price API ${resp.status}`);
+  }
+  const json = await resp.json();
+  const prices = json.data?.IBIT || [];
+  console.log(`IBIT prices: ${prices.length} points from ${json.source}`);
+  if (prices.length === 0) throw new Error('No IBIT price data. IBIT launched Jan 2024.');
+  return prices;
+}
+
+// --- Fetch BTC DVOL as IV proxy for IBIT ---
+async function fetchDVOL() {
+  const resp = await fetch('/api/btc-dvol');
+  if (!resp.ok) return [];
+  const json = await resp.json();
+  console.log(`BTC DVOL (IV proxy): ${json.dvol.length} points from ${json.source}`);
+  return json.dvol || [];
+}
+
+// Contract sizing: IBIT uses standard 100 shares/contract
+const SHARES_PER_CONTRACT = 100;
+
+// --- Realized volatility ---
+function calcRealizedVol(prices, idx, window) {
+  if (idx < window + 1) return 0.6;
+  const returns = [];
+  for (let i = idx - window + 1; i <= idx; i++) {
+    returns.push(Math.log(prices[i].price / prices[i-1].price));
+  }
+  const mean = returns.reduce((a,b) => a+b, 0) / returns.length;
+  const variance = returns.reduce((a,r) => a + (r-mean)**2, 0) / (returns.length - 1);
+  return Math.sqrt(variance * 252); // 252 trading days/year for ETF data
+}
+
+// --- Main backtest ---
+let btcData = null;
+let dvolData = null;
+
+async function runBacktest() {
+  const btn = document.getElementById('runBtn');
+  btn.textContent = 'Loading data...';
+  btn.disabled = true;
+
+  try {
+    const capital = parseFloat(document.getElementById('capital').value);
+    const baseDelta = parseFloat(document.getElementById('targetDelta').value);
+    const periodDays = parseInt(document.getElementById('period').value);
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    const ivMode = document.getElementById('ivMode').value;
+    const stratMode = document.getElementById('stratMode').value;
+    const userCashPct = parseFloat(document.getElementById('cashPct').value);
+    const compoundOn = document.getElementById('compound').value === 'on';
+    const putSpreadOn = document.getElementById('putSpread').value === 'on';
+    const spreadWidth = parseFloat(document.getElementById('spreadWidth').value);
+    const stopLossOn = document.getElementById('stopLossToggle').value === 'on';
+    const stopLossPct = parseFloat(document.getElementById('stopLoss').value) / 100;
+    const riskFreeRate = 0.045;
+
+    // Fetch data in parallel — IBIT prices + BTC DVOL as IV proxy
+    const [prices, dvol] = await Promise.all([
+      fetchIBITPrices(startDate, endDate),
+      ivMode === 'dvol' ? fetchDVOL() : Promise.resolve([])
+    ]);
+    // Keep ALL data (including pre-startDate padding) for RV calculation
+    btcData = prices.filter(p => p.date <= endDate);
+    dvolData = dvol;
+
+    if (btcData.length < 35) throw new Error('Not enough IBIT price data. IBIT launched Jan 2024 — try a later start date.');
+
+    // Find the index where actual trading should start (>= startDate)
+    let tradeStartIdx = btcData.findIndex(p => p.date >= startDate);
+    if (tradeStartIdx < 0) throw new Error('No data for start date');
+    // Ensure at least 30 days of prior data for vol calculation
+    tradeStartIdx = Math.max(tradeStartIdx, 30);
+
+    // Build DVOL lookup
+    const dvolMap = {};
+    dvolData.forEach(d => dvolMap[d.date] = d.iv);
+
+    btn.textContent = 'Running simulation...';
+
+    // Simulation state
+    let cash = capital;
+    let holdingBTC = false;
+    let shareQty = 0; // IBIT shares held
+    let entryPrice = 0;
+    const trades = [];
+    const equityCurve = [];
+    const vrpHistory = [];
+    let cumulPnl = 0;
+
+    // Record the actual trade start price for Buy & Hold comparison
+    const tradeStartPrice = btcData[tradeStartIdx].price;
+    const tradeStartDate = btcData[tradeStartIdx].date;
+
+    // Walk through time — start from the actual start date
+    let idx = tradeStartIdx;
+    while (idx < btcData.length - 5) { // allow partial final period (min 5 trading days)
+      const openDate = btcData[idx].date;
+      const openPrice = btcData[idx].price;
+
+      // Calculate RV (always)
+      const rv = calcRealizedVol(btcData, idx, 30);
+
+      // Determine IV
+      let iv;
+      if (ivMode === 'dvol') {
+        // Find closest DVOL date
+        iv = dvolMap[openDate];
+        if (!iv) {
+          // Search nearby dates (within 3 days)
+          for (let d = 1; d <= 3 && !iv; d++) {
+            const prev = new Date(openDate);
+            prev.setDate(prev.getDate() - d);
+            iv = dvolMap[prev.toISOString().slice(0, 10)];
+          }
+        }
+        if (!iv) iv = rv * 1.15; // fallback: estimate IV as RV + 15% premium
+      } else if (ivMode === 'realized') {
+        iv = rv;
+      } else {
+        iv = parseFloat(ivMode) / 100;
+      }
+      iv = Math.max(0.15, Math.min(2.0, iv));
+
+      const vrp = (iv - rv) * 100; // VRP in vol points
+      vrpHistory.push({ date: openDate, iv: iv * 100, rv: rv * 100, vrp });
+
+      const expiryIdx = Math.min(idx + periodDays, btcData.length - 1);
+      const actualDays = expiryIdx - idx;
+      const T = actualDays / 365; // use actual days (handles partial final period)
+      const expiryDate = btcData[expiryIdx].date;
+      const expiryPrice = btcData[expiryIdx].price;
+
+      // Adaptive strategy: VRP only adjusts delta, cash% set by user
+      let targetDelta = baseDelta;
+      let cashPct = userCashPct; // user-controlled cash deploy %
+      let skipTrade = false;
+      if (stratMode === 'adaptive' && !holdingBTC) {
+        if (vrp > 20) {
+          targetDelta = Math.max(0.05, baseDelta * 0.50); // IV rich → far OTM
+        } else if (vrp > 10) {
+          targetDelta = Math.max(0.05, baseDelta * 0.75); // moderate
+        } else if (vrp > 0) {
+          targetDelta = baseDelta; // base delta as-is
+        } else {
+          skipTrade = true; // VRP < 0 → pause
+        }
+      }
+
+      // (CPPI removed — risk controlled by Put Spread + Stop-Loss)
+
+      if (skipTrade) {
+        const eq = holdingBTC ? cash + openPrice * shareQty : cash;
+        equityCurve.push({ date: openDate, equity: eq, btcPrice: openPrice });
+        idx = expiryIdx;
+        continue;
+      }
+
+      // Snapshot equity BEFORE this trade
+      const equityBefore = holdingBTC ? cash + openPrice * shareQty : cash;
+
+      if (!holdingBTC) {
+        // === SELL PUT via Delta targeting ===
+        const strike = strikeForDelta(openPrice, T, riskFreeRate, iv, -targetDelta, 'put');
+        const actualDelta = Math.abs(bsDelta(openPrice, strike, T, riskFreeRate, iv, 'put'));
+        const rawPremium = bsPrice(openPrice, strike, T, riskFreeRate, iv, 'put');
+
+        // Put Spread: buy protective put → bull put credit spread
+        let hedgeCost = 0, hedgeStrike = 0;
+        if (putSpreadOn) {
+          hedgeStrike = Math.round(strike * (1 - spreadWidth) * 2) / 2; // round to $0.50
+          hedgeCost = bsPrice(openPrice, hedgeStrike, T, riskFreeRate, iv, 'put');
+        }
+        const premiumPerShare = rawPremium - hedgeCost;
+
+        // Standard options: 100 shares per contract
+        // Compound OFF: size based on original capital; ON: size based on current cash
+        const sizingCash = compoundOn ? cash : Math.min(capital, cash);
+        const deployableCash = sizingCash * cashPct;
+        const maxAssignment = strike * SHARES_PER_CONTRACT; // cost if assigned per contract
+        const numContracts = Math.floor(deployableCash / maxAssignment);
+        if (numContracts < 1) { idx = expiryIdx; continue; }
+        const totalShares = numContracts * SHARES_PER_CONTRACT;
+        const totalPremium = premiumPerShare * totalShares;
+
+        if (expiryPrice <= strike) {
+          if (putSpreadOn && hedgeStrike > 0 && expiryPrice < hedgeStrike) {
+            // HEDGE TRIGGERED — both legs ITM, spread settles, back to cash
+            const spreadLoss = (strike - hedgeStrike) * totalShares;
+            cash = cash - spreadLoss + totalPremium;
+
+            const equityAfter = cash;
+            const pnl = equityAfter - equityBefore;
+            cumulPnl = equityAfter - capital;
+
+            trades.push({
+              date: openDate, expiry: expiryDate, action: 'Sell Put', assigned: true, hedged: true,
+              btcPrice: openPrice, expiryPrice, strike, hedgeStrike, premium: totalPremium,
+              pnl, cumulPnl, equity: equityAfter, numContracts, totalShares,
+              iv: iv * 100, rv: rv * 100, vrp, delta: actualDelta, targetDelta
+            });
+          } else {
+            // ASSIGNED — buy IBIT shares at strike
+            holdingBTC = true;
+            shareQty = totalShares;
+            entryPrice = strike;
+            cash = cash - (strike * totalShares) + totalPremium;
+
+            const equityAfter = cash + expiryPrice * shareQty;
+            const pnl = equityAfter - equityBefore;
+            cumulPnl = equityAfter - capital;
+
+            trades.push({
+              date: openDate, expiry: expiryDate, action: 'Sell Put', assigned: true,
+              btcPrice: openPrice, expiryPrice, strike, premium: totalPremium,
+              pnl, cumulPnl, equity: equityAfter, numContracts, totalShares,
+              iv: iv * 100, rv: rv * 100, vrp, delta: actualDelta, targetDelta
+            });
+          }
+        } else {
+          // NOT ASSIGNED — keep premium
+          cash += totalPremium;
+
+          const equityAfter = cash;
+          const pnl = equityAfter - equityBefore;
+          cumulPnl = equityAfter - capital;
+
+          trades.push({
+            date: openDate, expiry: expiryDate, action: 'Sell Put', assigned: false,
+            btcPrice: openPrice, expiryPrice, strike, premium: totalPremium,
+            pnl, cumulPnl, equity: equityAfter, numContracts, totalShares,
+            iv: iv * 100, rv: rv * 100, vrp, delta: actualDelta, targetDelta
+          });
+        }
+      } else {
+        // === HOLDING IBIT — check stop-loss first ===
+        if (stopLossOn && stopLossPct > 0 && openPrice <= entryPrice * (1 - stopLossPct)) {
+          // STOP-LOSS TRIGGERED — sell IBIT shares at market, cut losses
+          cash = cash + openPrice * shareQty;
+          const equityAfter = cash;
+          const pnl = equityAfter - equityBefore;
+          cumulPnl = equityAfter - capital;
+
+          trades.push({
+            date: openDate, expiry: openDate, action: 'Stop-Loss', stopLoss: true,
+            btcPrice: openPrice, expiryPrice: openPrice, strike: entryPrice,
+            premium: 0, pnl, cumulPnl, equity: equityAfter, numContracts: shareQty / SHARES_PER_CONTRACT, totalShares: shareQty,
+            iv: iv * 100, rv: rv * 100, vrp, delta: null, targetDelta: null
+          });
+          holdingBTC = false;
+          shareQty = 0;
+          // Don't advance to expiry — start next trade from next period
+          idx += periodDays;
+          const eq = cash;
+          equityCurve.push({ date: openDate, equity: eq, btcPrice: openPrice });
+          continue;
+        }
+
+        // === SELL CALL via Delta targeting (holding IBIT shares) ===
+        const callDelta = baseDelta; // use same base delta for calls
+        const strike = strikeForDelta(openPrice, T, riskFreeRate, iv, callDelta, 'call');
+        const callActualDelta = bsDelta(openPrice, strike, T, riskFreeRate, iv, 'call');
+        const premiumPerShare = bsPrice(openPrice, strike, T, riskFreeRate, iv, 'call');
+        const callContracts = Math.floor(shareQty / SHARES_PER_CONTRACT);
+        const coveredShares = callContracts * SHARES_PER_CONTRACT;
+        const totalPremium = premiumPerShare * coveredShares;
+
+        if (expiryPrice >= strike) {
+          // EXERCISED — sell IBIT shares at strike
+          cash = cash + strike * coveredShares + totalPremium;
+          // Keep any uncovered shares
+          const remainShares = shareQty - coveredShares;
+          if (remainShares > 0) {
+            shareQty = remainShares;
+          } else {
+            holdingBTC = false;
+            shareQty = 0;
+          }
+          const equityAfter = holdingBTC ? cash + expiryPrice * shareQty : cash;
+          const pnl = equityAfter - equityBefore;
+          cumulPnl = equityAfter - capital;
+
+          trades.push({
+            date: openDate, expiry: expiryDate, action: 'Sell Call', exercised: true,
+            btcPrice: openPrice, expiryPrice, strike, premium: totalPremium,
+            pnl, cumulPnl, equity: equityAfter, numContracts: callContracts, totalShares: coveredShares,
+            iv: iv * 100, rv: rv * 100, vrp, delta: callActualDelta, targetDelta: callDelta
+          });
+        } else {
+          // NOT EXERCISED — keep premium + still hold IBIT
+          cash += totalPremium;
+
+          const equityAfter = cash + expiryPrice * shareQty;
+          const pnl = totalPremium; // option-only P&L (exclude share price movement)
+          cumulPnl = equityAfter - capital;
+
+          trades.push({
+            date: openDate, expiry: expiryDate, action: 'Sell Call', exercised: false,
+            btcPrice: openPrice, expiryPrice, strike, premium: totalPremium,
+            pnl, cumulPnl, equity: equityAfter, numContracts: callContracts, totalShares: coveredShares,
+            iv: iv * 100, rv: rv * 100, vrp, delta: callActualDelta, targetDelta: callDelta
+          });
+        }
+      }
+
+      const eq = holdingBTC ? cash + btcData[expiryIdx].price * shareQty : cash;
+      equityCurve.push({ date: expiryDate, equity: eq, btcPrice: btcData[expiryIdx].price });
+      idx = expiryIdx;
+    }
+
+    // Final equity
+    const finalPrice = btcData[btcData.length - 1].price;
+    const finalEquity = holdingBTC ? cash + finalPrice * shareQty : cash;
+    const bhShares = capital / tradeStartPrice;
+    const bhFinal = bhShares * finalPrice;
+    const totalReturn = (finalEquity - capital) / capital * 100;
+    const bhReturn = (bhFinal - capital) / capital * 100;
+    const years = (new Date(endDate) - new Date(tradeStartDate)) / (365.25 * 86400000);
+    const annReturn = (Math.pow(finalEquity / capital, 1/years) - 1) * 100;
+    const bhAnnReturn = (Math.pow(bhFinal / capital, 1/years) - 1) * 100;
+
+    let peak = capital, maxDD = 0, peakDate = '', troughDate = '', ddPeakDate = '';
+    for (const pt of equityCurve) {
+      if (pt.equity > peak) { peak = pt.equity; ddPeakDate = pt.date; }
+      const dd = (peak - pt.equity) / peak;
+      if (dd > maxDD) { maxDD = dd; peakDate = ddPeakDate; troughDate = pt.date; }
+    }
+
+    const totalPremium = trades.reduce((s, t) => s + t.premium, 0);
+    const numAssigned = trades.filter(t => t.assigned).length;
+    const numExercised = trades.filter(t => t.exercised).length;
+    const numHedged = trades.filter(t => t.hedged).length;
+    const numStopLoss = trades.filter(t => t.stopLoss).length;
+    const numSkipped = vrpHistory.filter(v => v.vrp < 0).length;
+    const avgVrp = vrpHistory.length > 0 ? vrpHistory.reduce((s,v) => s + v.vrp, 0) / vrpHistory.length : 0;
+
+    // Run baseline (naked, no protection) for comparison
+    let baseline = null;
+    if ((putSpreadOn || stopLossOn) && btcData && btcData.length > 35) {
+      baseline = backtestEngine({
+        capital, baseDelta, periodDays, cashPctOverride: userCashPct, stratMode,
+        riskFreeRate, priceData: btcData, dvolMap,
+        startDate, endDate, putSpreadOn: false, spreadWidth: 0, stopLossOn: false, stopLossPct: 0, compoundOn,
+      });
+    }
+
+    renderSummary({
+      capital, finalEquity, totalReturn, annReturn, bhFinal, bhReturn, bhAnnReturn,
+      maxDD, ddPeakDate: peakDate, ddTroughDate: troughDate,
+      totalPremium, numTrades: trades.length, numAssigned, numExercised,
+      holdingBTC, shareQty, entryPrice, numSkipped, avgVrp,
+      putSpreadOn, stopLossOn, numHedged, numStopLoss, baseline, compoundOn
+    });
+    renderVRPChart(vrpHistory);
+    renderPriceChart(equityCurve, trades);
+    renderChart(equityCurve, capital, tradeStartPrice);
+    renderTradeLog(trades);
+
+  } catch (err) {
+    alert('Error: ' + err.message);
+    console.error(err);
+  }
+
+  btn.textContent = 'Run Backtest';
+  btn.disabled = false;
+}
+
+// --- Render summary ---
+function renderSummary(m) {
+  const bar = document.getElementById('summaryBar');
+  bar.style.display = 'grid';
+  const fmt = n => '$' + n.toLocaleString('en-US', {maximumFractionDigits: 0});
+  const pct = n => n.toFixed(1) + '%';
+  const cls = n => n >= 0 ? 'good' : 'bad';
+
+  const netPnl = m.finalEquity - m.capital;
+  bar.innerHTML = `
+    <div class="stat ${cls(m.totalReturn)}"><div class="stat-label">Final Equity</div><div class="stat-value">${fmt(m.finalEquity)}</div><div class="stat-sub">P&L: ${netPnl >= 0 ? '+' : ''}${fmt(netPnl)} (${pct(m.annReturn)} ann.)</div></div>
+    <div class="stat"><div class="stat-label">Buy & Hold</div><div class="stat-value">${fmt(m.bhFinal)}</div><div class="stat-sub">${pct(m.bhReturn)} total / ${pct(m.bhAnnReturn)} ann.</div></div>
+    <div class="stat ${m.maxDD > 0.3 ? 'bad' : 'warn'}"><div class="stat-label">Max Drawdown</div><div class="stat-value">${pct(m.maxDD * 100)}</div>${m.ddPeakDate ? `<div class="stat-sub">${m.ddPeakDate} → ${m.ddTroughDate}</div>` : ''}</div>
+    <div class="stat"><div class="stat-label">Premium Collected</div><div class="stat-value">${fmt(m.totalPremium)}</div><div class="stat-sub">${m.numTrades} trades / yield ${m.capital > 0 ? pct(m.totalPremium / m.capital * 100) : '0%'}${m.compoundOn ? ' | Compound' : ' | Fixed'}</div></div>
+    <div class="stat"><div class="stat-label">Assigned / Exercised</div><div class="stat-value">${m.numAssigned} / ${m.numExercised}</div><div class="stat-sub">${m.holdingBTC ? `Holding ${m.shareQty} IBIT shares @${fmt(m.entryPrice)}` : 'Cash position'}</div></div>
+    <div class="stat"><div class="stat-label">Avg VRP / Skipped</div><div class="stat-value">${m.avgVrp.toFixed(1)}</div><div class="stat-sub">${m.numSkipped} periods paused (VRP&lt;0)</div></div>
+    ${m.putSpreadOn || m.stopLossOn ? `
+    <div class="stat" style="border-color:#8b5cf6"><div class="stat-label">Protection</div><div class="stat-value" style="color:#a78bfa">${[m.putSpreadOn ? 'Spread' : '', m.stopLossOn ? 'SL' : ''].filter(Boolean).join(' + ')}</div><div class="stat-sub">${m.numHedged} hedges | ${m.numStopLoss} stop-losses</div></div>
+    ${m.baseline ? `<div class="stat" style="border-color:#f59e0b"><div class="stat-label">Without Protection</div><div class="stat-value">${fmt(m.baseline.finalEquity)}</div><div class="stat-sub">MaxDD ${pct(m.baseline.maxDD*100)} | ${pct(m.baseline.annReturn)} ann.</div></div>` : ''}
+    ` : ''}
+  `;
+}
+
+// --- VRP chart (IV vs RV) ---
+function renderVRPChart(vrpHistory) {
+  if (vrpHistory.length < 2) return;
+  document.getElementById('vrpSection').style.display = 'block';
+  const canvas = document.getElementById('vrpChart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 400 * dpr;
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = 400;
+  ctx.clearRect(0, 0, W, H);
+
+  const ivs = vrpHistory.map(v => v.iv);
+  const rvs = vrpHistory.map(v => v.rv);
+  const all = [...ivs, ...rvs];
+  const maxY = Math.max(...all) * 1.1;
+  const minY = Math.max(0, Math.min(...all) * 0.8);
+
+  const padL = 55, padR = 20, padT = 20, padB = 40;
+  const cW = W - padL - padR, cH = H - padT - padB;
+  const xStep = cW / (vrpHistory.length - 1);
+  const toY = v => padT + cH - ((v - minY) / (maxY - minY)) * cH;
+  const toX = i => padL + i * xStep;
+
+  // Grid
+  ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+  for (let i = 0; i < 5; i++) {
+    const y = padT + (cH / 4) * i;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+    const val = maxY - ((maxY - minY) / 4) * i;
+    ctx.fillStyle = '#64748b'; ctx.font = '11px Inter';
+    ctx.fillText(val.toFixed(0) + '%', 5, y + 4);
+  }
+
+  // VRP shading
+  for (let i = 0; i < vrpHistory.length - 1; i++) {
+    const vrp = vrpHistory[i].vrp;
+    const x = toX(i);
+    const w = xStep + 1;
+    if (vrp > 20) { ctx.fillStyle = '#10b98115'; }
+    else if (vrp > 10) { ctx.fillStyle = '#f59e0b10'; }
+    else if (vrp > 0) { ctx.fillStyle = 'transparent'; }
+    else { ctx.fillStyle = '#ef444415'; }
+    ctx.fillRect(x, padT, w, cH);
+  }
+
+  // RV line (blue)
+  ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  for (let i = 0; i < vrpHistory.length; i++) {
+    const x = toX(i), y = toY(rvs[i]);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // IV line (orange)
+  ctx.strokeStyle = '#f97316'; ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i < vrpHistory.length; i++) {
+    const x = toX(i), y = toY(ivs[i]);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Date labels
+  ctx.fillStyle = '#64748b'; ctx.font = '10px Inter';
+  const labelEvery = Math.max(1, Math.floor(vrpHistory.length / 10));
+  for (let i = 0; i < vrpHistory.length; i += labelEvery) {
+    ctx.save();
+    ctx.translate(toX(i), H - 5);
+    ctx.rotate(-0.4);
+    ctx.fillText(vrpHistory[i].date.slice(0, 7), 0, 0);
+    ctx.restore();
+  }
+
+  // Legend
+  ctx.font = '12px Inter';
+  ctx.fillStyle = '#f97316'; ctx.fillRect(padL + 10, padT + 10, 16, 3);
+  ctx.fillText('IV (DVOL)', padL + 32, padT + 15);
+  ctx.fillStyle = '#3b82f6'; ctx.fillRect(padL + 120, padT + 10, 16, 3);
+  ctx.fillText('RV (30d)', padL + 142, padT + 15);
+}
+
+// --- Price chart with trade markers ---
+function renderPriceChart(curve, trades) {
+  document.getElementById('priceChartSection').style.display = 'block';
+  const canvas = document.getElementById('priceChart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 480 * dpr;
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = 480;
+  ctx.clearRect(0, 0, W, H);
+
+  if (curve.length < 2) return;
+
+  const prices = curve.map(p => p.btcPrice);
+  const allPrices = [...prices];
+  trades.forEach(t => { allPrices.push(t.btcPrice); if (t.strike) allPrices.push(t.strike); });
+  const maxY = Math.max(...allPrices) * 1.05;
+  const minY = Math.min(...allPrices) * 0.95;
+
+  const padL = 70, padR = 20, padT = 20, padB = 40;
+  const cW = W - padL - padR, cH = H - padT - padB;
+  const xStep = cW / (curve.length - 1);
+  const toY = v => padT + cH - ((v - minY) / (maxY - minY)) * cH;
+  const toX = i => padL + i * xStep;
+
+  // Build date-to-index lookup
+  const dateToIdx = {};
+  curve.forEach((pt, i) => { dateToIdx[pt.date] = i; });
+
+  // Grid
+  ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+  for (let i = 0; i < 6; i++) {
+    const y = padT + (cH / 5) * i;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+    const val = maxY - ((maxY - minY) / 5) * i;
+    ctx.fillStyle = '#64748b'; ctx.font = '11px Inter';
+    ctx.fillText('$' + val.toFixed(0), 5, y + 4);
+  }
+
+  // Price line
+  ctx.strokeStyle = '#60a5fa'; ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i < curve.length; i++) {
+    const x = toX(i), y = toY(prices[i]);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Trade markers
+  trades.forEach(t => {
+    const idx = dateToIdx[t.date];
+    if (idx == null) return;
+    const x = toX(idx);
+    const yPrice = toY(t.btcPrice);
+
+    // Strike tick + dotted connector
+    if (t.strike && t.strike !== t.btcPrice) {
+      const yStrike = toY(t.strike);
+      // Dotted vertical connector
+      ctx.strokeStyle = '#f59e0b44'; ctx.lineWidth = 1;
+      ctx.setLineDash([2, 3]);
+      ctx.beginPath(); ctx.moveTo(x, yPrice); ctx.lineTo(x, yStrike); ctx.stroke();
+      ctx.setLineDash([]);
+      // Strike tick (horizontal line)
+      ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x - 6, yStrike); ctx.lineTo(x + 6, yStrike); ctx.stroke();
+    }
+
+    // Determine marker color and shape
+    let color, isX = false;
+    if (t.action === 'Stop-Loss') {
+      color = '#ef4444'; isX = true;
+    } else if (t.action === 'Sell Put') {
+      if (t.hedged) color = '#a78bfa';
+      else if (t.assigned) color = '#ef4444';
+      else color = '#10b981';
+    } else {
+      // Sell Call
+      color = t.exercised ? '#3b82f6' : '#22d3ee';
+    }
+
+    if (isX) {
+      // X shape
+      ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(x - 4, yPrice - 4); ctx.lineTo(x + 4, yPrice + 4); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + 4, yPrice - 4); ctx.lineTo(x - 4, yPrice + 4); ctx.stroke();
+    } else {
+      // Circle
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(x, yPrice, 5, 0, Math.PI * 2); ctx.fill();
+    }
+  });
+
+  // Date labels
+  ctx.fillStyle = '#64748b'; ctx.font = '10px Inter';
+  const labelEvery = Math.max(1, Math.floor(curve.length / 8));
+  for (let i = 0; i < curve.length; i += labelEvery) {
+    ctx.save();
+    ctx.translate(toX(i), H - 5);
+    ctx.rotate(-0.4);
+    ctx.fillText(curve[i].date.slice(0, 7), 0, 0);
+    ctx.restore();
+  }
+}
+
+// --- Equity chart ---
+function renderChart(curve, capital, startPrice) {
+  document.getElementById('chartSection').style.display = 'block';
+  const canvas = document.getElementById('chart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 400 * dpr;
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = 400;
+  ctx.clearRect(0, 0, W, H);
+
+  if (curve.length < 2) return;
+
+  const equities = curve.map(p => p.equity);
+  const bh = curve.map(p => (p.btcPrice / startPrice) * capital);
+  const all = [...equities, ...bh, capital];
+  const maxY = Math.max(...all) * 1.05;
+  const minY = Math.min(...all) * 0.95;
+
+  const padL = 70, padR = 20, padT = 20, padB = 40;
+  const cW = W - padL - padR, cH = H - padT - padB;
+  const xStep = cW / (curve.length - 1);
+  const toY = v => padT + cH - ((v - minY) / (maxY - minY)) * cH;
+  const toX = i => padL + i * xStep;
+
+  // Grid
+  ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+  for (let i = 0; i < 5; i++) {
+    const y = padT + (cH / 4) * i;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+    const val = maxY - ((maxY - minY) / 4) * i;
+    ctx.fillStyle = '#64748b'; ctx.font = '11px Inter';
+    ctx.fillText('$' + (val/1000).toFixed(0) + 'K', 5, y + 4);
+  }
+
+  // Buy & Hold line
+  ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  for (let i = 0; i < curve.length; i++) {
+    const x = toX(i), y = toY(bh[i]);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Wheel equity line
+  ctx.strokeStyle = '#f97316'; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let i = 0; i < curve.length; i++) {
+    const x = toX(i), y = toY(equities[i]);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Starting capital line
+  ctx.strokeStyle = '#334155'; ctx.lineWidth = 1;
+  ctx.setLineDash([2, 4]);
+  const capY = toY(capital);
+  ctx.beginPath(); ctx.moveTo(padL, capY); ctx.lineTo(W-padR, capY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Legend
+  ctx.font = '12px Inter';
+  ctx.fillStyle = '#f97316'; ctx.fillRect(padL + 10, padT + 10, 16, 3);
+  ctx.fillText('IBIT Wheel', padL + 32, padT + 15);
+  ctx.fillStyle = '#64748b'; ctx.fillRect(padL + 150, padT + 10, 16, 3);
+  ctx.fillText('IBIT Buy & Hold', padL + 172, padT + 15);
+
+  // Date labels
+  ctx.fillStyle = '#64748b'; ctx.font = '10px Inter';
+  const labelEvery = Math.max(1, Math.floor(curve.length / 8));
+  for (let i = 0; i < curve.length; i += labelEvery) {
+    ctx.save();
+    ctx.translate(toX(i), H - 5);
+    ctx.rotate(-0.4);
+    ctx.fillText(curve[i].date.slice(0, 7), 0, 0);
+    ctx.restore();
+  }
+}
+
+// --- Trade log ---
+function renderTradeLog(trades) {
+  document.getElementById('logSection').style.display = 'block';
+  const body = document.getElementById('logBody');
+  const fmt = n => {
+    const abs = Math.abs(n);
+    if (abs < 10) return (n < 0 ? '-' : '') + '$' + abs.toFixed(2);
+    if (abs < 1000) return (n < 0 ? '-' : '') + '$' + abs.toFixed(0);
+    return '$' + n.toLocaleString('en-US', {maximumFractionDigits: 0});
+  };
+  const fmtPnl = n => {
+    const sign = n >= 0 ? '+' : '-';
+    const abs = Math.abs(n);
+    if (abs < 10) return sign + '$' + abs.toFixed(2);
+    return sign + '$' + abs.toLocaleString('en-US', {maximumFractionDigits: 0});
+  };
+
+  body.innerHTML = trades.map((t, i) => {
+    const actionTag = t.action === 'Stop-Loss'
+      ? `<span class="tag-assign">Stop-Loss</span>`
+      : t.action === 'Sell Put'
+      ? `<span class="tag-put">Sell Put</span>${t.assigned ? (t.hedged ? ' <span class="tag-adaptive">Hedged</span>' : ' <span class="tag-assign">Assigned</span>') : ''}`
+      : `<span class="tag-call">Sell Call</span>${t.exercised ? ' <span class="tag-exercise">Exercised</span>' : ''}`;
+    const pnlCls = t.pnl >= 0 ? 'pnl-pos' : 'pnl-neg';
+    const cpnlCls = t.cumulPnl >= 0 ? 'pnl-pos' : 'pnl-neg';
+    const vrpCls = t.vrp > 20 ? 'color:#10b981' : t.vrp > 10 ? 'color:#f59e0b' : t.vrp > 0 ? 'color:#94a3b8' : 'color:#ef4444';
+    const deltaStr = t.delta != null
+      ? `<span style="color:#a78bfa;font-weight:700">Δ${Math.abs(t.delta).toFixed(2)}</span><br><span style="color:#475569;font-size:10px">tgt: Δ${(t.targetDelta||0).toFixed(2)}</span>`
+      : '<span style="color:#64748b">—</span>';
+    const otmPct = t.btcPrice > 0 ? ((1 - t.strike / t.btcPrice) * 100).toFixed(1) : '—';
+    return `<tr>
+      <td style="color:#64748b">${i + 1}</td>
+      <td>${t.date}<br><span style="color:#475569;font-size:10px">→ ${t.expiry}</span></td>
+      <td>${actionTag}</td>
+      <td>${fmt(t.btcPrice)}<br><span style="color:#475569;font-size:10px">exp: ${fmt(t.expiryPrice)}</span></td>
+      <td>${fmt(t.strike)}<br><span style="color:#475569;font-size:10px">${otmPct}% OTM</span></td>
+      <td>${deltaStr}</td>
+      <td><span style="color:#f97316">${t.iv.toFixed(0)}%</span> / <span style="color:#3b82f6">${t.rv.toFixed(0)}%</span></td>
+      <td style="${vrpCls};font-weight:600">${t.vrp > 0 ? '+' : ''}${t.vrp.toFixed(0)}</td>
+      <td>${fmt(t.premium)}<br><span style="color:#475569;font-size:10px">${t.numContracts} ct / ${t.totalShares||t.numContracts*100} sh</span></td>
+      <td class="${pnlCls}">${fmtPnl(t.pnl)}<br><span class="${cpnlCls}" style="font-size:10px">cum: ${fmtPnl(t.cumulPnl)}</span></td>
+      <td style="font-weight:600">${fmt(t.equity)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ===== GRID SEARCH: run backtest engine with different params =====
+function backtestEngine(params) {
+  const { capital, baseDelta, periodDays, cashPctOverride, stratMode, riskFreeRate, priceData, dvolMap, putSpreadOn, spreadWidth, stopLossOn, stopLossPct, compoundOn } = params;
+
+  let cash = capital;
+  let holdingBTC = false;
+  let shareQty = 0;
+  let entryPrice = 0;
+  let cumulPnl = 0;
+  const equityPoints = [];
+  let totalPremium = 0;
+  let numTrades = 0;
+  let numAssigned = 0;
+
+  // Find trade start (first date >= startDate with 30-day padding)
+  const startDate = params.startDate;
+  const endDate = params.endDate;
+  let tradeStartIdx = priceData.findIndex(p => p.date >= startDate);
+  if (tradeStartIdx < 0) return null;
+  tradeStartIdx = Math.max(tradeStartIdx, 30);
+
+  const tradeStartPrice = priceData[tradeStartIdx].price;
+
+  let idx = tradeStartIdx;
+  while (idx < priceData.length - 5) {
+    const openPrice = priceData[idx].price;
+    const openDate = priceData[idx].date;
+    const rv = calcRealizedVol(priceData, idx, 30);
+
+    let iv = dvolMap[openDate];
+    if (!iv) {
+      for (let d = 1; d <= 3 && !iv; d++) {
+        const prev = new Date(openDate);
+        prev.setDate(prev.getDate() - d);
+        iv = dvolMap[prev.toISOString().slice(0, 10)];
+      }
+    }
+    if (!iv) iv = rv * 1.15;
+    iv = Math.max(0.15, Math.min(2.0, iv));
+
+    const vrp = (iv - rv) * 100;
+    const expiryIdx = Math.min(idx + periodDays, priceData.length - 1);
+    const actualDays = expiryIdx - idx;
+    const T = actualDays / 365;
+    const expiryPrice = priceData[expiryIdx].price;
+
+    let targetDelta = baseDelta;
+    let cashPct = cashPctOverride || 1.0;
+    let skipTrade = false;
+
+    if (stratMode === 'adaptive' && !holdingBTC) {
+      if (vrp > 20) { targetDelta = Math.max(0.05, baseDelta * 0.50); }
+      else if (vrp > 10) { targetDelta = Math.max(0.05, baseDelta * 0.75); }
+      else if (vrp > 0) { targetDelta = baseDelta; }
+      else { skipTrade = true; }
+    }
+
+    if (skipTrade) {
+      const eq = holdingBTC ? cash + openPrice * shareQty : cash;
+      equityPoints.push(eq);
+      idx = expiryIdx;
+      continue;
+    }
+
+    if (!holdingBTC) {
+      const strike = strikeForDelta(openPrice, T, riskFreeRate, iv, -targetDelta, 'put');
+      const rawPremium = bsPrice(openPrice, strike, T, riskFreeRate, iv, 'put');
+
+      // Put Spread
+      let hedgeCost = 0, hedgeStrike = 0;
+      if (putSpreadOn) {
+        hedgeStrike = Math.round(strike * (1 - (spreadWidth || 0.15)) * 2) / 2;
+        hedgeCost = bsPrice(openPrice, hedgeStrike, T, riskFreeRate, iv, 'put');
+      }
+      const premiumPerShare = rawPremium - hedgeCost;
+
+      const sizingCash = compoundOn !== false ? cash : Math.min(capital, cash);
+      const deployable = sizingCash * cashPct;
+      const maxAssignment = strike * SHARES_PER_CONTRACT;
+      const nc = Math.floor(deployable / maxAssignment);
+      if (nc < 1) { idx = expiryIdx; continue; }
+      const totalShares = nc * SHARES_PER_CONTRACT;
+      const tp = premiumPerShare * totalShares;
+      totalPremium += tp;
+      numTrades++;
+
+      if (expiryPrice <= strike) {
+        if (putSpreadOn && hedgeStrike > 0 && expiryPrice < hedgeStrike) {
+          const spreadLoss = (strike - hedgeStrike) * totalShares;
+          cash = cash - spreadLoss + tp;
+          numAssigned++;
+        } else {
+          holdingBTC = true;
+          shareQty = totalShares;
+          entryPrice = strike;
+          cash = cash - (strike * totalShares) + tp;
+          numAssigned++;
+        }
+      } else {
+        cash += tp;
+      }
+    } else {
+      // Stop-loss check
+      const slPct = stopLossPct || 0;
+      if (stopLossOn && slPct > 0 && openPrice <= entryPrice * (1 - slPct)) {
+        cash = cash + openPrice * shareQty;
+        holdingBTC = false;
+        shareQty = 0;
+        numTrades++;
+        idx += periodDays;
+        const eq = cash;
+        equityPoints.push(eq);
+        continue;
+      }
+
+      const strike = strikeForDelta(openPrice, T, riskFreeRate, iv, baseDelta, 'call');
+      const premiumPerShare = bsPrice(openPrice, strike, T, riskFreeRate, iv, 'call');
+      const callContracts = Math.floor(shareQty / SHARES_PER_CONTRACT);
+      const coveredShares = callContracts * SHARES_PER_CONTRACT;
+      const tp = premiumPerShare * coveredShares;
+      totalPremium += tp;
+      numTrades++;
+
+      if (expiryPrice >= strike) {
+        cash = cash + strike * coveredShares + tp;
+        const remain = shareQty - coveredShares;
+        if (remain > 0) { shareQty = remain; } else { holdingBTC = false; shareQty = 0; }
+      } else {
+        cash += tp;
+      }
+    }
+
+    const eq = holdingBTC ? cash + priceData[expiryIdx].price * shareQty : cash;
+    equityPoints.push(eq);
+    idx = expiryIdx;
+  }
+
+  const finalPrice = priceData[priceData.length - 1].price;
+  const finalEquity = holdingBTC ? cash + finalPrice * shareQty : cash;
+  const bhFinal = (capital / tradeStartPrice) * finalPrice;
+
+  // Max drawdown
+  let peak = capital, maxDD = 0;
+  for (const eq of equityPoints) {
+    if (eq > peak) peak = eq;
+    const dd = (peak - eq) / peak;
+    if (dd > maxDD) maxDD = dd;
+  }
+
+  // Annualized return
+  const years = (new Date(endDate) - new Date(priceData[tradeStartIdx].date)) / (365.25 * 86400000);
+  const annReturn = years > 0 ? (Math.pow(finalEquity / capital, 1/years) - 1) * 100 : 0;
+  const bhAnnReturn = years > 0 ? (Math.pow(bhFinal / capital, 1/years) - 1) * 100 : 0;
+
+  // Simple Sharpe (annualized return / annualized volatility of equity curve)
+  let sharpe = 0;
+  if (equityPoints.length > 2) {
+    const returns = [];
+    let prev = capital;
+    for (const eq of equityPoints) {
+      returns.push((eq - prev) / prev);
+      prev = eq;
+    }
+    const avgR = returns.reduce((a,b) => a+b, 0) / returns.length;
+    const stdR = Math.sqrt(returns.reduce((a,r) => a + (r-avgR)**2, 0) / (returns.length - 1));
+    const periodsPerYear = 365 / (params.periodDays || 30);
+    sharpe = stdR > 0 ? (avgR * periodsPerYear) / (stdR * Math.sqrt(periodsPerYear)) : 0;
+  }
+
+  return {
+    finalEquity, annReturn, bhAnnReturn, maxDD, sharpe,
+    totalPremium, numTrades, numAssigned,
+  };
+}
+
+async function runGridSearch() {
+  const btn = document.getElementById('gridBtn');
+  btn.textContent = 'Loading data...';
+  btn.disabled = true;
+
+  try {
+    const capital = parseFloat(document.getElementById('capital').value);
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    const ivMode = document.getElementById('ivMode').value;
+    const compoundOn = document.getElementById('compound').value === 'on';
+    const gridPutSpreadOn = document.getElementById('putSpread').value === 'on';
+    const gridSpreadWidth = parseFloat(document.getElementById('spreadWidth').value);
+    const gridStopLossOn = document.getElementById('stopLossToggle').value === 'on';
+    const gridStopLoss = parseFloat(document.getElementById('stopLoss').value) / 100;
+    const riskFreeRate = 0.045;
+
+    // Fetch data
+    const [prices, dvol] = await Promise.all([
+      fetchIBITPrices(startDate, endDate),
+      ivMode === 'dvol' ? fetchDVOL() : Promise.resolve([])
+    ]);
+    const priceData = prices.filter(p => p.date <= endDate);
+    const dvolMap = {};
+    dvol.forEach(d => dvolMap[d.date] = d.iv);
+
+    btn.textContent = 'Running grid search...';
+    await new Promise(r => setTimeout(r, 50)); // let UI update
+
+    // Parameter grid — Delta-based
+    const deltaValues = [0.05, 0.10, 0.15, 0.20, 0.25, 0.30];
+    const cashPctValues = [0.20, 0.30, 0.40, 0.50, 0.75, 1.0];
+    const periodValues = [7, 14, 30];
+    const modeValues = ['adaptive', 'fixed'];
+
+    const results = [];
+
+    for (const delta of deltaValues) {
+      for (const cashPct of cashPctValues) {
+        for (const period of periodValues) {
+          for (const mode of modeValues) {
+            const r = backtestEngine({
+              capital, baseDelta: delta, periodDays: period,
+              cashPctOverride: cashPct, stratMode: mode,
+              riskFreeRate, priceData, dvolMap,
+              startDate, endDate,
+              putSpreadOn: gridPutSpreadOn, spreadWidth: gridSpreadWidth, stopLossOn: gridStopLossOn, stopLossPct: gridStopLoss, compoundOn,
+            });
+            if (r) {
+              results.push({ delta, cashPct: cashPct * 100, period, mode, ...r });
+            }
+          }
+        }
+      }
+    }
+
+    // Sort by annualized return (descending)
+    results.sort((a, b) => b.annReturn - a.annReturn);
+
+    // Render grid
+    document.getElementById('gridSection').style.display = 'block';
+    const body = document.getElementById('gridBody');
+    const fmt = n => '$' + n.toLocaleString('en-US', {maximumFractionDigits: 0});
+    const pct = n => n.toFixed(1) + '%';
+    const periodLabel = d => d === 7 ? 'Weekly' : d === 14 ? 'Bi-weekly' : 'Monthly';
+
+    body.innerHTML = results.slice(0, 50).map((r, i) => {
+      const retCls = r.annReturn >= 0 ? 'pnl-pos' : 'pnl-neg';
+      const ddCls = r.maxDD > 0.3 ? 'pnl-neg' : r.maxDD > 0.15 ? 'color:#f59e0b' : 'pnl-pos';
+      const highlight = i < 3 ? 'background:#10b98108' : '';
+      return `<tr style="${highlight}">
+        <td style="color:${i < 3 ? '#10b981' : '#64748b'};font-weight:700">${i + 1}</td>
+        <td style="color:#a78bfa;font-weight:700">Δ${r.delta.toFixed(2)}</td>
+        <td>${r.cashPct}%</td>
+        <td>${periodLabel(r.period)}</td>
+        <td><span style="font-size:10px;${r.mode === 'adaptive' ? 'color:#a78bfa' : 'color:#94a3b8'}">${r.mode}</span></td>
+        <td style="font-weight:600">${fmt(r.finalEquity)}</td>
+        <td class="${retCls}" style="font-weight:700">${pct(r.annReturn)}</td>
+        <td style="${ddCls}">${pct(r.maxDD * 100)}</td>
+        <td>${r.sharpe.toFixed(2)}</td>
+        <td>${r.numTrades}</td>
+        <td>${r.numAssigned}</td>
+        <td>${fmt(r.totalPremium)}</td>
+      </tr>`;
+    }).join('');
+
+    // Summary
+    const best = results[0];
+    alert(`Best combination: Δ${best.delta.toFixed(2)}, Cash ${best.cashPct}%, ${periodLabel(best.period)}, ${best.mode}\nAnn. Return: ${pct(best.annReturn)} | Max DD: ${pct(best.maxDD * 100)} | Sharpe: ${best.sharpe.toFixed(2)}`);
+
+  } catch (err) {
+    alert('Error: ' + err.message);
+    console.error(err);
+  }
+
+  btn.textContent = 'Grid Search';
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>

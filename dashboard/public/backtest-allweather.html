@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strategy #4 — All Weather Portfolio Backtest</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+.header{padding:20px 24px;border-bottom:1px solid #1e293b}
+.header h1{font-size:22px;font-weight:800;background:linear-gradient(90deg,#6366f1,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header .sub{color:#64748b;font-size:13px;margin-top:4px}
+.nav{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap}
+.nav a{padding:4px 12px;border:1px solid #334155;border-radius:6px;font-size:12px;color:#94a3b8;text-decoration:none}
+.nav a:hover{border-color:#6366f1;color:#6366f1}
+
+.controls{display:flex;gap:16px;padding:16px 24px;flex-wrap:wrap;align-items:end;border-bottom:1px solid #1e293b}
+.ctrl{display:flex;flex-direction:column;gap:4px}
+.ctrl label{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.ctrl input,.ctrl select{background:#1e293b;border:1px solid #334155;border-radius:6px;padding:6px 10px;color:#e2e8f0;font-size:13px;font-family:inherit}
+.ctrl input:focus,.ctrl select:focus{outline:none;border-color:#6366f1}
+.ctrl input[type=range]{padding:0;width:120px;accent-color:#6366f1}
+
+.weights-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 16px;padding:12px 24px;border-bottom:1px solid #1e293b}
+.weight-item{display:flex;align-items:center;gap:8px;font-size:13px}
+.weight-item label{width:70px;color:#94a3b8;font-weight:500}
+.weight-item input[type=range]{flex:1;accent-color:#6366f1}
+.weight-item input[type=number]{width:56px;background:#1e293b;border:1px solid #334155;border-radius:4px;padding:3px 6px;color:#e2e8f0;font-size:12px;text-align:center}
+.weight-sum{padding:4px 24px 12px;font-size:12px;border-bottom:1px solid #1e293b}
+.weight-sum.ok{color:#10b981}
+.weight-sum.bad{color:#ef4444}
+
+.section{background:#1e293b;border:1px solid #334155;border-radius:12px;margin:16px 24px;overflow:hidden}
+.section-title{padding:16px 20px 12px;font-size:15px;font-weight:700;border-bottom:1px solid #334155}
+
+.stats-row{display:flex;gap:12px;padding:16px 24px;flex-wrap:wrap}
+.stat{flex:1;min-width:140px;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;text-align:center}
+.stat .stat-label{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.stat .stat-value{font-size:18px;font-weight:700}
+.stat .stat-sub{font-size:11px;color:#64748b;margin-top:2px}
+
+.chart-wrap{padding:16px 20px}
+canvas{width:100%;background:#0f172a;border-radius:8px}
+
+.cmp-table{width:100%;border-collapse:collapse;font-size:13px}
+.cmp-table th{text-align:left;padding:10px 12px;color:#64748b;font-weight:600;font-size:11px;text-transform:uppercase;border-bottom:1px solid #334155}
+.cmp-table td{padding:10px 12px;border-bottom:1px solid #1e293b}
+.cmp-table tr:hover{background:#334155aa}
+.cmp-best{color:#10b981;font-weight:700}
+
+.corr-table{border-collapse:collapse;margin:16px auto;font-size:12px}
+.corr-table th,.corr-table td{padding:8px 12px;text-align:center;border:1px solid #334155}
+.corr-table th{color:#94a3b8;font-weight:600;background:#0f172a}
+
+.log-wrap{max-height:400px;overflow-y:auto}
+.log-table{width:100%;border-collapse:collapse;font-size:11px}
+.log-table th{position:sticky;top:0;background:#1e293b;text-align:left;padding:8px;color:#64748b;font-weight:600;font-size:10px;text-transform:uppercase;border-bottom:1px solid #334155}
+.log-table td{padding:6px 8px;border-bottom:1px solid #1e293b22}
+.tag-buy{color:#10b981;font-weight:600}
+.tag-sell{color:#ef4444;font-weight:600}
+
+.run-btn{background:linear-gradient(135deg,#6366f1,#06b6d4);color:#fff;border:none;padding:8px 24px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
+.run-btn:hover{opacity:.9}
+.run-btn:disabled{opacity:.5;cursor:not-allowed}
+
+.loading{text-align:center;padding:40px;color:#64748b;font-size:14px}
+
+footer{text-align:center;padding:20px;color:#475569;font-size:11px}
+
+@media(max-width:768px){
+  .weights-grid{grid-template-columns:1fr 1fr}
+  .stats-row{gap:8px}
+  .stat{min-width:100px}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <h1>Strategy #4 — All Weather Portfolio</h1>
+  <div class="sub">Multi-asset diversification with periodic rebalancing — ETFs + BTC</div>
+  <div class="nav">
+    <a href="/">Strategy #1: Stablecoin</a>
+    <a href="/backtest-wheel.html">Strategy #2: Options Wheel</a>
+    <a href="/backtest-dip.html">Strategy #3: Dip-Buying</a>
+    <a href="/backtest-allweather.html">Strategy #4: All Weather</a>
+    <a href="/options-monitor.html">Strategy #5: Options Monitor</a>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="ctrl"><label>Start Date</label><input type="date" id="startDate" value="2018-01-01"></div>
+  <div class="ctrl"><label>End Date</label><input type="date" id="endDate" value="2025-12-31"></div>
+  <div class="ctrl"><label>Initial Capital</label><input type="number" id="capital" value="100000" step="1000" min="1000"></div>
+  <div class="ctrl"><label>Rebalance</label>
+    <select id="rebalFreq">
+      <option value="monthly">Monthly</option>
+      <option value="quarterly" selected>Quarterly</option>
+      <option value="semi">Semi-Annual</option>
+      <option value="annual">Annual</option>
+      <option value="threshold">Threshold</option>
+    </select>
+  </div>
+  <div class="ctrl" id="threshCtrl" style="display:none"><label>Drift Threshold %</label><input type="number" id="threshold" value="5" min="1" max="20" step="1"></div>
+  <div class="ctrl"><label>Benchmark</label>
+    <select id="benchmark">
+      <option value="spy" selected>SPY (100%)</option>
+      <option value="6040">60/40 (SPY/TLT)</option>
+    </select>
+  </div>
+  <div class="ctrl"><button class="run-btn" id="runBtn" onclick="runBacktest()">Run Backtest</button></div>
+</div>
+
+<div class="weights-grid" id="weightsGrid">
+  <div class="weight-item"><label>SPY</label><input type="range" min="0" max="50" value="25" data-asset="SPY" oninput="syncWeight(this,'range')"><input type="number" min="0" max="100" value="25" data-asset="SPY" oninput="syncWeight(this,'num')"><span>%</span></div>
+  <div class="weight-item"><label>FXI</label><input type="range" min="0" max="50" value="10" data-asset="FXI" oninput="syncWeight(this,'range')"><input type="number" min="0" max="100" value="10" data-asset="FXI" oninput="syncWeight(this,'num')"><span>%</span></div>
+  <div class="weight-item"><label>GLD</label><input type="range" min="0" max="50" value="20" data-asset="GLD" oninput="syncWeight(this,'range')"><input type="number" min="0" max="100" value="20" data-asset="GLD" oninput="syncWeight(this,'num')"><span>%</span></div>
+  <div class="weight-item"><label>SLV</label><input type="range" min="0" max="50" value="5" data-asset="SLV" oninput="syncWeight(this,'range')"><input type="number" min="0" max="100" value="5" data-asset="SLV" oninput="syncWeight(this,'num')"><span>%</span></div>
+  <div class="weight-item"><label>BTC</label><input type="range" min="0" max="50" value="15" data-asset="BTC" oninput="syncWeight(this,'range')"><input type="number" min="0" max="100" value="15" data-asset="BTC" oninput="syncWeight(this,'num')"><span>%</span></div>
+  <div class="weight-item"><label>TLT</label><input type="range" min="0" max="50" value="25" data-asset="TLT" oninput="syncWeight(this,'range')"><input type="number" min="0" max="100" value="25" data-asset="TLT" oninput="syncWeight(this,'num')"><span>%</span></div>
+</div>
+<div class="weight-sum ok" id="weightSum">Total: 100%</div>
+
+<div id="resultArea" style="display:none">
+
+<div class="stats-row" id="statsRow"></div>
+
+<div class="section">
+  <div class="section-title">Equity Curves</div>
+  <div class="chart-wrap"><canvas id="equityChart" height="360"></canvas></div>
+</div>
+
+<div class="section">
+  <div class="section-title">Allocation Drift</div>
+  <div class="chart-wrap"><canvas id="driftChart" height="300"></canvas></div>
+</div>
+
+<div class="section">
+  <div class="section-title">Drawdown</div>
+  <div class="chart-wrap"><canvas id="ddChart" height="240"></canvas></div>
+</div>
+
+<div class="section">
+  <div class="section-title">Portfolio Comparison</div>
+  <div style="padding:16px 20px;overflow-x:auto" id="cmpWrap"></div>
+</div>
+
+<div class="section">
+  <div class="section-title">Correlation Matrix (Daily Returns)</div>
+  <div style="padding:16px 20px;overflow-x:auto" id="corrWrap"></div>
+</div>
+
+<div class="section">
+  <div class="section-title">Rebalance Log</div>
+  <div class="log-wrap" id="logWrap"></div>
+</div>
+
+</div>
+
+<div class="loading" id="loadingMsg" style="display:none">Loading price data & running backtest...</div>
+
+<footer>
+  Strategy #4 Backtest — ETF data from Yahoo Finance | BTC from CryptoCompare
+</footer>
+
+<script>
+const ASSETS = ['SPY','FXI','GLD','SLV','BTC','TLT'];
+const COLORS = {SPY:'#3b82f6',FXI:'#ef4444',GLD:'#eab308',SLV:'#94a3b8',BTC:'#f97316',TLT:'#8b5cf6'};
+const BENCH_COLOR = '#64748b';
+const BENCH2_COLOR = '#06b6d4';
+
+// --- Controls ---
+document.getElementById('rebalFreq').addEventListener('change', e => {
+  document.getElementById('threshCtrl').style.display = e.target.value === 'threshold' ? '' : 'none';
+});
+
+function getWeights() {
+  const w = {};
+  ASSETS.forEach(a => {
+    const inp = document.querySelector(`input[type=number][data-asset="${a}"]`);
+    w[a] = parseFloat(inp.value) / 100;
+  });
+  return w;
+}
+
+function syncWeight(el, from) {
+  const asset = el.dataset.asset;
+  const parent = el.closest('.weight-item');
+  if (from === 'range') {
+    parent.querySelector('input[type=number]').value = el.value;
+  } else {
+    parent.querySelector('input[type=range]').value = el.value;
+  }
+  updateWeightSum();
+}
+
+function updateWeightSum() {
+  const w = getWeights();
+  const sum = Object.values(w).reduce((a, b) => a + b, 0);
+  const pct = Math.round(sum * 100);
+  const el = document.getElementById('weightSum');
+  el.textContent = `Total: ${pct}%`;
+  el.className = 'weight-sum ' + (pct === 100 ? 'ok' : 'bad');
+}
+
+// --- Data Fetching ---
+async function fetchAllPrices(years) {
+  const etfSymbols = ASSETS.filter(a => a !== 'BTC');
+  const [etfResp, btcResp] = await Promise.all([
+    fetch(`/api/etf-prices?symbols=${etfSymbols.join(',')}&years=${years}`).then(r => r.json()),
+    fetch(`/api/crypto-prices?asset=BTC&days=${years * 365}`).then(r => r.json()),
+  ]);
+
+  const prices = {};
+  if (etfResp.data) {
+    for (const sym of etfSymbols) {
+      if (etfResp.data[sym]) prices[sym] = etfResp.data[sym];
+    }
+  }
+  if (btcResp.prices) {
+    prices.BTC = btcResp.prices;
+  }
+
+  // Check we got all assets
+  const missing = ASSETS.filter(a => !prices[a] || prices[a].length === 0);
+  if (missing.length) throw new Error(`Missing price data for: ${missing.join(', ')}`);
+
+  return prices;
+}
+
+// --- Date Alignment (forward-fill) ---
+function alignPrices(rawPrices, startDate, endDate) {
+  // Build union of all dates in range
+  const allDates = new Set();
+  for (const sym of ASSETS) {
+    for (const d of rawPrices[sym]) {
+      if (d.date >= startDate && d.date <= endDate) allDates.add(d.date);
+    }
+  }
+  const dates = [...allDates].sort();
+
+  // Build lookup per asset
+  const lookup = {};
+  for (const sym of ASSETS) {
+    lookup[sym] = {};
+    for (const d of rawPrices[sym]) lookup[sym][d.date] = d.price;
+  }
+
+  // Forward-fill: for each date, use latest known price
+  const aligned = {};
+  ASSETS.forEach(a => aligned[a] = []);
+  const lastPrice = {};
+
+  for (const dt of dates) {
+    let allHave = true;
+    for (const sym of ASSETS) {
+      if (lookup[sym][dt] !== undefined) {
+        lastPrice[sym] = lookup[sym][dt];
+      }
+      if (lastPrice[sym] === undefined) allHave = false;
+    }
+    if (!allHave) continue; // skip dates before all assets have data
+
+    for (const sym of ASSETS) {
+      aligned[sym].push({ date: dt, price: lastPrice[sym] });
+    }
+  }
+
+  return aligned;
+}
+
+// --- Backtest Engine ---
+function simulate(aligned, weights, capital, rebalRule, thresholdPct) {
+  const n = aligned[ASSETS[0]].length;
+  if (n < 2) return null;
+
+  const activeAssets = ASSETS.filter(a => weights[a] > 0);
+
+  // Initialize holdings
+  const holdings = {};
+  for (const a of ASSETS) {
+    const price = aligned[a][0].price;
+    holdings[a] = (capital * (weights[a] || 0)) / price;
+  }
+
+  const equity = [];
+  const allocHist = []; // actual allocation over time
+  const rebalLog = [];
+  let prevRebalDate = aligned[ASSETS[0]][0].date;
+
+  for (let i = 0; i < n; i++) {
+    const dt = aligned[ASSETS[0]][i].date;
+
+    // Mark-to-market
+    let totalVal = 0;
+    const vals = {};
+    for (const a of ASSETS) {
+      vals[a] = holdings[a] * aligned[a][i].price;
+      totalVal += vals[a];
+    }
+
+    equity.push({ date: dt, value: totalVal });
+
+    // Record allocation
+    const alloc = {};
+    for (const a of ASSETS) alloc[a] = totalVal > 0 ? vals[a] / totalVal : 0;
+    allocHist.push({ date: dt, ...alloc });
+
+    // Check if rebalance day
+    if (i > 0 && shouldRebalance(prevRebalDate, dt, rebalRule, alloc, weights, thresholdPct)) {
+      // Rebalance
+      for (const a of ASSETS) {
+        const targetVal = totalVal * (weights[a] || 0);
+        const currentVal = vals[a];
+        const diff = targetVal - currentVal;
+        const price = aligned[a][i].price;
+
+        if (Math.abs(diff) > 1) { // skip trivial
+          rebalLog.push({
+            date: dt,
+            asset: a,
+            action: diff > 0 ? 'BUY' : 'SELL',
+            amount: Math.abs(diff),
+            oldWeight: (alloc[a] * 100).toFixed(1),
+            newWeight: ((weights[a] || 0) * 100).toFixed(1),
+          });
+          holdings[a] = targetVal / price;
+        }
+      }
+      prevRebalDate = dt;
+    }
+  }
+
+  return { equity, allocHist, rebalLog };
+}
+
+function shouldRebalance(prevDate, curDate, rule, alloc, targetWeights, threshPct) {
+  const prev = new Date(prevDate);
+  const cur = new Date(curDate);
+
+  if (rule === 'threshold') {
+    for (const a of ASSETS) {
+      if ((targetWeights[a] || 0) === 0) continue;
+      const drift = Math.abs((alloc[a] || 0) - (targetWeights[a] || 0));
+      if (drift > (threshPct / 100)) return true;
+    }
+    return false;
+  }
+
+  const monthsDiff = (cur.getFullYear() - prev.getFullYear()) * 12 + cur.getMonth() - prev.getMonth();
+
+  switch (rule) {
+    case 'monthly': return monthsDiff >= 1;
+    case 'quarterly': return monthsDiff >= 3;
+    case 'semi': return monthsDiff >= 6;
+    case 'annual': return monthsDiff >= 12;
+    default: return monthsDiff >= 3;
+  }
+}
+
+// --- Benchmark Simulation ---
+function simBenchmark(aligned, capital, type) {
+  if (type === 'spy') {
+    return simulate(aligned, { SPY:1, FXI:0, GLD:0, SLV:0, BTC:0, TLT:0 }, capital, 'annual', 5);
+  } else {
+    // 60/40: SPY 60%, TLT 40%, rebalance quarterly
+    return simulate(aligned, { SPY:0.6, FXI:0, GLD:0, SLV:0, BTC:0, TLT:0.4 }, capital, 'quarterly', 5);
+  }
+}
+
+// --- Metrics ---
+function calcMetrics(equityCurve) {
+  if (!equityCurve || equityCurve.length < 2) return null;
+  const values = equityCurve.map(e => e.value);
+  const startVal = values[0];
+  const endVal = values[values.length - 1];
+  const totalReturn = (endVal - startVal) / startVal;
+
+  const startD = new Date(equityCurve[0].date);
+  const endD = new Date(equityCurve[equityCurve.length - 1].date);
+  const years = (endD - startD) / (365.25 * 86400000);
+  const annReturn = Math.pow(1 + totalReturn, 1 / years) - 1;
+
+  // Daily returns
+  const dailyRet = [];
+  for (let i = 1; i < values.length; i++) {
+    dailyRet.push(values[i] / values[i - 1] - 1);
+  }
+
+  const meanDaily = dailyRet.reduce((a, b) => a + b, 0) / dailyRet.length;
+  const variance = dailyRet.reduce((s, r) => s + (r - meanDaily) ** 2, 0) / dailyRet.length;
+  const stdDaily = Math.sqrt(variance);
+  const annVol = stdDaily * Math.sqrt(252);
+  const sharpe = annVol > 0 ? (annReturn - 0.02) / annVol : 0; // Rf = 2%
+
+  // Max drawdown
+  let peak = values[0];
+  let maxDD = 0;
+  const ddSeries = [];
+  for (let i = 0; i < values.length; i++) {
+    if (values[i] > peak) peak = values[i];
+    const dd = (values[i] - peak) / peak;
+    if (dd < maxDD) maxDD = dd;
+    ddSeries.push({ date: equityCurve[i].date, dd });
+  }
+
+  // Best / worst calendar year
+  const yearReturns = {};
+  let prevYearEnd = startVal;
+  let lastYear = startD.getFullYear();
+  for (let i = 0; i < equityCurve.length; i++) {
+    const y = new Date(equityCurve[i].date).getFullYear();
+    if (y !== lastYear) {
+      yearReturns[lastYear] = (values[i - 1] - prevYearEnd) / prevYearEnd;
+      prevYearEnd = values[i - 1];
+      lastYear = y;
+    }
+  }
+  yearReturns[lastYear] = (endVal - prevYearEnd) / prevYearEnd;
+
+  const yearEntries = Object.entries(yearReturns);
+  const bestYear = yearEntries.reduce((a, b) => b[1] > a[1] ? b : a, yearEntries[0]);
+  const worstYear = yearEntries.reduce((a, b) => b[1] < a[1] ? b : a, yearEntries[0]);
+
+  return {
+    totalReturn, annReturn, maxDD, sharpe, annVol,
+    bestYear: { year: bestYear[0], ret: bestYear[1] },
+    worstYear: { year: worstYear[0], ret: worstYear[1] },
+    ddSeries, finalValue: endVal,
+  };
+}
+
+// --- Correlation Matrix ---
+function calcCorrelation(aligned) {
+  const n = aligned[ASSETS[0]].length;
+  // Daily returns per asset
+  const returns = {};
+  for (const a of ASSETS) {
+    returns[a] = [];
+    for (let i = 1; i < n; i++) {
+      returns[a].push(aligned[a][i].price / aligned[a][i - 1].price - 1);
+    }
+  }
+
+  const corr = {};
+  for (const a of ASSETS) {
+    corr[a] = {};
+    for (const b of ASSETS) {
+      corr[a][b] = pearson(returns[a], returns[b]);
+    }
+  }
+  return corr;
+}
+
+function pearson(x, y) {
+  const n = x.length;
+  let sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0;
+  for (let i = 0; i < n; i++) {
+    sx += x[i]; sy += y[i];
+    sxx += x[i] * x[i]; syy += y[i] * y[i];
+    sxy += x[i] * y[i];
+  }
+  const num = n * sxy - sx * sy;
+  const den = Math.sqrt((n * sxx - sx * sx) * (n * syy - sy * sy));
+  return den === 0 ? 0 : num / den;
+}
+
+// --- Chart Rendering ---
+function drawEquityCurve(portResult, benchResult, bench2Result, benchLabel, bench2Label) {
+  const canvas = document.getElementById('equityChart');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 360 * dpr;
+  canvas.style.height = '360px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = 360;
+  const padL = 70, padR = 20, padT = 30, padB = 40;
+  const cw = W - padL - padR, ch = H - padT - padB;
+
+  ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, W, H);
+
+  const allVals = [
+    ...portResult.equity.map(e => e.value),
+    ...benchResult.equity.map(e => e.value),
+    ...bench2Result.equity.map(e => e.value),
+  ];
+  const minV = Math.min(...allVals) * 0.95;
+  const maxV = Math.max(...allVals) * 1.05;
+  const dates = portResult.equity.map(e => e.date);
+  const n = dates.length;
+
+  function x(i) { return padL + (i / (n - 1)) * cw; }
+  function y(v) { return padT + ch - ((v - minV) / (maxV - minV)) * ch; }
+
+  // Grid
+  ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 5; i++) {
+    const val = minV + (maxV - minV) * (i / 5);
+    const yy = y(val);
+    ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(W - padR, yy); ctx.stroke();
+    ctx.fillStyle = '#475569'; ctx.font = '11px Inter'; ctx.textAlign = 'right';
+    ctx.fillText('$' + (val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val.toFixed(0)), padL - 8, yy + 4);
+  }
+
+  // Date labels
+  ctx.textAlign = 'center';
+  const step = Math.max(1, Math.floor(n / 8));
+  for (let i = 0; i < n; i += step) {
+    ctx.fillStyle = '#475569'; ctx.fillText(dates[i].slice(0, 7), x(i), H - 8);
+  }
+
+  // Rebalance markers
+  const rebalDates = new Set(portResult.rebalLog.map(r => r.date));
+  ctx.fillStyle = '#6366f133';
+  for (let i = 0; i < n; i++) {
+    if (rebalDates.has(dates[i])) {
+      ctx.fillRect(x(i) - 1, padT, 2, ch);
+    }
+  }
+
+  // Draw lines
+  function drawLine(data, color) {
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.beginPath();
+    for (let i = 0; i < data.length; i++) {
+      const px = x(i), py = y(data[i].value);
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+
+  drawLine(bench2Result.equity, BENCH2_COLOR);
+  drawLine(benchResult.equity, BENCH_COLOR);
+  drawLine(portResult.equity, '#6366f1');
+
+  // Legend
+  ctx.font = '12px Inter';
+  const legends = [
+    { label: 'All Weather', color: '#6366f1' },
+    { label: benchLabel, color: BENCH_COLOR },
+    { label: bench2Label, color: BENCH2_COLOR },
+  ];
+  let lx = padL + 10;
+  for (const lg of legends) {
+    ctx.fillStyle = lg.color;
+    ctx.fillRect(lx, padT + 8, 16, 3);
+    ctx.fillText(lg.label, lx + 20, padT + 14);
+    lx += ctx.measureText(lg.label).width + 36;
+  }
+}
+
+function drawDriftChart(allocHist) {
+  const canvas = document.getElementById('driftChart');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 300 * dpr;
+  canvas.style.height = '300px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = 300;
+  const padL = 50, padR = 20, padT = 30, padB = 40;
+  const cw = W - padL - padR, ch = H - padT - padB;
+
+  ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, W, H);
+
+  // Sample to avoid too many points
+  const sampleRate = Math.max(1, Math.floor(allocHist.length / 500));
+  const sampled = allocHist.filter((_, i) => i % sampleRate === 0 || i === allocHist.length - 1);
+  const n = sampled.length;
+
+  function x(i) { return padL + (i / (n - 1)) * cw; }
+
+  // Stacked area — bottom to top
+  const order = ['TLT', 'BTC', 'SLV', 'GLD', 'FXI', 'SPY'];
+  for (let ai = 0; ai < order.length; ai++) {
+    const asset = order[ai];
+    ctx.fillStyle = COLORS[asset] + '88';
+    ctx.beginPath();
+
+    // Top edge
+    for (let i = 0; i < n; i++) {
+      let cumTop = 0;
+      for (let j = 0; j <= ai; j++) cumTop += sampled[i][order[j]] || 0;
+      const px = x(i), py = padT + ch - cumTop * ch;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+
+    // Bottom edge (reverse)
+    for (let i = n - 1; i >= 0; i--) {
+      let cumBot = 0;
+      for (let j = 0; j < ai; j++) cumBot += sampled[i][order[j]] || 0;
+      const px = x(i), py = padT + ch - cumBot * ch;
+      ctx.lineTo(px, py);
+    }
+    ctx.closePath(); ctx.fill();
+  }
+
+  // Y axis labels
+  ctx.fillStyle = '#475569'; ctx.font = '11px Inter'; ctx.textAlign = 'right';
+  for (let p = 0; p <= 100; p += 25) {
+    const yy = padT + ch - (p / 100) * ch;
+    ctx.fillText(p + '%', padL - 8, yy + 4);
+    ctx.strokeStyle = '#1e293b'; ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(W - padR, yy); ctx.stroke();
+  }
+
+  // Date labels
+  ctx.textAlign = 'center';
+  const step = Math.max(1, Math.floor(n / 8));
+  for (let i = 0; i < n; i += step) {
+    ctx.fillText(sampled[i].date.slice(0, 7), x(i), H - 8);
+  }
+
+  // Legend
+  ctx.font = '11px Inter';
+  let lx = padL + 10;
+  for (const a of order.reverse()) {
+    ctx.fillStyle = COLORS[a]; ctx.fillRect(lx, padT + 6, 12, 8);
+    ctx.fillText(a, lx + 16, padT + 14);
+    lx += ctx.measureText(a).width + 28;
+  }
+}
+
+function drawDrawdownChart(portDD, benchDD, bench2DD, benchLabel, bench2Label) {
+  const canvas = document.getElementById('ddChart');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 240 * dpr;
+  canvas.style.height = '240px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = 240;
+  const padL = 60, padR = 20, padT = 30, padB = 40;
+  const cw = W - padL - padR, ch = H - padT - padB;
+
+  ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, W, H);
+
+  const allDD = [...portDD.map(d => d.dd), ...benchDD.map(d => d.dd), ...bench2DD.map(d => d.dd)];
+  const minDD = Math.min(...allDD) * 1.1;
+  const n = portDD.length;
+
+  function x(i) { return padL + (i / (n - 1)) * cw; }
+  function y(dd) { return padT + (-dd / minDD) * ch; }
+
+  // Grid
+  ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+  const gridSteps = [0, -0.1, -0.2, -0.3, -0.4, -0.5, -0.6, -0.7].filter(v => v >= minDD);
+  for (const v of gridSteps) {
+    const yy = y(v);
+    ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(W - padR, yy); ctx.stroke();
+    ctx.fillStyle = '#475569'; ctx.font = '11px Inter'; ctx.textAlign = 'right';
+    ctx.fillText((v * 100).toFixed(0) + '%', padL - 8, yy + 4);
+  }
+
+  // Date labels
+  ctx.textAlign = 'center';
+  const step = Math.max(1, Math.floor(n / 8));
+  for (let i = 0; i < n; i += step) {
+    ctx.fillStyle = '#475569'; ctx.fillText(portDD[i].date.slice(0, 7), x(i), H - 8);
+  }
+
+  function drawArea(data, color) {
+    ctx.fillStyle = color + '33'; ctx.strokeStyle = color; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x(0), y(0));
+    for (let i = 0; i < data.length; i++) ctx.lineTo(x(i), y(data[i].dd));
+    ctx.lineTo(x(data.length - 1), y(0));
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    for (let i = 0; i < data.length; i++) {
+      i === 0 ? ctx.moveTo(x(i), y(data[i].dd)) : ctx.lineTo(x(i), y(data[i].dd));
+    }
+    ctx.stroke();
+  }
+
+  drawArea(bench2DD, BENCH2_COLOR);
+  drawArea(benchDD, BENCH_COLOR);
+  drawArea(portDD, '#6366f1');
+
+  // Legend
+  ctx.font = '12px Inter';
+  const legends = [
+    { label: 'All Weather', color: '#6366f1' },
+    { label: benchLabel, color: BENCH_COLOR },
+    { label: bench2Label, color: BENCH2_COLOR },
+  ];
+  let lx = padL + 10;
+  for (const lg of legends) {
+    ctx.fillStyle = lg.color; ctx.fillRect(lx, padT + 8, 16, 3);
+    ctx.fillText(lg.label, lx + 20, padT + 14);
+    lx += ctx.measureText(lg.label).width + 36;
+  }
+}
+
+// --- Rendering ---
+function renderStats(m) {
+  const fmt = v => '$' + (v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v.toFixed(0));
+  const pct = v => (v * 100).toFixed(2) + '%';
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat"><div class="stat-label">Final Value</div><div class="stat-value">${fmt(m.finalValue)}</div></div>
+    <div class="stat"><div class="stat-label">Total Return</div><div class="stat-value">${pct(m.totalReturn)}</div></div>
+    <div class="stat"><div class="stat-label">Ann. Return</div><div class="stat-value">${pct(m.annReturn)}</div></div>
+    <div class="stat"><div class="stat-label">Max Drawdown</div><div class="stat-value" style="color:#ef4444">${pct(m.maxDD)}</div></div>
+    <div class="stat"><div class="stat-label">Sharpe Ratio</div><div class="stat-value">${m.sharpe.toFixed(2)}</div></div>
+    <div class="stat"><div class="stat-label">Ann. Volatility</div><div class="stat-value">${pct(m.annVol)}</div></div>
+    <div class="stat"><div class="stat-label">Best Year</div><div class="stat-value" style="color:#10b981">${m.bestYear.year}: ${pct(m.bestYear.ret)}</div></div>
+    <div class="stat"><div class="stat-label">Worst Year</div><div class="stat-value" style="color:#ef4444">${m.worstYear.year}: ${pct(m.worstYear.ret)}</div></div>
+  `;
+}
+
+function renderComparison(portM, benchM, bench2M, benchLabel, bench2Label) {
+  const pct = v => (v * 100).toFixed(2) + '%';
+  const fmt = v => '$' + (v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v.toFixed(0));
+
+  const rows = [
+    { name: 'All Weather', m: portM },
+    { name: benchLabel, m: benchM },
+    { name: bench2Label, m: bench2M },
+  ];
+
+  // Find best in each column
+  const bestReturn = Math.max(...rows.map(r => r.m.annReturn));
+  const bestDD = Math.max(...rows.map(r => r.m.maxDD)); // least negative
+  const bestSharpe = Math.max(...rows.map(r => r.m.sharpe));
+  const bestVol = Math.min(...rows.map(r => r.m.annVol)); // lowest
+
+  document.getElementById('cmpWrap').innerHTML = `<table class="cmp-table">
+    <thead><tr><th>Portfolio</th><th>Final Value</th><th>Total Return</th><th>Ann. Return</th><th>Max Drawdown</th><th>Sharpe</th><th>Ann. Vol</th><th>Best Year</th><th>Worst Year</th></tr></thead>
+    <tbody>${rows.map(r => `<tr>
+      <td><strong>${r.name}</strong></td>
+      <td>${fmt(r.m.finalValue)}</td>
+      <td>${pct(r.m.totalReturn)}</td>
+      <td class="${r.m.annReturn === bestReturn ? 'cmp-best' : ''}">${pct(r.m.annReturn)}</td>
+      <td class="${r.m.maxDD === bestDD ? 'cmp-best' : ''}">${pct(r.m.maxDD)}</td>
+      <td class="${r.m.sharpe === bestSharpe ? 'cmp-best' : ''}">${r.m.sharpe.toFixed(2)}</td>
+      <td class="${r.m.annVol === bestVol ? 'cmp-best' : ''}">${pct(r.m.annVol)}</td>
+      <td>${r.m.bestYear.year}: ${pct(r.m.bestYear.ret)}</td>
+      <td>${r.m.worstYear.year}: ${pct(r.m.worstYear.ret)}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function renderCorrelation(corr) {
+  let html = '<table class="corr-table"><thead><tr><th></th>';
+  for (const a of ASSETS) html += `<th>${a}</th>`;
+  html += '</tr></thead><tbody>';
+  for (const a of ASSETS) {
+    html += `<tr><th>${a}</th>`;
+    for (const b of ASSETS) {
+      const v = corr[a][b];
+      const bg = corrColor(v);
+      html += `<td style="background:${bg};color:${Math.abs(v) > 0.5 ? '#fff' : '#e2e8f0'}">${v.toFixed(2)}</td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('corrWrap').innerHTML = html;
+}
+
+function corrColor(v) {
+  // -1 (red) → 0 (gray) → +1 (green)
+  if (v >= 0) {
+    const g = Math.round(v * 180);
+    return `rgba(${40}, ${80 + g}, ${40 + g}, 0.6)`;
+  } else {
+    const r = Math.round(-v * 180);
+    return `rgba(${80 + r}, ${40}, ${40}, 0.6)`;
+  }
+}
+
+function renderRebalLog(log) {
+  if (!log.length) {
+    document.getElementById('logWrap').innerHTML = '<div style="padding:20px;color:#64748b">No rebalance events</div>';
+    return;
+  }
+  const fmt = v => '$' + (v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v.toFixed(0));
+  let html = `<table class="log-table"><thead><tr><th>Date</th><th>Asset</th><th>Action</th><th>Amount</th><th>Old Weight</th><th>New Weight</th></tr></thead><tbody>`;
+  for (const r of log) {
+    html += `<tr>
+      <td>${r.date}</td>
+      <td><span style="color:${COLORS[r.asset]}">${r.asset}</span></td>
+      <td class="${r.action === 'BUY' ? 'tag-buy' : 'tag-sell'}">${r.action}</td>
+      <td>${fmt(r.amount)}</td>
+      <td>${r.oldWeight}%</td>
+      <td>${r.newWeight}%</td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  document.getElementById('logWrap').innerHTML = html;
+}
+
+// --- Main ---
+async function runBacktest() {
+  const weights = getWeights();
+  const sumW = Object.values(weights).reduce((a, b) => a + b, 0);
+  if (Math.abs(sumW - 1) > 0.001) {
+    alert('Weights must sum to 100%');
+    return;
+  }
+
+  const capital = parseFloat(document.getElementById('capital').value);
+  const startDate = document.getElementById('startDate').value;
+  const endDate = document.getElementById('endDate').value;
+  const rebalFreq = document.getElementById('rebalFreq').value;
+  const threshold = parseFloat(document.getElementById('threshold').value) || 5;
+  const benchType = document.getElementById('benchmark').value;
+
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  document.getElementById('loadingMsg').style.display = '';
+  document.getElementById('resultArea').style.display = 'none';
+
+  try {
+    // Calculate years needed
+    const years = Math.ceil((new Date(endDate) - new Date(startDate)) / (365.25 * 86400000)) + 1;
+    const rawPrices = await fetchAllPrices(Math.min(years + 1, 20));
+    const aligned = alignPrices(rawPrices, startDate, endDate);
+
+    if (aligned[ASSETS[0]].length < 10) {
+      throw new Error('Not enough overlapping data for the selected date range');
+    }
+
+    // Run simulations
+    const portResult = simulate(aligned, weights, capital, rebalFreq, threshold);
+    const benchResult = simBenchmark(aligned, capital, 'spy');
+    const bench2Result = simBenchmark(aligned, capital, '6040');
+
+    const benchLabel = 'SPY (100%)';
+    const bench2Label = '60/40 (SPY/TLT)';
+
+    // Metrics
+    const portMetrics = calcMetrics(portResult.equity);
+    const benchMetrics = calcMetrics(benchResult.equity);
+    const bench2Metrics = calcMetrics(bench2Result.equity);
+
+    // Correlation
+    const corr = calcCorrelation(aligned);
+
+    // Render
+    document.getElementById('resultArea').style.display = '';
+
+    renderStats(portMetrics);
+    drawEquityCurve(portResult, benchResult, bench2Result, benchLabel, bench2Label);
+    drawDriftChart(portResult.allocHist);
+    drawDrawdownChart(portMetrics.ddSeries, benchMetrics.ddSeries, bench2Metrics.ddSeries, benchLabel, bench2Label);
+    renderComparison(portMetrics, benchMetrics, bench2Metrics, benchLabel, bench2Label);
+    renderCorrelation(corr);
+    renderRebalLog(portResult.rebalLog);
+
+  } catch (err) {
+    alert('Error: ' + err.message);
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    document.getElementById('loadingMsg').style.display = 'none';
+  }
+}
+</script>
+</body>
+</html>

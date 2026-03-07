@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YieldGPS — Your Crypto Yield Navigator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0a0e17;color:#e2e8f0;min-height:100vh}
+a{color:#60a5fa;text-decoration:none}
+.header{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;background:linear-gradient(135deg,#0f172a,#1e293b);border-bottom:1px solid #1e293b;flex-wrap:wrap;gap:12px}
+.header h1{font-size:24px;font-weight:800;background:linear-gradient(90deg,#f59e0b,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.tagline{color:#64748b;font-size:13px;margin-left:12px}
+.header-right{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.header-right label{font-size:11px;color:#64748b;display:block;margin-bottom:2px}
+.header-right input,.header-right select{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:6px;font-size:13px;width:140px}
+.stats-bar{display:flex;gap:12px;padding:16px 24px;overflow-x:auto}
+.stat-card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:12px 18px;min-width:150px;flex:1}
+.stat-card.highlight{border-color:#f59e0b;background:linear-gradient(135deg,#1e293b,#1a1a2e)}
+.stat-label{font-size:11px;color:#64748b;display:block}
+.stat-value{font-size:22px;font-weight:700;color:#f1f5f9;display:block;margin-top:2px}
+.stat-sub{font-size:10px;color:#94a3b8}
+.tabs{display:flex;gap:4px;padding:8px 24px;background:#0f172a;border-bottom:1px solid #1e293b;overflow-x:auto}
+.tab{padding:10px 20px;border:none;background:transparent;color:#94a3b8;cursor:pointer;border-radius:8px;font-size:14px;font-weight:500;white-space:nowrap;transition:all .2s;font-family:inherit}
+.tab:hover{background:#1e293b;color:#e2e8f0}
+.tab.active{background:#1e293b;color:#f59e0b}
+.filters{display:flex;gap:12px;padding:12px 24px;background:#0f172a;flex-wrap:wrap;align-items:end;border-bottom:1px solid #1e293b}
+.filter-group{display:flex;flex-direction:column;gap:3px}
+.filter-group label{font-size:11px;color:#64748b}
+.filter-group select{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:6px;font-size:12px}
+.tab-content{display:none;padding:16px 24px}
+.tab-content.active{display:block}
+.table-container{overflow-x:auto;border-radius:12px;border:1px solid #1e293b}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:#1e293b;padding:10px 12px;text-align:left;font-weight:600;color:#94a3b8;font-size:11px;text-transform:uppercase;position:sticky;top:0;white-space:nowrap}
+tbody tr{border-bottom:1px solid #1e293b;cursor:pointer;transition:background .15s}
+tbody tr:hover{background:#1e293b44}
+td{padding:10px 12px;vertical-align:middle}
+.rank-col{width:36px;text-align:center;color:#64748b}
+.loading{text-align:center;padding:40px;color:#64748b}
+.pool-name{font-weight:600;color:#f1f5f9}
+.pool-project{font-size:11px;color:#64748b}
+.chain-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500}
+.apy-value{font-weight:700;font-size:15px}
+.apy-green{color:#10b981}.apy-yellow{color:#f59e0b}.apy-red{color:#ef4444}
+.net-apy{font-weight:600}
+.risk-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600}
+.risk-low{background:#10b98122;color:#10b981}
+.risk-med{background:#f59e0b22;color:#f59e0b}
+.risk-high{background:#f9731622;color:#f97316}
+.risk-vhigh{background:#ef444422;color:#ef4444}
+.yield-tag{display:inline-block;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600;margin:1px 2px}
+.tag-organic{background:#10b98122;color:#10b981}
+.tag-reward{background:#8b5cf622;color:#8b5cf6}
+.tag-basis{background:#3b82f622;color:#3b82f6}
+.tag-rwa{background:#06b6d422;color:#06b6d4}
+.tag-lending{background:#6366f122;color:#6366f1}
+.sustainability-bar{width:60px;height:8px;background:#1e293b;border-radius:4px;overflow:hidden;display:inline-block;vertical-align:middle}
+.sustainability-fill{height:100%;border-radius:4px}
+.trend-up{color:#10b981;font-weight:600}.trend-down{color:#ef4444;font-weight:600}.trend-flat{color:#64748b}
+.compare-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-top:20px}
+.compare-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px}
+.compare-card h3{font-size:16px;margin-bottom:12px}
+.compare-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #33415544;font-size:13px}
+.compare-row:last-child{border:none}
+.compare-label{color:#94a3b8}.compare-value{font-weight:600}.compare-winner{color:#10b981}
+.sim-controls{display:flex;gap:16px;margin:20px 0;flex-wrap:wrap;align-items:end}
+.sim-input{display:flex;flex-direction:column;gap:4px}
+.sim-input label{font-size:12px;color:#64748b}
+.sim-input input,.sim-input select{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:8px 12px;border-radius:8px;font-size:14px}
+#simRun{background:linear-gradient(135deg,#f59e0b,#10b981);color:#0a0e17;border:none;padding:10px 24px;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px;font-family:inherit}
+.sim-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.sim-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px}
+.sim-card h4{font-size:14px;margin-bottom:4px}
+.sim-card .sim-apy{font-size:24px;font-weight:800;margin:8px 0}
+.sim-card .sim-detail{font-size:12px;color:#94a3b8;line-height:1.8}
+.sim-card .sim-earning{font-size:18px;font-weight:700;color:#10b981}
+.risk-map{background:#1e293b;border-radius:12px;padding:20px;min-height:400px;position:relative;margin:20px 0;overflow:hidden}
+.risk-dot{position:absolute;border-radius:50%;cursor:pointer;transition:transform .2s;border:2px solid rgba(255,255,255,0.3)}
+.risk-dot:hover{transform:scale(1.8);z-index:10}
+.risk-dot .tooltip{display:none;position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:#0f172a;border:1px solid #334155;padding:8px 12px;border-radius:8px;white-space:nowrap;font-size:11px;z-index:100}
+.risk-dot:hover .tooltip{display:block}
+.risk-legend{display:flex;gap:20px;justify-content:center;margin-top:12px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#94a3b8}
+.dot{width:10px;height:10px;border-radius:50%}
+.dot.green{background:#10b981}.dot.yellow{background:#f59e0b}.dot.orange{background:#f97316}.dot.red{background:#ef4444}
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1000;justify-content:center;align-items:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:#1e293b;border:1px solid #334155;border-radius:16px;padding:28px;max-width:680px;width:100%;max-height:85vh;overflow-y:auto;position:relative}
+.modal-close{position:absolute;top:12px;right:12px;background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer}
+.modal h2{font-size:20px;margin-bottom:16px}
+.modal-section{margin:16px 0;padding:16px;background:#0f172a;border-radius:10px}
+.modal-section h3{font-size:14px;color:#f59e0b;margin-bottom:10px}
+.modal-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px}
+.modal-bar{height:12px;background:#334155;border-radius:6px;margin-top:6px;overflow:hidden}
+.modal-bar-fill{height:100%;border-radius:6px}
+.compare-desc,.sim-desc{color:#94a3b8;font-size:14px}
+footer{padding:24px;text-align:center;color:#475569;font-size:12px;border-top:1px solid #1e293b;margin-top:40px}
+footer a{color:#f59e0b}
+@media(max-width:768px){.header{flex-direction:column}.stats-bar{flex-wrap:wrap}.filters{flex-direction:column}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="header">
+    <div class="header-left"><h1>🧭 YieldGPS</h1><span class="tagline">Your Crypto Yield Navigator</span></div>
+    <div class="header-right">
+      <div><label>💰 Investment ($)</label><input type="number" id="investAmount" value="10000" min="100" step="100"></div>
+      <div><label>⛽ Gas Chain</label><select id="gasChain"><option value="ethereum">Ethereum (~$5)</option><option value="arbitrum">Arbitrum (~$0.10)</option><option value="base">Base (~$0.05)</option><option value="polygon">Polygon (~$0.01)</option><option value="bsc">BSC (~$0.10)</option></select></div>
+    </div>
+  </header>
+  <div class="stats-bar">
+    <div class="stat-card"><span class="stat-label">Pools Tracked</span><span class="stat-value" id="totalPools">-</span></div>
+    <div class="stat-card"><span class="stat-label">Stablecoin Pools</span><span class="stat-value" id="stablePools">-</span></div>
+    <div class="stat-card"><span class="stat-label">Total TVL</span><span class="stat-value" id="totalTvl">-</span></div>
+    <div class="stat-card"><span class="stat-label">Median Stable APY</span><span class="stat-value" id="medianApy">-</span></div>
+    <div class="stat-card highlight"><span class="stat-label">TradFi Benchmark</span><span class="stat-value">4.25%</span><span class="stat-sub">US T-Bill Rate</span></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-tab="yields">📊 Yield Rankings</button>
+    <button class="tab" data-tab="compare">⚔️ CeFi vs DeFi</button>
+    <button class="tab" data-tab="simulator">🧮 Strategy Simulator</button>
+    <button class="tab" data-tab="risk">🛡️ Risk Map</button>
+  </div>
+  <div class="filters" id="filtersBar">
+    <div class="filter-group"><label>Category</label><select id="filterCategory"><option value="all">All</option><option value="stablecoin" selected>Stablecoins</option><option value="eth">ETH / LST</option><option value="btc">BTC</option></select></div>
+    <div class="filter-group"><label>Min TVL</label><select id="filterTvl"><option value="0">No minimum</option><option value="1000000">$1M+</option><option value="10000000" selected>$10M+</option><option value="100000000">$100M+</option><option value="1000000000">$1B+</option></select></div>
+    <div class="filter-group"><label>Chain</label><select id="filterChain"><option value="all">All Chains</option></select></div>
+    <div class="filter-group"><label>Yield Source</label><select id="filterYieldSource"><option value="all">All Sources</option><option value="organic">🌱 Organic Only</option><option value="incentivized">🎁 With Rewards</option></select></div>
+    <div class="filter-group"><label>Sort By</label><select id="filterSort"><option value="netApy">Net APY ↓</option><option value="apy">Raw APY ↓</option><option value="tvl">TVL ↓</option><option value="risk">Risk Score ↓</option><option value="sustainability">Sustainability ↓</option></select></div>
+  </div>
+  <div class="tab-content active" id="tab-yields"><div class="table-container"><table><thead><tr><th class="rank-col">#</th><th>Pool / Protocol</th><th>Chain</th><th>TVL</th><th>APY</th><th>Net APY<br><small>(after gas)</small></th><th>Risk Score</th><th>Yield Source</th><th>Sustainability</th><th>30d Trend</th><th>Est. Annual Earnings</th></tr></thead><tbody id="yieldsBody"><tr><td colspan="11" class="loading">⏳ Loading from DeFiLlama API...</td></tr></tbody></table></div></div>
+  <div class="tab-content" id="tab-compare"><h2>⚔️ CeFi vs DeFi: Stablecoin Yield Comparison</h2><p class="compare-desc">Same asset, different venues.</p><div class="compare-grid" id="compareGrid"></div></div>
+  <div class="tab-content" id="tab-simulator"><h2>🧮 Strategy Simulator</h2><p class="sim-desc">Compare strategies over time.</p><div class="sim-controls"><div class="sim-input"><label>Starting Capital ($)</label><input type="number" id="simCapital" value="10000"></div><div class="sim-input"><label>Time Horizon</label><select id="simTime"><option value="30">1 Month</option><option value="90">3 Months</option><option value="180">6 Months</option><option value="365" selected>1 Year</option></select></div><button id="simRun" onclick="runSimulation()">▶ Run Simulation</button></div><div class="sim-results" id="simResults"></div></div>
+  <div class="tab-content" id="tab-risk"><h2>🛡️ Risk-Return Map</h2><p>Dot size = TVL. Hover for details.</p><div class="risk-map" id="riskMap"></div><div class="risk-legend"><span class="legend-item"><span class="dot green"></span> Low Risk (8+)</span><span class="legend-item"><span class="dot yellow"></span> Medium (6-8)</span><span class="legend-item"><span class="dot orange"></span> High (4-6)</span><span class="legend-item"><span class="dot red"></span> Very High (&lt;4)</span></div></div>
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><button class="modal-close" onclick="closeModal()">✕</button><div id="modalContent"></div></div></div>
+  <footer>YieldGPS — Data from <a href="https://defillama.com" target="_blank">DeFiLlama API</a> | Risk scores are algorithmic estimates, not financial advice</footer>
+</div>
+<script>
+let allPools=[],filteredPools=[];
+const GAS={ethereum:5,arbitrum:.1,base:.05,polygon:.01,bsc:.1,avalanche:.15,optimism:.08};
+const CC={Ethereum:'#627eea',Arbitrum:'#28a0f0',Base:'#0052ff',Polygon:'#8247e5',Solana:'#9945ff',BSC:'#f0b90b',Avalanche:'#e84142',Optimism:'#ff0420'};
+const BC=['aave-v3','aave-v2','compound-v3','compound-v2','sky-lending','maker','lido','rocket-pool','curve-dex','uniswap-v3','convex-finance'];
+const ES=['ethena-usde','maple','morpho-blue','euler-v2','venus','benqi-lending','radiant-v2','spark','fluid-lending'];
+
+function classYS(p){
+  const t=[],pr=p.project.toLowerCase();
+  if(p.apyBase>0){
+    if(/aave|compound|morpho|euler|venus|spark|fluid|maple|benqi/.test(pr))t.push({l:'Lending Interest',c:'tag-lending',o:1});
+    else if(/curve|uniswap|pancake|aerodrome|velodrome|camelot|trader-joe/.test(pr))t.push({l:'LP Fees',c:'tag-organic',o:1});
+    else if(/lido|rocket|jito|coinbase|frax-ether|swell|kelp|ether\.fi/.test(pr))t.push({l:'Staking',c:'tag-organic',o:1});
+    else if(/ethena|hyperliquid/.test(pr))t.push({l:'Basis Trade',c:'tag-basis',o:0.6});
+    else if(/ondo|mountain|backed|hashnote|openeden/.test(pr))t.push({l:'RWA',c:'tag-rwa',o:1});
+    else t.push({l:'Organic',c:'tag-organic',o:0.8});
+  }
+  if(p.apyReward>0)t.push({l:'Rewards',c:'tag-reward',o:0.3});
+  if(t.length===0)t.push({l:'Unknown',c:'tag-organic',o:0.5});
+  return t;
+}
+
+function riskScore(p){
+  let s=5;
+  const pr=p.project.toLowerCase();
+  // TVL factor
+  if(p.tvlUsd>1e9)s+=1.5;else if(p.tvlUsd>1e8)s+=1;else if(p.tvlUsd>1e7)s+=0.5;else s-=0.5;
+  // Blue chip bonus
+  if(BC.some(b=>pr.includes(b.replace('-v2','').replace('-v3','').replace('-dex','').replace('-lending',''))))s+=1.5;
+  else if(ES.some(b=>pr.includes(b.replace('-v2','').replace('-v3','').replace('-lending','').replace('-usde',''))))s+=0.5;
+  // High APY penalty
+  const apy=p.apy||0;
+  if(apy>50)s-=2;else if(apy>25)s-=1;else if(apy>15)s-=0.5;
+  // IL risk
+  if(p.ilRisk==='yes')s-=1;
+  // Stablecoin bonus
+  if(p.stablecoin)s+=0.5;
+  // Reward-heavy penalty
+  if(p.apyReward>0&&p.apyBase>0&&p.apyReward/(p.apyBase+p.apyReward)>0.7)s-=1;
+  if(p.apyReward>0&&(!p.apyBase||p.apyBase===0))s-=1.5;
+  return Math.max(1,Math.min(10,Math.round(s*10)/10));
+}
+
+function sustainability(p){
+  const ys=classYS(p);
+  let avg=ys.reduce((a,c)=>a+c.o,0)/ys.length;
+  // Punish if mostly rewards
+  if(p.apyReward>0&&p.apyBase>0){
+    const ratio=p.apyBase/(p.apyBase+p.apyReward);
+    avg=avg*ratio+avg*(1-ratio)*0.3;
+  }
+  return Math.max(0,Math.min(1,avg));
+}
+
+function fmt$(v){
+  if(v>=1e12)return'$'+(v/1e12).toFixed(2)+'T';
+  if(v>=1e9)return'$'+(v/1e9).toFixed(2)+'B';
+  if(v>=1e6)return'$'+(v/1e6).toFixed(2)+'M';
+  if(v>=1e3)return'$'+(v/1e3).toFixed(1)+'K';
+  return'$'+v.toFixed(0);
+}
+
+function apyClass(v){return v>=10?'apy-green':v>=4?'apy-yellow':'apy-red';}
+function riskClass(s){return s>=8?'risk-low':s>=6?'risk-med':s>=4?'risk-high':'risk-vhigh';}
+function riskLabel(s){return s>=8?'Low':s>=6?'Medium':s>=4?'High':'V.High';}
+function chainColor(c){return CC[c]||'#94a3b8';}
+
+function netApy(p){
+  const inv=parseFloat(document.getElementById('investAmount').value)||10000;
+  const chain=document.getElementById('gasChain').value;
+  const gasCost=(GAS[p.chain?.toLowerCase()]||GAS[chain]||0.1)*12;// ~12 tx/year
+  const gross=inv*(p.apy||0)/100;
+  const net=gross-gasCost;
+  return{net:Math.max(0,net/inv*100),gasCost,gross};
+}
+
+async function fetchData(){
+  try{
+    const r=await fetch('https://yields.llama.fi/pools');
+    const d=await r.json();
+    allPools=d.data.filter(p=>p.tvlUsd>0&&p.apy!=null&&p.apy>0).map(p=>{
+      const rs=riskScore(p);
+      const sus=sustainability(p);
+      const na=netApy(p);
+      return{...p,riskScore:rs,sustainability:sus,netApyVal:na.net,gasCost:na.gasCost};
+    });
+    populateChains();
+    applyFilters();
+    updateStats();
+  }catch(e){
+    document.getElementById('yieldsBody').innerHTML='<tr><td colspan="11" class="loading">❌ Failed to load data. Please refresh. ('+e.message+')</td></tr>';
+  }
+}
+
+function populateChains(){
+  const chains=[...new Set(allPools.map(p=>p.chain))].sort();
+  const sel=document.getElementById('filterChain');
+  chains.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});
+}
+
+function updateStats(){
+  const stables=allPools.filter(p=>p.stablecoin);
+  document.getElementById('totalPools').textContent=allPools.length.toLocaleString();
+  document.getElementById('stablePools').textContent=stables.length.toLocaleString();
+  document.getElementById('totalTvl').textContent=fmt$(allPools.reduce((a,p)=>a+p.tvlUsd,0));
+  const apys=stables.map(p=>p.apy).sort((a,b)=>a-b);
+  const med=apys.length>0?apys[Math.floor(apys.length/2)]:0;
+  document.getElementById('medianApy').textContent=med.toFixed(2)+'%';
+}
+
+function categorize(p){
+  const sym=(p.symbol||'').toUpperCase();
+  if(p.stablecoin||/USDC|USDT|DAI|FRAX|LUSD|TUSD|BUSD|USDE|USDBC|PYUSD|GHO|CUSD|USDD|DOLA|SUSD|MIM|EUSD|USDS/.test(sym))return'stablecoin';
+  if(/ETH|STETH|WSTETH|RETH|CBETH|SWETH|METH|EETH|RSETH|WEETH/.test(sym))return'eth';
+  if(/BTC|WBTC|TBTC|CBBTC|SBTC|LBTC/.test(sym))return'btc';
+  return'other';
+}
+
+function applyFilters(){
+  const cat=document.getElementById('filterCategory').value;
+  const minTvl=parseFloat(document.getElementById('filterTvl').value);
+  const chain=document.getElementById('filterChain').value;
+  const ysFilter=document.getElementById('filterYieldSource').value;
+  const sort=document.getElementById('filterSort').value;
+
+  filteredPools=allPools.filter(p=>{
+    if(cat!=='all'&&categorize(p)!==cat)return false;
+    if(p.tvlUsd<minTvl)return false;
+    if(chain!=='all'&&p.chain!==chain)return false;
+    if(ysFilter==='organic'&&(p.apyReward||0)>(p.apyBase||0)*0.5)return false;
+    if(ysFilter==='incentivized'&&(!p.apyReward||p.apyReward<=0))return false;
+    return true;
+  });
+
+  // Recalc net APY
+  filteredPools.forEach(p=>{const na=netApy(p);p.netApyVal=na.net;p.gasCost=na.gasCost;});
+
+  const sortFns={
+    netApy:(a,b)=>b.netApyVal-a.netApyVal,
+    apy:(a,b)=>(b.apy||0)-(a.apy||0),
+    tvl:(a,b)=>b.tvlUsd-a.tvlUsd,
+    risk:(a,b)=>b.riskScore-a.riskScore,
+    sustainability:(a,b)=>b.sustainability-a.sustainability
+  };
+  filteredPools.sort(sortFns[sort]||sortFns.netApy);
+  renderTable();
+  renderRiskMap();
+}
+
+function renderTable(){
+  const inv=parseFloat(document.getElementById('investAmount').value)||10000;
+  const tbody=document.getElementById('yieldsBody');
+  if(filteredPools.length===0){tbody.innerHTML='<tr><td colspan="11" class="loading">No pools match your filters.</td></tr>';return;}
+
+  const top=filteredPools.slice(0,200);
+  tbody.innerHTML=top.map((p,i)=>{
+    const ys=classYS(p);
+    const rc=riskClass(p.riskScore);
+    const sus=p.sustainability;
+    const sc=sus>0.7?'#10b981':sus>0.4?'#f59e0b':'#ef4444';
+    const trend=p.apyMean30d!=null?(p.apy>p.apyMean30d*1.05?'trend-up':p.apy<p.apyMean30d*0.95?'trend-down':'trend-flat'):'trend-flat';
+    const trendVal=p.apyMean30d!=null?p.apyMean30d.toFixed(2)+'%':'-';
+    const annEarn=inv*p.netApyVal/100;
+    return`<tr onclick="openModal(${i})">
+      <td class="rank-col">${i+1}</td>
+      <td><span class="pool-name">${p.symbol||'?'}</span><br><span class="pool-project">${p.project}</span></td>
+      <td><span class="chain-badge" style="background:${chainColor(p.chain)}22;color:${chainColor(p.chain)}">${p.chain}</span></td>
+      <td>${fmt$(p.tvlUsd)}</td>
+      <td class="apy-value ${apyClass(p.apy)}">${(p.apy||0).toFixed(2)}%</td>
+      <td class="net-apy ${apyClass(p.netApyVal)}">${p.netApyVal.toFixed(2)}%</td>
+      <td><span class="risk-badge ${rc}">${p.riskScore.toFixed(1)} ${riskLabel(p.riskScore)}</span></td>
+      <td>${ys.map(y=>'<span class="yield-tag '+y.c+'">'+y.l+'</span>').join('')}</td>
+      <td><div class="sustainability-bar"><div class="sustainability-fill" style="width:${sus*100}%;background:${sc}"></div></div> ${(sus*100).toFixed(0)}%</td>
+      <td class="${trend}">${trend==='trend-up'?'▲':trend==='trend-down'?'▼':'→'} ${trendVal}</td>
+      <td>${annEarn>=0?'<span style="color:#10b981">+'+fmt$(annEarn)+'</span>':'<span style="color:#ef4444">'+fmt$(annEarn)+'</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function openModal(idx){
+  const p=filteredPools[idx];if(!p)return;
+  const ys=classYS(p);
+  const inv=parseFloat(document.getElementById('investAmount').value)||10000;
+  const na=netApy(p);
+  const daily=inv*p.netApyVal/100/365;
+  const monthly=daily*30;
+  document.getElementById('modalContent').innerHTML=`
+    <h2>${p.symbol} — ${p.project}</h2>
+    <div class="modal-section">
+      <h3>Overview</h3>
+      <div class="modal-row"><span>Chain</span><span style="color:${chainColor(p.chain)}">${p.chain}</span></div>
+      <div class="modal-row"><span>TVL</span><span>${fmt$(p.tvlUsd)}</span></div>
+      <div class="modal-row"><span>Gross APY</span><span class="${apyClass(p.apy)}">${(p.apy||0).toFixed(2)}%</span></div>
+      <div class="modal-row"><span>Base APY</span><span>${(p.apyBase||0).toFixed(2)}%</span></div>
+      <div class="modal-row"><span>Reward APY</span><span>${(p.apyReward||0).toFixed(2)}%</span></div>
+      <div class="modal-row"><span>Net APY (after gas)</span><span class="net-apy ${apyClass(na.net)}">${na.net.toFixed(2)}%</span></div>
+      <div class="modal-row"><span>Est. Gas Cost/Year</span><span>~${fmt$(na.gasCost)}</span></div>
+    </div>
+    <div class="modal-section">
+      <h3>Risk Assessment</h3>
+      <div class="modal-row"><span>Risk Score</span><span class="risk-badge ${riskClass(p.riskScore)}">${p.riskScore.toFixed(1)} ${riskLabel(p.riskScore)}</span></div>
+      <div class="modal-row"><span>IL Risk</span><span>${p.ilRisk||'No'}</span></div>
+      <div class="modal-row"><span>Sustainability</span><span>${(p.sustainability*100).toFixed(0)}%</span></div>
+      <div class="modal-bar"><div class="modal-bar-fill" style="width:${p.sustainability*100}%;background:${p.sustainability>0.7?'#10b981':p.sustainability>0.4?'#f59e0b':'#ef4444'}"></div></div>
+      <div class="modal-row"><span>Yield Sources</span><span>${ys.map(y=>'<span class="yield-tag '+y.c+'">'+y.l+'</span>').join(' ')}</span></div>
+    </div>
+    <div class="modal-section">
+      <h3>Earnings Projection (${fmt$(inv)} invested)</h3>
+      <div class="modal-row"><span>Daily</span><span style="color:#10b981">+${fmt$(Math.max(0,daily))}</span></div>
+      <div class="modal-row"><span>Monthly</span><span style="color:#10b981">+${fmt$(Math.max(0,monthly))}</span></div>
+      <div class="modal-row"><span>Yearly</span><span style="color:#10b981">+${fmt$(Math.max(0,inv*na.net/100))}</span></div>
+    </div>
+    ${p.pool?'<div style="margin-top:12px;text-align:center"><a href="https://defillama.com/yields/pool/'+p.pool+'" target="_blank" style="color:#f59e0b">View on DeFiLlama →</a></div>':''}
+  `;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
+
+function renderCompare(){
+  const stables=allPools.filter(p=>p.stablecoin&&p.tvlUsd>1e7).sort((a,b)=>b.tvlUsd-a.tvlUsd);
+  const cefi=[
+    {name:'US T-Bills (Benchmark)',apy:4.25,risk:'Very Low',type:'TradFi'},
+    {name:'High-Yield Savings',apy:4.5,risk:'Very Low',type:'CeFi'},
+    {name:'Coinbase USDC Rewards',apy:4.0,risk:'Low',type:'CeFi'},
+    {name:'Binance Flexible Savings',apy:3.5,risk:'Low',type:'CeFi'},
+  ];
+  const topDefi=stables.slice(0,6).map(p=>({
+    name:p.symbol+' ('+p.project+')',
+    apy:p.apy,
+    risk:riskLabel(p.riskScore),
+    type:'DeFi',
+    tvl:p.tvlUsd,
+    chain:p.chain
+  }));
+  const all=[...cefi,...topDefi];
+  const grid=document.getElementById('compareGrid');
+  grid.innerHTML=all.map(item=>{
+    const isDeFi=item.type==='DeFi';
+    const color=item.apy>4.25?'#10b981':'#f59e0b';
+    return`<div class="compare-card">
+      <h3>${item.name}</h3>
+      <div class="compare-row"><span class="compare-label">Type</span><span class="compare-value">${item.type}</span></div>
+      <div class="compare-row"><span class="compare-label">APY</span><span class="compare-value" style="color:${color}">${item.apy.toFixed(2)}%</span></div>
+      <div class="compare-row"><span class="compare-label">Risk</span><span class="compare-value">${item.risk}</span></div>
+      ${isDeFi?'<div class="compare-row"><span class="compare-label">TVL</span><span class="compare-value">'+fmt$(item.tvl)+'</span></div>':''}
+      ${isDeFi?'<div class="compare-row"><span class="compare-label">Chain</span><span class="compare-value" style="color:'+chainColor(item.chain)+'">'+item.chain+'</span></div>':''}
+      <div class="compare-row"><span class="compare-label">vs T-Bills</span><span class="${item.apy>4.25?'compare-winner':'compare-value'}">${item.apy>4.25?'+':''}${(item.apy-4.25).toFixed(2)}%</span></div>
+    </div>`;
+  }).join('');
+}
+
+function runSimulation(){
+  const cap=parseFloat(document.getElementById('simCapital').value)||10000;
+  const days=parseInt(document.getElementById('simTime').value)||365;
+  const stables=filteredPools.filter(p=>p.stablecoin||categorize(p)==='stablecoin').slice(0,3);
+  const strategies=[
+    {name:'🏦 T-Bills / Savings',apy:4.25,risk:'Very Low',desc:'Traditional safe haven'},
+    ...stables.map(p=>({name:'🌐 '+p.symbol+' ('+p.project+')',apy:p.netApyVal,risk:riskLabel(p.riskScore),desc:p.chain+' | TVL: '+fmt$(p.tvlUsd)})),
+  ];
+  if(stables.length>1){
+    const avgApy=stables.reduce((a,p)=>a+p.netApyVal,0)/stables.length;
+    strategies.push({name:'🔀 Split Strategy',apy:avgApy,risk:'Medium',desc:'Equal split across top '+stables.length+' pools'});
+  }
+  const res=document.getElementById('simResults');
+  res.innerHTML=strategies.map(s=>{
+    const earn=cap*(s.apy/100)*(days/365);
+    const total=cap+earn;
+    const monthlyEarn=earn/(days/30);
+    return`<div class="sim-card">
+      <h4>${s.name}</h4>
+      <div class="sim-apy ${apyClass(s.apy)}">${s.apy.toFixed(2)}% APY</div>
+      <div class="sim-detail">Risk: ${s.risk}</div>
+      <div class="sim-detail">${s.desc}</div>
+      <hr style="border-color:#334155;margin:10px 0">
+      <div class="sim-detail">Period: ${days} days</div>
+      <div class="sim-detail">Monthly: <span class="sim-earning">+${fmt$(Math.max(0,monthlyEarn))}</span></div>
+      <div class="sim-detail">Total Earned: <span class="sim-earning">+${fmt$(Math.max(0,earn))}</span></div>
+      <div class="sim-detail" style="font-size:14px;margin-top:6px">Final: <strong>${fmt$(total)}</strong></div>
+    </div>`;
+  }).join('');
+}
+
+function renderRiskMap(){
+  const map=document.getElementById('riskMap');
+  const w=map.clientWidth-40,h=360;
+  map.style.height=(h+40)+'px';
+  // Axis labels
+  let html='<div style="position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:11px;color:#64748b">Risk Score →</div>';
+  html+='<div style="position:absolute;left:4px;top:50%;transform:rotate(-90deg) translateX(-50%);font-size:11px;color:#64748b;transform-origin:0 0">APY % →</div>';
+
+  const subset=filteredPools.slice(0,150);
+  const maxApy=Math.min(Math.max(...subset.map(p=>p.apy||0),20),80);
+  subset.forEach(p=>{
+    const x=20+((p.riskScore-1)/9)*w;
+    const y=h-((Math.min(p.apy||0,maxApy))/maxApy)*h+10;
+    const size=Math.max(8,Math.min(40,Math.sqrt(p.tvlUsd/1e6)*2));
+    const c=p.riskScore>=8?'#10b981':p.riskScore>=6?'#f59e0b':p.riskScore>=4?'#f97316':'#ef4444';
+    html+=`<div class="risk-dot" style="left:${x}px;top:${y}px;width:${size}px;height:${size}px;background:${c}88">
+      <div class="tooltip"><strong>${p.symbol}</strong><br>${p.project} | ${p.chain}<br>APY: ${(p.apy||0).toFixed(2)}% | Risk: ${p.riskScore}<br>TVL: ${fmt$(p.tvlUsd)}</div>
+    </div>`;
+  });
+  map.innerHTML=html;
+}
+
+// Event listeners
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+    tab.classList.add('active');
+    const target=tab.dataset.tab;
+    document.getElementById('tab-'+target).classList.add('active');
+    if(target==='compare')renderCompare();
+    if(target==='simulator')runSimulation();
+    if(target==='risk')renderRiskMap();
+    // Show/hide filters
+    document.getElementById('filtersBar').style.display=target==='yields'?'flex':'none';
+  });
+});
+
+['filterCategory','filterTvl','filterChain','filterYieldSource','filterSort'].forEach(id=>{
+  document.getElementById(id).addEventListener('change',applyFilters);
+});
+document.getElementById('investAmount').addEventListener('change',applyFilters);
+document.getElementById('gasChain').addEventListener('change',applyFilters);
+
+// Keyboard close modal
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+// Init
+fetchData();
+</script>
+</body>
+</html>

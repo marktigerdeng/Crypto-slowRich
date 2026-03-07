@@ -1,0 +1,178 @@
+{
+  "totalCapital": 1000000,
+  "tiers": [
+    {
+      "name": "Tier 1 — 安全垫层",
+      "allocation": 0.40,
+      "amount": 400000,
+      "targetApy": "4-6%",
+      "positions": [
+        {
+          "id": "sky-susds",
+          "protocol": "Sky (Maker)",
+          "product": "sUSDS",
+          "chain": "Ethereum",
+          "asset": "USDS→sUSDS",
+          "amount": 200000,
+          "type": "defi",
+          "defillamaPool": "d8c4eff5-c8a9-46fc-a888-057c4c668e72",
+          "defillamaProject": "sky-lending",
+          "officialUrl": "https://app.sky.money",
+          "riskLevel": "low",
+          "yieldSource": "RWA + 借贷收入"
+        },
+        {
+          "id": "aave-eth-usdc",
+          "protocol": "Aave V3",
+          "product": "Supply USDC",
+          "chain": "Ethereum",
+          "asset": "USDC",
+          "amount": 100000,
+          "type": "defi",
+          "defillamaPool": "aa70268e-4b52-42bf-a116-608b370f9501",
+          "defillamaProject": "aave-v3",
+          "officialUrl": "https://app.aave.com",
+          "riskLevel": "low",
+          "yieldSource": "借贷利息"
+        },
+        {
+          "id": "aave-arb-usdc",
+          "protocol": "Aave V3",
+          "product": "Supply USDC",
+          "chain": "Arbitrum",
+          "asset": "USDC",
+          "amount": 100000,
+          "type": "defi",
+          "defillamaPool": "d9fa8e14-0447-4207-9ae8-7810199dfa1f",
+          "defillamaProject": "aave-v3",
+          "officialUrl": "https://app.aave.com",
+          "riskLevel": "low",
+          "yieldSource": "借贷利息（低gas）"
+        }
+      ]
+    },
+    {
+      "name": "Tier 2 — 收益增强层",
+      "allocation": 0.35,
+      "amount": 350000,
+      "targetApy": "10-15%",
+      "positions": [
+        {
+          "id": "ethena-susde",
+          "protocol": "Ethena",
+          "product": "sUSDe",
+          "chain": "Ethereum",
+          "asset": "USDC→USDe→sUSDe",
+          "amount": 150000,
+          "type": "defi",
+          "defillamaPool": "66985a81-9c51-46ca-9977-42b4fe7bc6df",
+          "defillamaProject": "ethena-usde",
+          "officialUrl": "https://app.ethena.fi",
+          "riskLevel": "medium",
+          "yieldSource": "期现套利 (basis trade)"
+        },
+        {
+          "id": "morpho-usdc",
+          "protocol": "Morpho Blue",
+          "product": "USDC Vault",
+          "chain": "Ethereum",
+          "asset": "USDC",
+          "amount": 100000,
+          "type": "defi",
+          "defillamaPool": "b55f43a8-f444-4cd8-a3a4-0a4e786ba566",
+          "defillamaProject": "morpho-v1",
+          "officialUrl": "https://app.morpho.org",
+          "riskLevel": "medium-low",
+          "yieldSource": "优化借贷利率"
+        },
+        {
+          "id": "pendle-pt",
+          "protocol": "Pendle",
+          "product": "PT Fixed Yield",
+          "chain": "Ethereum",
+          "asset": "USDC/sUSDe PT",
+          "amount": 100000,
+          "type": "defi",
+          "defillamaPool": null,
+          "defillamaProject": "pendle",
+          "officialUrl": "https://app.pendle.finance",
+          "riskLevel": "medium",
+          "yieldSource": "锁定固定利率"
+        }
+      ]
+    },
+    {
+      "name": "Tier 3 — 机动层",
+      "allocation": 0.25,
+      "amount": 250000,
+      "targetApy": "8-15%",
+      "positions": [
+        {
+          "id": "fluid-usdc",
+          "protocol": "Fluid",
+          "product": "Lending",
+          "chain": "Ethereum",
+          "asset": "USDC/USDT",
+          "amount": 80000,
+          "type": "defi",
+          "defillamaPool": "4438dabc-7f0c-430b-8136-2722711ae663",
+          "defillamaProject": "fluid-lending",
+          "officialUrl": "https://fluid.instadapp.io",
+          "riskLevel": "medium",
+          "yieldSource": "高效借贷"
+        },
+        {
+          "id": "curve-convex",
+          "protocol": "Curve/Convex",
+          "product": "稳定池 LP",
+          "chain": "Ethereum",
+          "asset": "3pool/crvUSD",
+          "amount": 70000,
+          "type": "defi",
+          "defillamaPool": null,
+          "defillamaProject": "curve-dex",
+          "officialUrl": "https://curve.fi",
+          "riskLevel": "medium-low",
+          "yieldSource": "交易费 + CRV"
+        },
+        {
+          "id": "cefi-binance",
+          "protocol": "Binance",
+          "product": "Locked Savings 90d",
+          "chain": null,
+          "asset": "USDT",
+          "amount": 25000,
+          "type": "cefi",
+          "platform": "binance",
+          "officialUrl": "https://www.binance.com/en/earn",
+          "riskLevel": "medium",
+          "yieldSource": "平台理财"
+        },
+        {
+          "id": "cefi-okx",
+          "protocol": "OKX",
+          "product": "Simple Earn",
+          "chain": null,
+          "asset": "USDC",
+          "amount": 25000,
+          "type": "cefi",
+          "platform": "okx",
+          "officialUrl": "https://www.okx.com/earn",
+          "riskLevel": "medium",
+          "yieldSource": "平台理财"
+        },
+        {
+          "id": "reserve",
+          "protocol": "备用金",
+          "product": "裸持",
+          "chain": null,
+          "asset": "USDC",
+          "amount": 50000,
+          "type": "reserve",
+          "riskLevel": "none",
+          "yieldSource": "—"
+        }
+      ]
+    }
+  ]
+}

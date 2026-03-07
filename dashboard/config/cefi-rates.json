@@ -1,0 +1,27 @@
+{
+  "_comment": "Manual fallback rates — update when API is unavailable",
+  "_updated": "2026-02-16",
+  "binance": {
+    "USDT": {
+      "flexible": { "apy": 1.8, "source": "manual" },
+      "locked_30d": { "apy": 2.5, "source": "manual" },
+      "locked_90d": { "apy": 3.5, "source": "manual" },
+      "locked_120d": { "apy": 4.0, "source": "manual" }
+    },
+    "USDC": {
+      "flexible": { "apy": 1.5, "source": "manual" },
+      "locked_30d": { "apy": 2.2, "source": "manual" },
+      "locked_90d": { "apy": 3.2, "source": "manual" }
+    }
+  },
+  "okx": {
+    "USDT": {
+      "flexible": { "apy": 2.0, "source": "manual" },
+      "fixed": { "apy": 3.0, "source": "manual" }
+    },
+    "USDC": {
+      "flexible": { "apy": 1.8, "source": "manual" },
+      "fixed": { "apy": 2.8, "source": "manual" }
+    }
+  }
+}

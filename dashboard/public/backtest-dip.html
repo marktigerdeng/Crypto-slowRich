@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strategy #3 — Dip-Buying Backtest</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0a0e17;color:#e2e8f0;min-height:100vh;line-height:1.6}
+a{color:#60a5fa;text-decoration:none}
+.header{padding:16px 24px;background:linear-gradient(135deg,#0f172a,#1e293b);border-bottom:1px solid #1e293b}
+.header h1{font-size:22px;font-weight:800;background:linear-gradient(90deg,#10b981,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header .sub{color:#64748b;font-size:13px;margin-top:4px}
+.nav{display:flex;gap:12px;margin-top:8px}
+.nav a{padding:4px 12px;border:1px solid #334155;border-radius:6px;font-size:12px;color:#94a3b8}
+.nav a:hover{border-color:#10b981;color:#10b981}
+
+.controls{display:flex;gap:16px;padding:16px 24px;flex-wrap:wrap;align-items:end;border-bottom:1px solid #1e293b}
+.ctrl{display:flex;flex-direction:column;gap:4px}
+.ctrl label{font-size:11px;color:#64748b;text-transform:uppercase}
+.ctrl input,.ctrl select{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:8px 12px;border-radius:8px;font-size:14px;font-family:inherit;width:140px}
+.ctrl input[type="number"]{width:100px}
+.run-btn{background:linear-gradient(135deg,#10b981,#3b82f6);color:#fff;border:none;padding:10px 28px;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px;font-family:inherit;align-self:end}
+.run-btn:hover{opacity:.9}
+.run-btn:disabled{opacity:.5;pointer-events:none}
+
+.strat-desc{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;margin:16px 24px;font-size:13px;color:#94a3b8;line-height:1.8}
+.strat-desc strong{color:#e2e8f0}
+.strat-desc .step{display:flex;gap:8px;margin:4px 0}
+.strat-desc .num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+
+.summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;padding:16px 24px}
+.stat{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px 18px}
+.stat.good{border-color:#10b981}.stat.warn{border-color:#f59e0b}.stat.bad{border-color:#ef4444}
+.stat-label{font-size:11px;color:#64748b;text-transform:uppercase}
+.stat-value{font-size:22px;font-weight:700;color:#f1f5f9;margin-top:4px}
+.stat-sub{font-size:11px;color:#94a3b8;margin-top:2px}
+
+.section{padding:16px 24px}
+.section-title{font-size:16px;font-weight:700;margin-bottom:12px}
+
+.chart-wrap{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;position:relative;overflow:hidden;margin-bottom:16px}
+canvas{width:100%!important;height:400px!important}
+
+/* Comparison table */
+.cmp-table-wrap{overflow-x:auto;border-radius:12px;border:1px solid #334155;margin-bottom:16px}
+.cmp-table{width:100%;border-collapse:collapse;font-size:13px}
+.cmp-table th{background:#0f172a;padding:10px 14px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase}
+.cmp-table td{padding:10px 14px;border-bottom:1px solid #1e293b}
+.cmp-table tr:hover{background:#33415520}
+.cmp-table .strat-name{font-weight:700;font-size:14px}
+.color-dca{color:#f59e0b}
+.color-ath{color:#3b82f6}
+.color-opt{color:#10b981}
+.pnl-pos{color:#10b981;font-weight:600}
+.pnl-neg{color:#ef4444;font-weight:600}
+
+/* Trade log */
+.log-tabs{display:flex;gap:8px;margin-bottom:12px}
+.log-tab{padding:8px 16px;border:1px solid #334155;background:#1e293b;color:#94a3b8;border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit;transition:all .2s}
+.log-tab:hover{border-color:#64748b;color:#e2e8f0}
+.log-tab.active{border-color:#10b981;color:#10b981;background:#10b98111}
+.log-wrap{max-height:500px;overflow-y:auto;border-radius:12px;border:1px solid #334155}
+.log-table{width:100%;border-collapse:collapse;font-size:12px}
+.log-table th{background:#0f172a;padding:8px 12px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;position:sticky;top:0}
+.log-table td{padding:8px 12px;border-bottom:1px solid #1e293b}
+.log-table tr:hover{background:#33415520}
+.tag-buy{background:#10b98122;color:#10b981;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+.tag-sell-put{background:#3b82f622;color:#3b82f6;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+.tag-assign{background:#f59e0b22;color:#f59e0b;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+.tag-expire{background:#64748b22;color:#94a3b8;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+.tag-reset{background:#8b5cf622;color:#a78bfa;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+
+.ladder-config{display:flex;gap:12px;flex-wrap:wrap;align-items:end}
+.ladder-level{display:flex;flex-direction:column;gap:2px;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px 12px}
+.ladder-level label{font-size:10px;color:#64748b;text-transform:uppercase}
+.ladder-level input{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:4px 8px;border-radius:6px;font-size:13px;font-family:inherit;width:70px}
+
+footer{padding:24px;text-align:center;color:#475569;font-size:12px;border-top:1px solid #1e293b;margin-top:40px}
+@media(max-width:768px){.controls{flex-direction:column}.ctrl input{width:100%}.ladder-config{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <h1>Strategy #3 — Dip-Buying with Options</h1>
+  <div class="sub">Compare DCA vs ATH Drawdown vs Options Ladder — same capital, fair fight</div>
+  <div class="nav">
+    <a href="/">Strategy #1: Stablecoin</a>
+    <a href="/backtest-wheel.html">Strategy #2: Options Wheel</a>
+    <a href="/backtest-dip.html">Strategy #3: Dip-Buying</a>
+    <a href="/backtest-allweather.html">Strategy #4: All Weather</a>
+    <a href="/options-monitor.html">Strategy #5: Options Monitor</a>
+  </div>
+</header>
+
+<div class="strat-desc">
+  <strong>Three Dip-Buying Strategies Compared:</strong>
+  <div class="step"><span class="num" style="background:#f59e0b22;color:#f59e0b">A</span> <strong>DCA</strong> — Buy fixed $ amount every period regardless of price. Simple baseline.</div>
+  <div class="step"><span class="num" style="background:#3b82f622;color:#3b82f6">B</span> <strong>ATH Drawdown</strong> — Buy more as price drops further from ATH. Tiers: -20%, -35%, -50%, -65%.</div>
+  <div class="step"><span class="num" style="background:#10b98122;color:#10b981">C</span> <strong>Options Ladder</strong> — Sell puts at each drawdown tier. Collect premium while waiting. If assigned, you bought at a discount.</div>
+</div>
+
+<div class="controls">
+  <div class="ctrl"><label>Asset</label>
+    <select id="asset">
+      <option value="BTC" selected>BTC</option>
+      <option value="ETH">ETH</option>
+    </select>
+  </div>
+  <div class="ctrl"><label>Start Date</label><input type="date" id="startDate" value="2021-04-01"></div>
+  <div class="ctrl"><label>End Date</label><input type="date" id="endDate" value="2025-12-31"></div>
+  <div class="ctrl"><label>Total Capital ($)</label><input type="number" id="capital" value="100000" step="10000"></div>
+  <div class="ctrl"><label>DCA Period</label>
+    <select id="dcaPeriod">
+      <option value="7">Weekly</option>
+      <option value="14">Bi-weekly</option>
+      <option value="30" selected>Monthly</option>
+    </select>
+  </div>
+  <div class="ctrl"><label>Option Period</label>
+    <select id="optPeriod">
+      <option value="14">Bi-weekly</option>
+      <option value="30" selected>Monthly</option>
+      <option value="60">Bi-monthly</option>
+    </select>
+  </div>
+  <div class="ctrl"><label>IV Source</label>
+    <select id="ivMode">
+      <option value="dvol" selected>Deribit DVOL</option>
+      <option value="realized">Realized Vol</option>
+      <option value="60">60% Fixed</option>
+      <option value="80">80% Fixed</option>
+    </select>
+  </div>
+  <button class="run-btn" id="runBtn" onclick="runBacktest()">Run Backtest</button>
+</div>
+
+<div class="controls" style="border-bottom:none;padding-top:8px">
+  <div class="ladder-config">
+    <div class="ladder-level">
+      <label>Level 1 Drawdown</label>
+      <input type="number" id="lv1dd" value="20" min="5" max="40" step="5">
+      <span style="font-size:10px;color:#64748b">% below ATH · 15% alloc</span>
+    </div>
+    <div class="ladder-level">
+      <label>Level 2 Drawdown</label>
+      <input type="number" id="lv2dd" value="35" min="15" max="55" step="5">
+      <span style="font-size:10px;color:#64748b">% below ATH · 25% alloc</span>
+    </div>
+    <div class="ladder-level">
+      <label>Level 3 Drawdown</label>
+      <input type="number" id="lv3dd" value="50" min="25" max="70" step="5">
+      <span style="font-size:10px;color:#64748b">% below ATH · 30% alloc</span>
+    </div>
+    <div class="ladder-level">
+      <label>Level 4 Drawdown</label>
+      <input type="number" id="lv4dd" value="65" min="35" max="85" step="5">
+      <span style="font-size:10px;color:#64748b">% below ATH · 30% alloc</span>
+    </div>
+  </div>
+</div>
+
+<div class="summary-bar" id="summaryBar" style="display:none"></div>
+
+<div class="section" id="chartPriceSection" style="display:none">
+  <div class="section-title">Price + Buy Signals</div>
+  <div class="chart-wrap"><canvas id="chartPrice"></canvas></div>
+</div>
+
+<div class="section" id="chartEquitySection" style="display:none">
+  <div class="section-title">Portfolio Value Comparison</div>
+  <div class="chart-wrap"><canvas id="chartEquity"></canvas></div>
+</div>
+
+<div class="section" id="chartCostSection" style="display:none">
+  <div class="section-title">Average Cost Basis Comparison</div>
+  <div class="chart-wrap"><canvas id="chartCost"></canvas></div>
+</div>
+
+<div class="section" id="cmpSection" style="display:none">
+  <div class="section-title">Strategy Comparison</div>
+  <div class="cmp-table-wrap" id="cmpTableWrap"></div>
+</div>
+
+<div class="section" id="logSection" style="display:none">
+  <div class="section-title">Trade Log</div>
+  <div class="log-tabs" id="logTabs"></div>
+  <div class="log-wrap"><table class="log-table"><thead id="logHead"></thead><tbody id="logBody"></tbody></table></div>
+</div>
+
+<footer>
+  Strategy #3 Backtest — Prices from CryptoCompare | IV from Deribit DVOL | Black-Scholes pricing
+</footer>
+
+<script>
+// ===== Black-Scholes =====
+function normCDF(x) {
+  const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+  const sign = x < 0 ? -1 : 1;
+  x = Math.abs(x) / Math.SQRT2;
+  const t = 1 / (1 + p * x);
+  const y = 1 - (((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+  return 0.5 * (1 + sign * y);
+}
+
+function bsPrice(S, K, T, r, sigma, type) {
+  if (T <= 0) return Math.max(0, type === 'put' ? K - S : S - K);
+  const d1 = (Math.log(S/K) + (r + sigma*sigma/2)*T) / (sigma*Math.sqrt(T));
+  const d2 = d1 - sigma*Math.sqrt(T);
+  if (type === 'call') return S*normCDF(d1) - K*Math.exp(-r*T)*normCDF(d2);
+  return K*Math.exp(-r*T)*normCDF(-d2) - S*normCDF(-d1);
+}
+
+function calcRealizedVol(prices, idx, window) {
+  if (idx < window + 1) return 0.6;
+  const returns = [];
+  for (let i = idx - window + 1; i <= idx; i++) {
+    returns.push(Math.log(prices[i].price / prices[i-1].price));
+  }
+  const mean = returns.reduce((a,b) => a+b, 0) / returns.length;
+  const variance = returns.reduce((a,r) => a + (r-mean)**2, 0) / (returns.length - 1);
+  return Math.sqrt(variance * 365);
+}
+
+// ===== Data fetching =====
+async function fetchPrices(asset, startDate, endDate) {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const totalDays = Math.ceil((end - start) / 86400000);
+  const queryDays = Math.min(totalDays + 60, 2000);
+  const resp = await fetch(`/api/crypto-prices?asset=${asset}&days=${queryDays}`);
+  if (!resp.ok) throw new Error(`Price API ${resp.status}`);
+  const json = await resp.json();
+  console.log(`${asset} prices: ${json.prices.length} from ${json.source}`);
+  return json.prices || [];
+}
+
+async function fetchDVOL(asset) {
+  const resp = await fetch(`/api/crypto-dvol?asset=${asset}`);
+  if (!resp.ok) return [];
+  const json = await resp.json();
+  console.log(`${asset} DVOL: ${json.dvol.length} from ${json.source}`);
+  return json.dvol || [];
+}
+
+// ===== Helpers =====
+const $ = id => document.getElementById(id);
+const fmt = n => '$' + Math.round(n).toLocaleString('en-US');
+const fmtCoin = (n, asset) => n.toFixed(asset === 'BTC' ? 4 : 3) + ' ' + asset;
+const pct = n => (n >= 0 ? '+' : '') + n.toFixed(1) + '%';
+
+// ===== MAIN BACKTEST =====
+let lastResults = null;
+
+async function runBacktest() {
+  const btn = $('runBtn');
+  btn.textContent = 'Loading data...';
+  btn.disabled = true;
+
+  try {
+    const asset = $('asset').value;
+    const startDate = $('startDate').value;
+    const endDate = $('endDate').value;
+    const capital = parseFloat($('capital').value);
+    const dcaPeriod = parseInt($('dcaPeriod').value);
+    const optPeriod = parseInt($('optPeriod').value);
+    const ivMode = $('ivMode').value;
+    const riskFreeRate = 0.045;
+
+    const levels = [
+      { dd: parseFloat($('lv1dd').value) / 100, alloc: 0.15 },
+      { dd: parseFloat($('lv2dd').value) / 100, alloc: 0.25 },
+      { dd: parseFloat($('lv3dd').value) / 100, alloc: 0.30 },
+      { dd: parseFloat($('lv4dd').value) / 100, alloc: 0.30 },
+    ];
+
+    // Fetch data
+    btn.textContent = 'Fetching prices...';
+    const [rawPrices, dvolArr] = await Promise.all([
+      fetchPrices(asset, startDate, endDate),
+      ivMode === 'dvol' ? fetchDVOL(asset) : Promise.resolve([])
+    ]);
+
+    const prices = rawPrices.filter(p => p.date <= endDate);
+    if (prices.length < 35) throw new Error('Not enough price data');
+
+    const dvolMap = {};
+    dvolArr.forEach(d => dvolMap[d.date] = d.iv);
+
+    let tradeStartIdx = prices.findIndex(p => p.date >= startDate);
+    if (tradeStartIdx < 0) throw new Error('No data for start date');
+    tradeStartIdx = Math.max(tradeStartIdx, 30);
+
+    btn.textContent = 'Running simulation...';
+    await new Promise(r => setTimeout(r, 30));
+
+    // ===== Helper: get IV for a date =====
+    function getIV(idx) {
+      const date = prices[idx].date;
+      const rv = calcRealizedVol(prices, idx, 30);
+      let iv;
+      if (ivMode === 'dvol') {
+        iv = dvolMap[date];
+        if (!iv) {
+          for (let d = 1; d <= 3 && !iv; d++) {
+            const prev = new Date(date);
+            prev.setDate(prev.getDate() - d);
+            iv = dvolMap[prev.toISOString().slice(0, 10)];
+          }
+        }
+        if (!iv) iv = rv * 1.15;
+      } else if (ivMode === 'realized') {
+        iv = rv;
+      } else {
+        iv = parseFloat(ivMode) / 100;
+      }
+      return Math.max(0.15, Math.min(2.0, iv));
+    }
+
+    // ===== Precompute ATH series =====
+    const athSeries = new Array(prices.length);
+    athSeries[0] = prices[0].price;
+    for (let i = 1; i < prices.length; i++) {
+      athSeries[i] = Math.max(athSeries[i-1], prices[i].price);
+    }
+
+    // ============================================
+    // STRATEGY 1: DCA
+    // ============================================
+    const dcaResult = runDCA(prices, tradeStartIdx, capital, dcaPeriod, asset);
+
+    // ============================================
+    // STRATEGY 2: ATH Drawdown
+    // ============================================
+    const athResult = runATHDrawdown(prices, tradeStartIdx, athSeries, capital, dcaPeriod, levels, asset);
+
+    // ============================================
+    // STRATEGY 3: Options Ladder
+    // ============================================
+    const optResult = runOptionsLadder(prices, tradeStartIdx, athSeries, capital, optPeriod, levels, riskFreeRate, getIV, asset);
+
+    // Store results
+    lastResults = { dca: dcaResult, ath: athResult, opt: optResult, prices, tradeStartIdx, athSeries, levels, asset, capital };
+
+    // Render everything
+    renderSummary(dcaResult, athResult, optResult, capital, asset);
+    renderPriceChart(prices, tradeStartIdx, athSeries, dcaResult, athResult, optResult, levels, asset);
+    renderEquityChart(dcaResult, athResult, optResult, asset);
+    renderCostChart(dcaResult, athResult, optResult, asset);
+    renderComparisonTable(dcaResult, athResult, optResult, capital, asset);
+    renderTradeLog('dca');
+
+  } catch (err) {
+    alert('Error: ' + err.message);
+    console.error(err);
+  }
+
+  btn.textContent = 'Run Backtest';
+  btn.disabled = false;
+}
+
+// ===== DCA Engine =====
+function runDCA(prices, startIdx, capital, period, asset) {
+  const totalPeriods = Math.floor((prices.length - 1 - startIdx) / period);
+  const amountPerPeriod = capital / totalPeriods;
+  let totalSpent = 0;
+  let totalCoins = 0;
+  const trades = [];
+  const curve = []; // {date, equity, cost, coins}
+
+  for (let i = startIdx; i < prices.length; i += period) {
+    const price = prices[i].price;
+    const spend = Math.min(amountPerPeriod, capital - totalSpent);
+    if (spend <= 0) break;
+
+    const qty = spend / price;
+    totalSpent += spend;
+    totalCoins += qty;
+    const avgCost = totalSpent / totalCoins;
+
+    trades.push({
+      date: prices[i].date,
+      action: 'Buy',
+      price,
+      qty,
+      spend,
+      totalSpent,
+      totalCoins,
+      avgCost,
+    });
+
+    curve.push({
+      date: prices[i].date,
+      equity: totalCoins * price + (capital - totalSpent),
+      cost: avgCost,
+      coins: totalCoins,
+      spent: totalSpent,
+    });
+  }
+
+  // Fill remaining curve points for last price
+  const lastPrice = prices[prices.length - 1].price;
+  const finalEquity = totalCoins * lastPrice + (capital - totalSpent);
+
+  // Max drawdown
+  let peak = capital, maxDD = 0;
+  for (const pt of curve) {
+    if (pt.equity > peak) peak = pt.equity;
+    const dd = (peak - pt.equity) / peak;
+    if (dd > maxDD) maxDD = dd;
+  }
+
+  const years = (new Date(prices[prices.length-1].date) - new Date(prices[startIdx].date)) / (365.25 * 86400000);
+  const annReturn = years > 0 ? (Math.pow(finalEquity / capital, 1/years) - 1) * 100 : 0;
+
+  return {
+    name: 'DCA',
+    totalSpent,
+    totalCoins,
+    avgCost: totalSpent / totalCoins,
+    finalEquity,
+    totalReturn: (finalEquity - capital) / capital * 100,
+    annReturn,
+    maxDD,
+    trades,
+    curve,
+    premium: 0,
+    cashRemaining: capital - totalSpent,
+  };
+}
+
+// ===== ATH Drawdown Engine =====
+function runATHDrawdown(prices, startIdx, athSeries, capital, period, levels, asset) {
+  let totalSpent = 0;
+  let totalCoins = 0;
+  let cashRemaining = capital;
+  const trades = [];
+  const curve = [];
+
+  // Track which levels have been filled in the current ATH cycle
+  let lastATH = athSeries[startIdx];
+  let levelsFilled = levels.map(() => false);
+
+  for (let i = startIdx; i < prices.length; i += period) {
+    const price = prices[i].price;
+    const ath = athSeries[i];
+
+    // New ATH → reset levels
+    if (ath > lastATH) {
+      lastATH = ath;
+      levelsFilled = levels.map(() => false);
+    }
+
+    const drawdown = 1 - price / ath;
+    let buyAmount = 0;
+
+    // Check each level
+    for (let lv = 0; lv < levels.length; lv++) {
+      if (!levelsFilled[lv] && drawdown >= levels[lv].dd) {
+        const alloc = levels[lv].alloc * capital;
+        buyAmount += alloc;
+        levelsFilled[lv] = true;
+      }
+    }
+
+    if (buyAmount > 0) {
+      const spend = Math.min(buyAmount, cashRemaining);
+      if (spend <= 0) {
+        curve.push({
+          date: prices[i].date,
+          equity: totalCoins * price + cashRemaining,
+          cost: totalCoins > 0 ? totalSpent / totalCoins : 0,
+          coins: totalCoins,
+          spent: totalSpent,
+        });
+        continue;
+      }
+
+      const qty = spend / price;
+      totalSpent += spend;
+      totalCoins += qty;
+      cashRemaining -= spend;
+      const avgCost = totalSpent / totalCoins;
+
+      trades.push({
+        date: prices[i].date,
+        action: 'Buy',
+        price,
+        qty,
+        spend,
+        drawdown: drawdown * 100,
+        ath,
+        totalSpent,
+        totalCoins,
+        avgCost,
+      });
+    }
+
+    curve.push({
+      date: prices[i].date,
+      equity: totalCoins * price + cashRemaining,
+      cost: totalCoins > 0 ? totalSpent / totalCoins : 0,
+      coins: totalCoins,
+      spent: totalSpent,
+    });
+  }
+
+  const lastPrice = prices[prices.length - 1].price;
+  const finalEquity = totalCoins * lastPrice + cashRemaining;
+
+  let peak = capital, maxDD = 0;
+  for (const pt of curve) {
+    if (pt.equity > peak) peak = pt.equity;
+    const dd = (peak - pt.equity) / peak;
+    if (dd > maxDD) maxDD = dd;
+  }
+
+  const years = (new Date(prices[prices.length-1].date) - new Date(prices[startIdx].date)) / (365.25 * 86400000);
+  const annReturn = years > 0 ? (Math.pow(finalEquity / capital, 1/years) - 1) * 100 : 0;
+
+  return {
+    name: 'ATH Drawdown',
+    totalSpent,
+    totalCoins,
+    avgCost: totalCoins > 0 ? totalSpent / totalCoins : 0,
+    finalEquity,
+    totalReturn: (finalEquity - capital) / capital * 100,
+    annReturn,
+    maxDD,
+    trades,
+    curve,
+    premium: 0,
+    cashRemaining,
+  };
+}
+
+// ===== Options Ladder Engine =====
+function runOptionsLadder(prices, startIdx, athSeries, capital, period, levels, riskFreeRate, getIV, asset) {
+  let cash = capital;
+  let totalCoins = 0;
+  let totalCostBasis = 0; // total $ spent on coins (assign price - premium credited)
+  let totalPremium = 0;
+  const trades = [];
+  const curve = [];
+
+  // Active puts: [{strike, qty, premium, expIdx, level, marginLocked}]
+  let activePuts = [];
+
+  let lastATH = athSeries[startIdx];
+  // Track which levels have active or filled puts in this ATH cycle
+  let levelActive = levels.map(() => false);
+
+  for (let i = startIdx; i < prices.length - 1; i += period) {
+    const price = prices[i].price;
+    const ath = athSeries[i];
+    const iv = getIV(i);
+    const T = period / 365;
+
+    // 1. New ATH → reset ladder
+    if (ath > lastATH * 1.001) {
+      lastATH = ath;
+      // Only reset levels that don't have active puts
+      levelActive = activePuts.length > 0
+        ? levels.map((_, lv) => activePuts.some(p => p.level === lv))
+        : levels.map(() => false);
+
+      if (levelActive.every(x => !x)) {
+        trades.push({
+          date: prices[i].date,
+          action: 'ATH Reset',
+          price,
+          ath,
+          detail: `New ATH $${fmt(ath).slice(1)} — ladder reset`,
+        });
+      }
+    }
+
+    // 2. Settle expiring puts
+    const expiring = activePuts.filter(p => p.expIdx <= i);
+    const remaining = activePuts.filter(p => p.expIdx > i);
+
+    for (const put of expiring) {
+      if (price <= put.strike) {
+        // ASSIGNED — buy coins at strike
+        const assignQty = put.marginLocked / put.strike;
+        const netCost = put.strike - put.premium / assignQty; // effective cost per coin
+        totalCoins += assignQty;
+        totalCostBasis += put.marginLocked - put.premium;
+        // cash was already locked as margin, premium already added to cash
+        // just release the margin notation (cash unchanged since margin = locked cash)
+
+        trades.push({
+          date: prices[i].date,
+          action: 'Assigned',
+          price,
+          strike: put.strike,
+          qty: assignQty,
+          premium: put.premium,
+          netCost,
+          level: put.level,
+          ath: put.ath,
+        });
+        levelActive[put.level] = false;
+      } else {
+        // EXPIRED OTM — margin released, premium already collected
+        cash += put.marginLocked; // release margin back to available cash
+        trades.push({
+          date: prices[i].date,
+          action: 'Expired OTM',
+          price,
+          strike: put.strike,
+          premium: put.premium,
+          level: put.level,
+        });
+        levelActive[put.level] = false;
+      }
+    }
+    activePuts = remaining;
+
+    // 3. Sell new puts for unfilled levels
+    const drawdown = 1 - price / ath;
+    const allocPcts = [0.15, 0.25, 0.30, 0.30];
+    // Available cash for new puts (total cash minus locked margin)
+    const lockedMargin = activePuts.reduce((s, p) => s + p.marginLocked, 0);
+    let availableCash = cash - lockedMargin;
+
+    for (let lv = 0; lv < levels.length; lv++) {
+      if (levelActive[lv]) continue; // already have a put at this level
+      if (availableCash <= 0) break;
+
+      const strike = ath * (1 - levels[lv].dd);
+      if (strike <= 0 || strike >= price * 1.5) continue; // sanity
+
+      const putPremium = bsPrice(price, strike, T, riskFreeRate, iv, 'put');
+      const allocAmount = allocPcts[lv] * capital;
+      const marginNeeded = Math.min(allocAmount, availableCash);
+      if (marginNeeded < 100) continue;
+
+      const qty = marginNeeded / strike; // number of coins this put covers
+      const totalPutPremium = putPremium * qty;
+
+      // Lock margin, collect premium
+      cash -= marginNeeded; // lock margin
+      // But we keep track: marginLocked will be returned on expiry or used on assign
+      cash += totalPutPremium; // collect premium immediately
+      totalPremium += totalPutPremium;
+      availableCash -= marginNeeded;
+
+      const expIdx = Math.min(i + period, prices.length - 1);
+      activePuts.push({
+        strike,
+        qty,
+        premium: totalPutPremium,
+        expIdx,
+        level: lv,
+        marginLocked: marginNeeded,
+        ath,
+      });
+      levelActive[lv] = true;
+
+      trades.push({
+        date: prices[i].date,
+        action: 'Sell Put',
+        price,
+        strike,
+        premium: totalPutPremium,
+        iv: iv * 100,
+        margin: marginNeeded,
+        level: lv,
+        ath,
+        expiry: prices[expIdx]?.date || 'end',
+      });
+    }
+
+    // 4. Record equity curve
+    const lockedNow = activePuts.reduce((s, p) => s + p.marginLocked, 0);
+    const coinValue = totalCoins * price;
+    const equity = cash + coinValue; // cash includes unlocked + premium; margin is "inside" cash accounting
+    const avgCost = totalCoins > 0 ? totalCostBasis / totalCoins : 0;
+
+    curve.push({
+      date: prices[i].date,
+      equity,
+      cost: avgCost,
+      coins: totalCoins,
+      spent: totalCostBasis,
+    });
+  }
+
+  // Settle any remaining active puts at end
+  const lastPrice = prices[prices.length - 1].price;
+  for (const put of activePuts) {
+    if (lastPrice <= put.strike) {
+      const assignQty = put.marginLocked / put.strike;
+      totalCoins += assignQty;
+      totalCostBasis += put.marginLocked - put.premium;
+    } else {
+      cash += put.marginLocked;
+    }
+  }
+
+  const finalEquity = cash + totalCoins * lastPrice;
+
+  let peak = capital, maxDD = 0;
+  for (const pt of curve) {
+    if (pt.equity > peak) peak = pt.equity;
+    const dd = (peak - pt.equity) / peak;
+    if (dd > maxDD) maxDD = dd;
+  }
+
+  const years = (new Date(prices[prices.length-1].date) - new Date(prices[startIdx].date)) / (365.25 * 86400000);
+  const annReturn = years > 0 ? (Math.pow(finalEquity / capital, 1/years) - 1) * 100 : 0;
+
+  return {
+    name: 'Options Ladder',
+    totalSpent: totalCostBasis,
+    totalCoins,
+    avgCost: totalCoins > 0 ? totalCostBasis / totalCoins : 0,
+    finalEquity,
+    totalReturn: (finalEquity - capital) / capital * 100,
+    annReturn,
+    maxDD,
+    trades,
+    curve,
+    premium: totalPremium,
+    cashRemaining: cash,
+  };
+}
+
+// ===== RENDER: Summary Cards =====
+function renderSummary(dca, ath, opt, capital, asset) {
+  const bar = $('summaryBar');
+  bar.style.display = 'grid';
+  const best = [dca, ath, opt].sort((a, b) => b.finalEquity - a.finalEquity)[0];
+  const bestCost = [dca, ath, opt].filter(s => s.totalCoins > 0).sort((a, b) => a.avgCost - b.avgCost)[0];
+
+  bar.innerHTML = `
+    <div class="stat" style="border-color:#f59e0b"><div class="stat-label">DCA Final</div><div class="stat-value color-dca">${fmt(dca.finalEquity)}</div><div class="stat-sub">${pct(dca.totalReturn)} total | ${pct(dca.annReturn)} ann.</div></div>
+    <div class="stat" style="border-color:#3b82f6"><div class="stat-label">ATH DD Final</div><div class="stat-value color-ath">${fmt(ath.finalEquity)}</div><div class="stat-sub">${pct(ath.totalReturn)} total | ${pct(ath.annReturn)} ann.</div></div>
+    <div class="stat" style="border-color:#10b981"><div class="stat-label">Options Final</div><div class="stat-value color-opt">${fmt(opt.finalEquity)}</div><div class="stat-sub">${pct(opt.totalReturn)} total | ${pct(opt.annReturn)} ann.</div></div>
+    <div class="stat"><div class="stat-label">Best Strategy</div><div class="stat-value">${best.name}</div><div class="stat-sub">${fmt(best.finalEquity)} | ${pct(best.annReturn)} ann.</div></div>
+    <div class="stat"><div class="stat-label">Lowest Cost Basis</div><div class="stat-value">${bestCost ? fmt(bestCost.avgCost) : '—'}</div><div class="stat-sub">${bestCost ? bestCost.name : '—'}</div></div>
+    <div class="stat"><div class="stat-label">Option Premium</div><div class="stat-value">${fmt(opt.premium)}</div><div class="stat-sub">${(opt.premium / capital * 100).toFixed(1)}% of capital</div></div>
+  `;
+}
+
+// ===== RENDER: Price Chart =====
+function renderPriceChart(prices, startIdx, athSeries, dca, ath, opt, levels, asset) {
+  $('chartPriceSection').style.display = 'block';
+  const canvas = $('chartPrice');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 400 * dpr;
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = 400;
+  ctx.clearRect(0, 0, W, H);
+
+  const visiblePrices = prices.slice(startIdx);
+  const visibleATH = athSeries.slice(startIdx);
+  const pArr = visiblePrices.map(p => p.price);
+  const maxP = Math.max(...pArr, ...visibleATH) * 1.05;
+  const minP = Math.min(...pArr) * 0.9;
+
+  const padL = 70, padR = 20, padT = 20, padB = 40;
+  const cW = W - padL - padR, cH = H - padT - padB;
+  const xStep = cW / (visiblePrices.length - 1);
+  const toY = v => padT + cH - ((v - minP) / (maxP - minP)) * cH;
+  const toX = i => padL + i * xStep;
+
+  // Grid
+  ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+  for (let i = 0; i < 5; i++) {
+    const y = padT + (cH / 4) * i;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+    const val = maxP - ((maxP - minP) / 4) * i;
+    ctx.fillStyle = '#64748b'; ctx.font = '11px Inter';
+    ctx.fillText('$' + (val >= 1000 ? (val/1000).toFixed(0) + 'K' : val.toFixed(0)), 5, y + 4);
+  }
+
+  // Price line
+  ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  for (let i = 0; i < visiblePrices.length; i++) {
+    const x = toX(i), y = toY(pArr[i]);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // ATH line (dashed)
+  ctx.strokeStyle = '#475569'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+  ctx.beginPath();
+  for (let i = 0; i < visiblePrices.length; i++) {
+    const x = toX(i), y = toY(visibleATH[i]);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ATH level lines (faint)
+  const lvColors = ['#f59e0b33', '#3b82f633', '#8b5cf633', '#ef444433'];
+  for (let lv = 0; lv < levels.length; lv++) {
+    ctx.strokeStyle = lvColors[lv]; ctx.lineWidth = 0.8; ctx.setLineDash([2, 4]);
+    ctx.beginPath();
+    for (let i = 0; i < visiblePrices.length; i++) {
+      const lvPrice = visibleATH[i] * (1 - levels[lv].dd);
+      const x = toX(i), y = toY(lvPrice);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Buy signals — DCA (small yellow dots)
+  const dateToIdx = {};
+  visiblePrices.forEach((p, i) => dateToIdx[p.date] = i);
+
+  ctx.fillStyle = '#f59e0b';
+  for (const t of dca.trades) {
+    const idx = dateToIdx[t.date];
+    if (idx == null) continue;
+    ctx.beginPath();
+    ctx.arc(toX(idx), toY(t.price), 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Buy signals — ATH (blue triangles)
+  ctx.fillStyle = '#3b82f6';
+  for (const t of ath.trades) {
+    const idx = dateToIdx[t.date];
+    if (idx == null) continue;
+    const x = toX(idx), y = toY(t.price);
+    ctx.beginPath();
+    ctx.moveTo(x, y - 5); ctx.lineTo(x - 4, y + 3); ctx.lineTo(x + 4, y + 3);
+    ctx.closePath(); ctx.fill();
+  }
+
+  // Buy signals — Options assignments (green diamonds)
+  ctx.fillStyle = '#10b981';
+  for (const t of opt.trades) {
+    if (t.action !== 'Assigned') continue;
+    const idx = dateToIdx[t.date];
+    if (idx == null) continue;
+    const x = toX(idx), y = toY(t.price);
+    ctx.beginPath();
+    ctx.moveTo(x, y - 6); ctx.lineTo(x + 5, y); ctx.lineTo(x, y + 6); ctx.lineTo(x - 5, y);
+    ctx.closePath(); ctx.fill();
+  }
+
+  // Date labels
+  ctx.fillStyle = '#64748b'; ctx.font = '10px Inter';
+  const labelEvery = Math.max(1, Math.floor(visiblePrices.length / 10));
+  for (let i = 0; i < visiblePrices.length; i += labelEvery) {
+    ctx.save();
+    ctx.translate(toX(i), H - 5);
+    ctx.rotate(-0.4);
+    ctx.fillText(visiblePrices[i].date.slice(0, 7), 0, 0);
+    ctx.restore();
+  }
+
+  // Legend
+  ctx.font = '11px Inter';
+  let lx = padL + 10;
+  ctx.fillStyle = '#94a3b8'; ctx.fillRect(lx, padT + 8, 14, 2); lx += 18;
+  ctx.fillText('Price', lx, padT + 13); lx += 40;
+  ctx.fillStyle = '#475569'; ctx.fillRect(lx, padT + 8, 14, 2); lx += 18;
+  ctx.fillText('ATH', lx, padT + 13); lx += 35;
+  ctx.fillStyle = '#f59e0b';
+  ctx.beginPath(); ctx.arc(lx + 4, padT + 10, 3, 0, Math.PI * 2); ctx.fill(); lx += 12;
+  ctx.fillText('DCA', lx, padT + 13); lx += 32;
+  ctx.fillStyle = '#3b82f6';
+  ctx.beginPath(); ctx.moveTo(lx + 4, padT + 5); ctx.lineTo(lx, padT + 13); ctx.lineTo(lx + 8, padT + 13); ctx.closePath(); ctx.fill(); lx += 14;
+  ctx.fillText('ATH DD', lx, padT + 13); lx += 48;
+  ctx.fillStyle = '#10b981';
+  ctx.beginPath(); ctx.moveTo(lx + 4, padT + 4); ctx.lineTo(lx + 9, padT + 10); ctx.lineTo(lx + 4, padT + 16); ctx.lineTo(lx - 1, padT + 10); ctx.closePath(); ctx.fill(); lx += 14;
+  ctx.fillText('Options', lx, padT + 13);
+}
+
+// ===== RENDER: Equity Chart =====
+function renderEquityChart(dca, ath, opt, asset) {
+  $('chartEquitySection').style.display = 'block';
+  const canvas = $('chartEquity');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 400 * dpr;
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = 400;
+  ctx.clearRect(0, 0, W, H);
+
+  // Merge all dates and create aligned curves
+  const allDates = new Set([...dca.curve.map(c => c.date), ...ath.curve.map(c => c.date), ...opt.curve.map(c => c.date)]);
+  const dates = [...allDates].sort();
+
+  function interpolate(curve, dates) {
+    const map = {};
+    curve.forEach(c => map[c.date] = c.equity);
+    const result = [];
+    let last = curve[0]?.equity || 0;
+    for (const d of dates) {
+      if (map[d] != null) last = map[d];
+      result.push(last);
+    }
+    return result;
+  }
+
+  const dcaEq = interpolate(dca.curve, dates);
+  const athEq = interpolate(ath.curve, dates);
+  const optEq = interpolate(opt.curve, dates);
+
+  const all = [...dcaEq, ...athEq, ...optEq];
+  const maxY = Math.max(...all) * 1.05;
+  const minY = Math.min(...all) * 0.95;
+
+  const padL = 70, padR = 20, padT = 20, padB = 40;
+  const cW = W - padL - padR, cH = H - padT - padB;
+  const xStep = dates.length > 1 ? cW / (dates.length - 1) : cW;
+  const toY = v => padT + cH - ((v - minY) / (maxY - minY)) * cH;
+  const toX = i => padL + i * xStep;
+
+  // Grid
+  ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+  for (let i = 0; i < 5; i++) {
+    const y = padT + (cH / 4) * i;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+    const val = maxY - ((maxY - minY) / 4) * i;
+    ctx.fillStyle = '#64748b'; ctx.font = '11px Inter';
+    ctx.fillText('$' + (val/1000).toFixed(0) + 'K', 5, y + 4);
+  }
+
+  // Draw curves
+  function drawLine(data, color, width) {
+    ctx.strokeStyle = color; ctx.lineWidth = width;
+    ctx.beginPath();
+    for (let i = 0; i < data.length; i++) {
+      const x = toX(i), y = toY(data[i]);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  drawLine(dcaEq, '#f59e0b', 2);
+  drawLine(athEq, '#3b82f6', 2);
+  drawLine(optEq, '#10b981', 2.5);
+
+  // Capital line
+  const capY = toY(dca.curve[0]?.equity || parseFloat($('capital').value));
+  ctx.strokeStyle = '#334155'; ctx.lineWidth = 1; ctx.setLineDash([2, 4]);
+  ctx.beginPath(); ctx.moveTo(padL, toY(parseFloat($('capital').value))); ctx.lineTo(W-padR, toY(parseFloat($('capital').value))); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Date labels
+  ctx.fillStyle = '#64748b'; ctx.font = '10px Inter';
+  const labelEvery = Math.max(1, Math.floor(dates.length / 10));
+  for (let i = 0; i < dates.length; i += labelEvery) {
+    ctx.save();
+    ctx.translate(toX(i), H - 5);
+    ctx.rotate(-0.4);
+    ctx.fillText(dates[i].slice(0, 7), 0, 0);
+    ctx.restore();
+  }
+
+  // Legend
+  ctx.font = '12px Inter';
+  let lx = padL + 10;
+  ctx.fillStyle = '#f59e0b'; ctx.fillRect(lx, padT + 10, 16, 3); lx += 20;
+  ctx.fillText('DCA', lx, padT + 15); lx += 40;
+  ctx.fillStyle = '#3b82f6'; ctx.fillRect(lx, padT + 10, 16, 3); lx += 20;
+  ctx.fillText('ATH Drawdown', lx, padT + 15); lx += 100;
+  ctx.fillStyle = '#10b981'; ctx.fillRect(lx, padT + 10, 16, 3); lx += 20;
+  ctx.fillText('Options Ladder', lx, padT + 15);
+}
+
+// ===== RENDER: Cost Basis Chart =====
+function renderCostChart(dca, ath, opt, asset) {
+  $('chartCostSection').style.display = 'block';
+  const canvas = $('chartCost');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 400 * dpr;
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = 400;
+  ctx.clearRect(0, 0, W, H);
+
+  const allDates = new Set([...dca.curve.map(c => c.date), ...ath.curve.map(c => c.date), ...opt.curve.map(c => c.date)]);
+  const dates = [...allDates].sort();
+
+  function interpolateCost(curve, dates) {
+    const map = {};
+    curve.forEach(c => { if (c.cost > 0) map[c.date] = c.cost; });
+    const result = [];
+    let last = 0;
+    for (const d of dates) {
+      if (map[d] != null) last = map[d];
+      result.push(last);
+    }
+    return result;
+  }
+
+  const dcaCost = interpolateCost(dca.curve, dates);
+  const athCost = interpolateCost(ath.curve, dates);
+  const optCost = interpolateCost(opt.curve, dates);
+
+  const allCosts = [...dcaCost, ...athCost, ...optCost].filter(c => c > 0);
+  if (allCosts.length === 0) return;
+  const maxY = Math.max(...allCosts) * 1.1;
+  const minY = Math.min(...allCosts) * 0.8;
+
+  const padL = 70, padR = 20, padT = 20, padB = 40;
+  const cW = W - padL - padR, cH = H - padT - padB;
+  const xStep = dates.length > 1 ? cW / (dates.length - 1) : cW;
+  const toY = v => v > 0 ? padT + cH - ((v - minY) / (maxY - minY)) * cH : padT + cH;
+  const toX = i => padL + i * xStep;
+
+  // Grid
+  ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+  for (let i = 0; i < 5; i++) {
+    const y = padT + (cH / 4) * i;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+    const val = maxY - ((maxY - minY) / 4) * i;
+    ctx.fillStyle = '#64748b'; ctx.font = '11px Inter';
+    ctx.fillText('$' + (val >= 1000 ? (val/1000).toFixed(0) + 'K' : val.toFixed(0)), 5, y + 4);
+  }
+
+  function drawCostLine(data, color, width) {
+    ctx.strokeStyle = color; ctx.lineWidth = width;
+    ctx.beginPath();
+    let started = false;
+    for (let i = 0; i < data.length; i++) {
+      if (data[i] <= 0) continue;
+      const x = toX(i), y = toY(data[i]);
+      if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  drawCostLine(dcaCost, '#f59e0b', 2);
+  drawCostLine(athCost, '#3b82f6', 2);
+  drawCostLine(optCost, '#10b981', 2.5);
+
+  // Date labels
+  ctx.fillStyle = '#64748b'; ctx.font = '10px Inter';
+  const labelEvery = Math.max(1, Math.floor(dates.length / 10));
+  for (let i = 0; i < dates.length; i += labelEvery) {
+    ctx.save();
+    ctx.translate(toX(i), H - 5);
+    ctx.rotate(-0.4);
+    ctx.fillText(dates[i].slice(0, 7), 0, 0);
+    ctx.restore();
+  }
+
+  // Legend
+  ctx.font = '12px Inter';
+  let lx = padL + 10;
+  ctx.fillStyle = '#f59e0b'; ctx.fillRect(lx, padT + 10, 16, 3); lx += 20;
+  ctx.fillText('DCA Avg Cost', lx, padT + 15); lx += 90;
+  ctx.fillStyle = '#3b82f6'; ctx.fillRect(lx, padT + 10, 16, 3); lx += 20;
+  ctx.fillText('ATH DD Avg Cost', lx, padT + 15); lx += 110;
+  ctx.fillStyle = '#10b981'; ctx.fillRect(lx, padT + 10, 16, 3); lx += 20;
+  ctx.fillText('Options Avg Cost', lx, padT + 15);
+}
+
+// ===== RENDER: Comparison Table =====
+function renderComparisonTable(dca, ath, opt, capital, asset) {
+  $('cmpSection').style.display = 'block';
+  const wrap = $('cmpTableWrap');
+  const lastPrice = lastResults.prices[lastResults.prices.length - 1].price;
+
+  function row(s, colorCls) {
+    const retCls = s.totalReturn >= 0 ? 'pnl-pos' : 'pnl-neg';
+    const annCls = s.annReturn >= 0 ? 'pnl-pos' : 'pnl-neg';
+    return `<tr>
+      <td class="strat-name ${colorCls}">${s.name}</td>
+      <td>${fmt(s.totalSpent)}</td>
+      <td>${fmtCoin(s.totalCoins, asset)}</td>
+      <td>${s.avgCost > 0 ? fmt(s.avgCost) : '—'}</td>
+      <td style="font-weight:700">${fmt(s.finalEquity)}</td>
+      <td class="${retCls}">${pct(s.totalReturn)}</td>
+      <td class="${annCls}">${pct(s.annReturn)}</td>
+      <td style="color:${s.maxDD > 0.3 ? '#ef4444' : '#f59e0b'}">${(s.maxDD * 100).toFixed(1)}%</td>
+      <td>${fmt(s.premium)}</td>
+      <td>${fmt(s.cashRemaining)}</td>
+    </tr>`;
+  }
+
+  wrap.innerHTML = `<table class="cmp-table">
+    <thead><tr>
+      <th>Strategy</th><th>Total Invested</th><th>Coins</th><th>Avg Cost</th>
+      <th>Final Value</th><th>Total Return</th><th>Ann. Return</th><th>Max DD</th>
+      <th>Premium</th><th>Cash Left</th>
+    </tr></thead>
+    <tbody>
+      ${row(dca, 'color-dca')}
+      ${row(ath, 'color-ath')}
+      ${row(opt, 'color-opt')}
+    </tbody>
+  </table>`;
+}
+
+// ===== RENDER: Trade Log =====
+let activeLogTab = 'dca';
+
+function renderTradeLog(tab) {
+  if (!lastResults) return;
+  activeLogTab = tab;
+  $('logSection').style.display = 'block';
+
+  // Tabs
+  $('logTabs').innerHTML = [
+    { key: 'dca', label: 'DCA', color: '#f59e0b' },
+    { key: 'ath', label: 'ATH Drawdown', color: '#3b82f6' },
+    { key: 'opt', label: 'Options Ladder', color: '#10b981' },
+  ].map(t => `<button class="log-tab ${tab === t.key ? 'active' : ''}" onclick="renderTradeLog('${t.key}')" style="${tab === t.key ? 'border-color:' + t.color + ';color:' + t.color : ''}">${t.label} (${lastResults[t.key].trades.length})</button>`).join('');
+
+  const asset = lastResults.asset;
+  const head = $('logHead');
+  const body = $('logBody');
+
+  if (tab === 'dca') {
+    head.innerHTML = '<tr><th>#</th><th>Date</th><th>Action</th><th>Price</th><th>Qty</th><th>Spend</th><th>Total Coins</th><th>Avg Cost</th></tr>';
+    body.innerHTML = lastResults.dca.trades.map((t, i) => `<tr>
+      <td style="color:#64748b">${i+1}</td>
+      <td>${t.date}</td>
+      <td><span class="tag-buy">Buy</span></td>
+      <td>${fmt(t.price)}</td>
+      <td>${fmtCoin(t.qty, asset)}</td>
+      <td>${fmt(t.spend)}</td>
+      <td>${fmtCoin(t.totalCoins, asset)}</td>
+      <td>${fmt(t.avgCost)}</td>
+    </tr>`).join('');
+  } else if (tab === 'ath') {
+    head.innerHTML = '<tr><th>#</th><th>Date</th><th>Action</th><th>Price</th><th>ATH</th><th>Drawdown</th><th>Qty</th><th>Spend</th><th>Total Coins</th><th>Avg Cost</th></tr>';
+    body.innerHTML = lastResults.ath.trades.map((t, i) => `<tr>
+      <td style="color:#64748b">${i+1}</td>
+      <td>${t.date}</td>
+      <td><span class="tag-buy">Buy</span></td>
+      <td>${fmt(t.price)}</td>
+      <td>${fmt(t.ath)}</td>
+      <td style="color:#ef4444;font-weight:600">-${t.drawdown.toFixed(1)}%</td>
+      <td>${fmtCoin(t.qty, asset)}</td>
+      <td>${fmt(t.spend)}</td>
+      <td>${fmtCoin(t.totalCoins, asset)}</td>
+      <td>${fmt(t.avgCost)}</td>
+    </tr>`).join('');
+  } else {
+    head.innerHTML = '<tr><th>#</th><th>Date</th><th>Action</th><th>Price</th><th>Strike</th><th>Level</th><th>IV</th><th>Premium</th><th>Detail</th></tr>';
+    body.innerHTML = lastResults.opt.trades.map((t, i) => {
+      let tag, detail = '';
+      if (t.action === 'Sell Put') {
+        tag = '<span class="tag-sell-put">Sell Put</span>';
+        detail = `Margin: ${fmt(t.margin)} | Exp: ${t.expiry}`;
+      } else if (t.action === 'Assigned') {
+        tag = '<span class="tag-assign">Assigned</span>';
+        detail = `${fmtCoin(t.qty, lastResults.asset)} @ net ${fmt(t.netCost)}`;
+      } else if (t.action === 'Expired OTM') {
+        tag = '<span class="tag-expire">Expired OTM</span>';
+        detail = `Premium kept: ${fmt(t.premium)}`;
+      } else if (t.action === 'ATH Reset') {
+        tag = '<span class="tag-reset">ATH Reset</span>';
+        detail = t.detail || '';
+      }
+      return `<tr>
+        <td style="color:#64748b">${i+1}</td>
+        <td>${t.date}</td>
+        <td>${tag}</td>
+        <td>${fmt(t.price)}</td>
+        <td>${t.strike ? fmt(t.strike) : '—'}</td>
+        <td>${t.level != null ? 'L' + (t.level + 1) : '—'}</td>
+        <td>${t.iv ? t.iv.toFixed(0) + '%' : '—'}</td>
+        <td>${t.premium ? fmt(t.premium) : '—'}</td>
+        <td style="font-size:11px;color:#94a3b8">${detail}</td>
+      </tr>`;
+    }).join('');
+  }
+}
+</script>
+</body>
+</html>
