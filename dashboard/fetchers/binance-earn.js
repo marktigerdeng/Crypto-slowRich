@@ -47,7 +47,14 @@ async function fetchPublicEndpoint() {
     try {
       const resp = await fetch(PUBLIC_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+          'Accept': 'application/json',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Origin': 'https://www.binance.com',
+          'Referer': 'https://www.binance.com/en/earn',
+        },
         body: JSON.stringify({
           asset,
           pageSize: 10,
@@ -55,6 +62,10 @@ async function fetchPublicEndpoint() {
           status: 'SUBSCRIBABLE',
         }),
       });
+      if (resp.status === 403) {
+        console.warn(`[Binance] Public API returned 403 for ${asset} (geo-blocked or WAF). Using fallback.`);
+        continue;
+      }
       if (!resp.ok) continue;
       const json = await resp.json();
       const items = json.data?.list || json.data || [];
@@ -67,7 +78,9 @@ async function fetchPublicEndpoint() {
           platform: 'binance',
         });
       }
-    } catch { /* skip */ }
+    } catch (err) {
+      console.warn(`[Binance] Public endpoint error for ${asset}:`, err.message);
+    }
   }
   return results;
 }

@@ -31,6 +31,16 @@ async function fetchAnnouncements() {
       }),
     });
 
+    if (resp.status === 403) {
+      console.warn('[Binance Announcements] 403 Forbidden (geo-blocked or WAF). Using fallback.');
+      return cache.get(CACHE_KEY) || [{
+        title: 'Binance Earn announcements unavailable (403) — visit directly',
+        url: 'https://www.binance.com/en/support/announcement/earn',
+        platform: 'binance',
+        highlighted: false,
+        fallback: true,
+      }];
+    }
     if (!resp.ok) throw new Error(`Binance CMS API ${resp.status}`);
     const json = await resp.json();
     const articles = (json.data?.catalogs?.[0]?.articles || json.data?.articles || [])

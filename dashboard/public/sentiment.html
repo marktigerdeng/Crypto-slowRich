@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>市场情绪感知 — SlowRich</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#fafafa;color:#1a1a1a;min-height:100vh;line-height:1.6}
+a{color:#10b981;text-decoration:none}
+a:hover{text-decoration:underline}
+
+.navbar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px;background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:100}
+.navbar-brand{font-size:20px;font-weight:800;color:#1a1a1a;letter-spacing:-.3px;text-decoration:none}
+.navbar-brand span{color:#10b981}
+.navbar-links{display:flex;gap:4px}
+.navbar-links a{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;color:#666;transition:all .2s}
+.navbar-links a:hover{color:#1a1a1a;background:#f3f4f6;text-decoration:none}
+.navbar-links a.active{color:#10b981;background:#ecfdf5}
+
+.container{max-width:1200px;margin:0 auto;padding:24px 28px}
+.page-title{font-size:24px;font-weight:800;margin-bottom:4px}
+.page-sub{font-size:14px;color:#666;margin-bottom:28px}
+
+/* ─── Composite Score ─── */
+.score-hero{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:32px;text-align:center;margin-bottom:24px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.score-ring-wrap{position:relative;width:180px;height:180px;margin:0 auto 20px}
+.score-ring-wrap canvas{position:absolute;top:0;left:0}
+.score-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.score-number{font-size:48px;font-weight:800;line-height:1}
+.score-max{font-size:13px;color:#999;margin-top:4px}
+.score-level{font-size:18px;font-weight:700;margin-bottom:8px}
+.score-rec{font-size:13px;color:#666;max-width:500px;margin:0 auto;line-height:1.6}
+.score-updated{font-size:11px;color:#bbb;margin-top:12px}
+
+/* ─── Allocation Suggestion ─── */
+.alloc-bar{display:flex;height:12px;border-radius:6px;overflow:hidden;margin:16px 0 8px;gap:2px}
+.alloc-seg{transition:width .5s}
+.alloc-legend{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+.alloc-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#666}
+.alloc-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+
+/* ─── Dimension Grid ─── */
+.dim-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:24px}
+.dim-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.dim-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.dim-title{font-size:13px;font-weight:700;color:#1a1a1a}
+.dim-desc{font-size:11px;color:#999;margin-top:2px}
+.dim-score-badge{font-size:22px;font-weight:800}
+.dim-score-label{font-size:10px;color:#999;text-align:right;margin-top:2px}
+
+/* Gauge bar */
+.gauge-wrap{margin-top:4px}
+.gauge-track{height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;position:relative}
+.gauge-fill{height:100%;border-radius:4px;transition:width .6s ease}
+.gauge-ticks{display:flex;justify-content:space-between;font-size:9px;color:#bbb;margin-top:3px}
+
+.dim-values{display:flex;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid #f3f4f6;flex-wrap:wrap}
+.dim-val-item{font-size:11px;color:#666}
+.dim-val-item strong{display:block;font-size:13px;font-weight:600;color:#1a1a1a}
+
+/* Signal pill */
+.signal-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600}
+.pill-bullish{background:#ecfdf5;color:#059669}
+.pill-bearish{background:#fef2f2;color:#dc2626}
+.pill-neutral{background:#f3f4f6;color:#666}
+.pill-greed{background:#fef9e7;color:#d97706}
+.pill-fear{background:#fef2f2;color:#dc2626}
+.pill-extreme-fear{background:#fee2e2;color:#b91c1c}
+.pill-extreme-greed{background:#ede9fe;color:#7c3aed}
+
+/* ─── F&G History Chart ─── */
+.chart-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:24px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.chart-card-title{font-size:14px;font-weight:700;margin-bottom:16px}
+.chart-wrap{position:relative;height:200px}
+
+/* ─── Loading ─── */
+.loading-overlay{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px;gap:12px;color:#999}
+.spinner{width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:#10b981;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ─── Footer ─── */
+footer{padding:24px;text-align:center;color:#ccc;font-size:12px;border-top:1px solid #e5e7eb;margin-top:40px;background:#fff}
+
+@media(max-width:640px){
+  .navbar{flex-direction:column;gap:8px;padding:12px 16px}
+  .container{padding:16px}
+  .dim-grid{grid-template-columns:1fr}
+  .score-number{font-size:40px}
+}
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" href="/">Slow<span>Rich</span></a>
+  <div class="navbar-links">
+    <a href="/">首页</a>
+    <a href="/sentiment.html" class="active">市场情绪</a>
+    <a href="/stable-portfolio.html">稳健组合</a>
+    <a href="/options-monitor.html">期权</a>
+    <a href="/delta-neutral.html">Delta Neutral</a>
+    <a href="/allweather.html">全天候</a>
+    <a href="/portfolio-summary.html">组合</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="page-title">市场情绪感知</div>
+  <div class="page-sub">多维度实时感知，不预测未来，只读懂现在</div>
+
+  <div id="mainContent">
+    <div class="loading-overlay">
+      <div class="spinner"></div>
+      <div>加载情绪数据...</div>
+    </div>
+  </div>
+</div>
+
+<footer>SlowRich — 数据源：Alternative.me · Binance · Deribit · CryptoCompare</footer>
+
+<script>
+const COLORS = {
+  fearGreed: '#f59e0b',
+  funding: '#3b82f6',
+  vrp: '#8b5cf6',
+  cta: '#10b981',
+};
+
+const ALLOC_COLORS = {
+  stable: '#10b981',
+  options: '#f59e0b',
+  cta: '#3b82f6',
+  longHold: '#e5e7eb',
+};
+
+let fngChart = null;
+
+function scoreColor(score) {
+  if (score <= 20) return '#ef4444';
+  if (score <= 35) return '#f97316';
+  if (score <= 55) return '#f59e0b';
+  if (score <= 70) return '#10b981';
+  return '#8b5cf6';
+}
+
+function gaugeColor(score) {
+  return scoreColor(score);
+}
+
+function pillClass(label) {
+  const l = (label || '').toLowerCase();
+  if (l.includes('extreme fear')) return 'pill-extreme-fear';
+  if (l.includes('fear')) return 'pill-fear';
+  if (l.includes('extreme greed')) return 'pill-extreme-greed';
+  if (l.includes('greed')) return 'pill-greed';
+  if (l.includes('bullish')) return 'pill-bullish';
+  if (l.includes('bearish')) return 'pill-bearish';
+  return 'pill-neutral';
+}
+
+function fmt(v, suffix='', decimals=2) {
+  if (v == null) return '—';
+  return (typeof v === 'number' ? v.toFixed(decimals) : v) + suffix;
+}
+
+function buildRingChart(score, color) {
+  const canvas = document.getElementById('ringCanvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = 180 * dpr; canvas.height = 180 * dpr;
+  canvas.style.width = '180px'; canvas.style.height = '180px';
+  ctx.scale(dpr, dpr);
+
+  const cx = 90, cy = 90, r = 72, lineW = 14;
+  const startAngle = -Math.PI * 1.25;
+  const totalAngle = Math.PI * 2.5;
+  const fillAngle = totalAngle * (score / 100);
+
+  // Track
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, startAngle, startAngle + totalAngle);
+  ctx.strokeStyle = '#f3f4f6';
+  ctx.lineWidth = lineW;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Fill
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, startAngle, startAngle + fillAngle);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lineW;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+}
+
+function buildFngChart(history) {
+  if (!history || !history.length) return;
+  const canvas = document.getElementById('fngChartCanvas');
+  if (!canvas) return;
+  if (fngChart) fngChart.destroy();
+
+  const labels = history.map(d => d.date).reverse();
+  const values = history.map(d => d.value).reverse();
+
+  fngChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: '恐慌贪婪指数',
+        data: values,
+        borderColor: '#f59e0b',
+        backgroundColor: 'rgba(245,158,11,0.08)',
+        borderWidth: 2,
+        pointRadius: 2,
+        tension: 0.3,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.parsed.y} — ${ctx.parsed.y <= 25 ? 'Extreme Fear' : ctx.parsed.y <= 45 ? 'Fear' : ctx.parsed.y <= 55 ? 'Neutral' : ctx.parsed.y <= 75 ? 'Greed' : 'Extreme Greed'}`
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { font: { size: 10 }, maxRotation: 0, maxTicksLimit: 8 }, grid: { display: false } },
+        y: { min: 0, max: 100, ticks: { font: { size: 10 }, stepSize: 25 }, grid: { color: '#f3f4f6' } }
+      }
+    }
+  });
+}
+
+function render(data) {
+  const c = data.composite;
+  const color = scoreColor(c);
+  const d = data.dimensions;
+
+  const allocSegs = [
+    { key: 'stable', label: '稳定币', color: ALLOC_COLORS.stable, pct: data.suggestedAllocation.stable },
+    { key: 'options', label: '期权', color: ALLOC_COLORS.options, pct: data.suggestedAllocation.options },
+    { key: 'cta', label: 'CTA', color: ALLOC_COLORS.cta, pct: data.suggestedAllocation.cta },
+    { key: 'longHold', label: '长期持有', color: ALLOC_COLORS.longHold, pct: data.suggestedAllocation.longHold },
+  ];
+
+  const allocBar = allocSegs.map(s =>
+    `<div class="alloc-seg" style="width:${s.pct}%;background:${s.color}"></div>`
+  ).join('');
+
+  const allocLegend = allocSegs.map(s =>
+    `<div class="alloc-item"><div class="alloc-dot" style="background:${s.color}"></div>${s.label} ${s.pct}%</div>`
+  ).join('');
+
+  // Dimension cards
+  const dims = [
+    {
+      title: '恐慌贪婪指数',
+      desc: d.fearGreed.description,
+      score: d.fearGreed.score,
+      badge: `<span class="signal-pill ${pillClass(d.fearGreed.label)}">${d.fearGreed.label}</span>`,
+      vals: [
+        { label: '当前值', value: fmt(d.fearGreed.value, '', 0) },
+        { label: '情绪', value: d.fearGreed.label },
+      ],
+      color: COLORS.fearGreed,
+    },
+    {
+      title: '资金费率压力',
+      desc: d.funding.description,
+      score: d.funding.score,
+      badge: d.funding.btcRate != null
+        ? `<span class="signal-pill ${d.funding.btcRate > 0.005 ? 'pill-greed' : d.funding.btcRate < -0.005 ? 'pill-bearish' : 'pill-neutral'}">${d.funding.btcRate > 0.005 ? '多头过热' : d.funding.btcRate < -0.005 ? '空头主导' : '均衡'}</span>`
+        : `<span class="signal-pill pill-neutral">加载中</span>`,
+      vals: [
+        { label: 'BTC费率/8h', value: fmt(d.funding.btcRate, '%', 4) },
+        { label: 'ETH费率/8h', value: fmt(d.funding.ethRate, '%', 4) },
+      ],
+      color: COLORS.funding,
+    },
+    {
+      title: 'VRP 波动率溢价',
+      desc: d.vrp.description,
+      score: d.vrp.score,
+      badge: d.vrp.spread != null
+        ? `<span class="signal-pill ${d.vrp.spread > 5 ? 'pill-fear' : d.vrp.spread < -5 ? 'pill-bullish' : 'pill-neutral'}">${d.vrp.spread > 5 ? '期权偏贵' : d.vrp.spread < -5 ? '期权便宜' : '正常'}</span>`
+        : `<span class="signal-pill pill-neutral">计算中</span>`,
+      vals: [
+        { label: 'DVOL (IV)', value: fmt(d.vrp.dvol, '%') },
+        { label: 'IV-RV 溢价', value: fmt(d.vrp.spread, '%') },
+      ],
+      color: COLORS.vrp,
+    },
+    {
+      title: 'CTA 趋势信号',
+      desc: d.cta.description,
+      score: d.cta.score,
+      badge: `<span class="signal-pill ${pillClass(d.cta.signal)}">${d.cta.signal === 'bullish' ? '看涨' : d.cta.signal === 'bearish' ? '看跌' : '震荡'}</span>`,
+      vals: [
+        { label: 'BTC价格', value: d.cta.btcPrice ? '$' + d.cta.btcPrice.toLocaleString() : '—' },
+        { label: '25/60日均线', value: d.cta.signal === 'bullish' ? '金叉' : d.cta.signal === 'bearish' ? '死叉' : '接近' },
+      ],
+      color: COLORS.cta,
+    },
+  ];
+
+  const dimCards = dims.map(dim => `
+    <div class="dim-card">
+      <div class="dim-header">
+        <div>
+          <div class="dim-title">${dim.title}</div>
+          <div class="dim-desc">${dim.desc}</div>
+        </div>
+        <div>
+          <div class="dim-score-badge" style="color:${dim.color}">${dim.score}</div>
+          <div class="dim-score-label">/ 100</div>
+        </div>
+      </div>
+      <div class="gauge-wrap">
+        <div class="gauge-track">
+          <div class="gauge-fill" style="width:${dim.score}%;background:${gaugeColor(dim.score)}"></div>
+        </div>
+        <div class="gauge-ticks"><span>恐慌</span><span>中性</span><span>贪婪</span></div>
+      </div>
+      <div style="margin-top:10px">${dim.badge}</div>
+      <div class="dim-values">
+        ${dim.vals.map(v => `<div class="dim-val-item"><strong>${v.value}</strong>${v.label}</div>`).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  const updatedStr = data.lastUpdate
+    ? '更新于 ' + new Date(data.lastUpdate).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+    : '';
+
+  document.getElementById('mainContent').innerHTML = `
+    <div class="score-hero">
+      <div class="score-ring-wrap">
+        <canvas id="ringCanvas" width="180" height="180"></canvas>
+        <div class="score-center">
+          <div class="score-number" style="color:${color}">${c}</div>
+          <div class="score-max">/ 100</div>
+        </div>
+      </div>
+      <div class="score-level" style="color:${color}">${data.riskLevel}</div>
+      <div class="score-rec">${data.recommendation}</div>
+
+      <div style="margin-top:24px;max-width:480px;margin-left:auto;margin-right:auto">
+        <div style="font-size:12px;color:#999;font-weight:600;margin-bottom:6px;text-align:left">当前建议仓位配置</div>
+        <div class="alloc-bar">${allocBar}</div>
+        <div class="alloc-legend">${allocLegend}</div>
+      </div>
+
+      <div class="score-updated">${updatedStr} · 每5分钟刷新</div>
+    </div>
+
+    <div class="dim-grid">${dimCards}</div>
+
+    <div class="chart-card">
+      <div class="chart-card-title">恐慌贪婪指数 — 30日走势</div>
+      <div class="chart-wrap">
+        <canvas id="fngChartCanvas"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card" style="border-left:3px solid #10b981">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">如何读懂综合评分？</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;font-size:12px;color:#666">
+        <div><strong style="color:#ef4444">0–20 极度恐慌</strong><br>期权最佳开仓，CTA分批建仓，稳定币保30%以上</div>
+        <div><strong style="color:#f97316">21–35 恐慌</strong><br>市场偏悲观，可逐步入场，避免重仓</div>
+        <div><strong style="color:#f59e0b">36–55 中性</strong><br>按计划维持组合，不追涨不杀跌</div>
+        <div><strong style="color:#10b981">56–70 贪婪</strong><br>CTA继续持有，期权谨慎，不追高</div>
+        <div><strong style="color:#8b5cf6">71–100 极度贪婪</strong><br>高风险！减仓CTA，增配稳定币，等待修正</div>
+      </div>
+    </div>
+  `;
+
+  buildRingChart(c, color);
+  buildFngChart(data.dimensions.fearGreed.history);
+}
+
+async function load() {
+  try {
+    const resp = await fetch('/api/sentiment');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    render(data);
+  } catch (err) {
+    document.getElementById('mainContent').innerHTML = `
+      <div class="loading-overlay" style="color:#ef4444">
+        <div>加载失败: ${err.message}</div>
+        <button onclick="load()" style="margin-top:12px;padding:8px 20px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;background:#fff">重试</button>
+      </div>`;
+  }
+}
+
+load();
+// Auto-refresh every 5 minutes
+setInterval(load, 5 * 60 * 1000);
+</script>
+</body>
+</html>

@@ -1,15 +1,20 @@
 {
   "name": "stablecoin-dashboard",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Real-time monitoring dashboard for $1M stablecoin portfolio",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop stablecoin-dashboard",
+    "pm2:restart": "pm2 restart stablecoin-dashboard",
+    "pm2:logs": "pm2 logs stablecoin-dashboard",
+    "pm2:status": "pm2 status"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "yahoo-finance2": "^3.13.0"
+    "yahoo-finance2": "^3.13.2"
   }
 }

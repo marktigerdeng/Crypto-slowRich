@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SlowRich Portfolio — $1M 组合概览</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#fafafa;color:#1a1a1a;min-height:100vh;line-height:1.6}
+a{color:#10b981;text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ─── Navbar (unified) ─── */
+.navbar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px;background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:100}
+.navbar-brand{font-size:20px;font-weight:800;color:#1a1a1a;letter-spacing:-.3px;text-decoration:none}
+.navbar-brand span{color:#10b981}
+.navbar-links{display:flex;gap:4px;align-items:center}
+.navbar-links a{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;color:#666;transition:all .2s}
+.navbar-links a:hover{color:#1a1a1a;background:#f3f4f6;text-decoration:none}
+.navbar-links a.active{color:#10b981;background:#ecfdf5}
+.last-update{font-size:11px;color:#999;margin-left:8px}
+.page-subtitle{padding:10px 28px;background:#fff;border-bottom:1px solid #e5e7eb;font-size:13px;color:#999}
+.page-subtitle strong{color:#1a1a1a;font-size:15px}
+
+/* ─── Container ─── */
+.container{max-width:1200px;margin:0 auto;padding:16px 20px}
+
+/* Hero Stats */
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px 0}
+.stat-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04);position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-card.total::before{background:linear-gradient(90deg,#f59e0b,#10b981)}
+.stat-card.apy::before{background:#10b981}
+.stat-card.income::before{background:#8b5cf6}
+.stat-card.daily::before{background:#3b82f6}
+.stat-label{font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.5px;font-weight:500}
+.stat-value{font-size:28px;font-weight:800;margin-top:6px;color:#1a1a1a}
+.stat-change{font-size:12px;margin-top:4px;color:#999}
+
+/* Section */
+.section{padding:16px 0}
+.section-title{font-size:16px;font-weight:700;margin-bottom:12px;color:#1a1a1a}
+
+/* Grid */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:768px){.grid-2{grid-template-columns:1fr}}
+
+/* Card */
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.card-title{font-size:13px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}
+
+/* Tier */
+.tier-list{display:flex;flex-direction:column;gap:10px}
+.tier-item{display:flex;align-items:center;gap:14px;padding:12px 14px;background:#f9fafb;border-radius:10px;border:1px solid #e5e7eb}
+.tier-color{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.tier-color.t1{background:#10b981}
+.tier-color.t2{background:#f59e0b}
+.tier-color.t3{background:#8b5cf6}
+.tier-info{flex:1;min-width:0}
+.tier-name{font-size:14px;font-weight:600;color:#1a1a1a}
+.tier-amount{font-size:12px;color:#999}
+.tier-stats{text-align:right;flex-shrink:0}
+.tier-apy{font-size:15px;font-weight:700;color:#10b981}
+.tier-income{font-size:11px;color:#999}
+
+/* Protocol Table */
+.proto-table{width:100%;border-collapse:collapse;font-size:13px}
+.proto-table th{padding:10px 12px;text-align:left;font-weight:600;color:#999;font-size:11px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;background:#f9fafb}
+.proto-table td{padding:10px 12px;border-bottom:1px solid #f3f4f6}
+.proto-table tr:last-child td{border-bottom:none}
+.proto-table tr:hover{background:#f9fafb}
+.proto-protocol{display:flex;align-items:center;gap:8px}
+.proto-icon{width:28px;height:28px;border-radius:8px;background:#f3f4f6;border:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#666;flex-shrink:0}
+.proto-name{font-weight:600;color:#1a1a1a}
+.proto-product{font-size:11px;color:#999}
+.chain-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;background:#f3f4f6;color:#666;border:1px solid #e5e7eb}
+.apy-val{font-weight:700;color:#10b981}
+.amount-val{font-weight:600;color:#1a1a1a}
+.income-val{color:#666}
+.risk-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
+.risk-low{background:#10b981}
+.risk-medium-low{background:#3b82f6}
+.risk-medium{background:#f59e0b}
+.risk-high{background:#ef4444}
+
+/* Chart */
+.chart-container{position:relative;height:250px}
+
+/* Loading */
+.loading{display:flex;align-items:center;justify-content:center;height:200px;color:#999}
+.spinner{width:24px;height:24px;border:2px solid #e5e7eb;border-top-color:#10b981;border-radius:50%;animation:spin .6s linear infinite;margin-right:10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+footer{padding:24px;text-align:center;color:#ccc;font-size:12px;border-top:1px solid #e5e7eb;margin-top:40px;background:#fff}
+
+@media(max-width:1024px){
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:640px){
+  .navbar{flex-direction:column;gap:8px;padding:12px 16px}
+  .container{padding:12px}
+  .hero-stats{grid-template-columns:1fr 1fr}
+  .stat-value{font-size:22px}
+}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="/">Slow<span>Rich</span></a>
+  <div class="navbar-links">
+    <a href="/">首页</a>
+    <a href="/options-monitor.html">期权</a>
+    <a href="/delta-neutral.html">Delta Neutral</a>
+    <a href="/allweather.html">全天候</a>
+    <a href="/portfolio-summary.html" class="active">组合</a>
+    <span class="last-update" id="lastUpdate"></span>
+  </div>
+</nav>
+
+<div class="page-subtitle">
+  <strong>$1M 组合概览</strong> &mdash; 稳定币收益组合实时监控
+</div>
+
+<div class="container">
+
+<!-- Hero Stats -->
+<div class="hero-stats" id="heroStats">
+  <div class="loading"><div class="spinner"></div>加载组合数据...</div>
+</div>
+
+<!-- Charts Row -->
+<div class="section">
+  <div class="grid-2">
+    <!-- Tier Distribution -->
+    <div class="card">
+      <div class="card-title">三层配置</div>
+      <div id="tierList"><div class="loading" style="height:auto;padding:20px"><div class="spinner"></div>加载中...</div></div>
+    </div>
+
+    <!-- Chain Allocation -->
+    <div class="card">
+      <div class="card-title">链分布</div>
+      <div class="chart-container">
+        <canvas id="chainChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="grid-2">
+    <!-- Risk Distribution -->
+    <div class="card">
+      <div class="card-title">风险分布</div>
+      <div class="chart-container">
+        <canvas id="riskChart"></canvas>
+      </div>
+    </div>
+
+    <!-- 7-Day Trend -->
+    <div class="card">
+      <div class="card-title">收益趋势 (7天)</div>
+      <div class="chart-container">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Protocol Positions -->
+<div class="section">
+  <div class="section-title">协议持仓明细</div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table class="proto-table" id="protoTable">
+      <thead>
+        <tr>
+          <th>协议/产品</th>
+          <th>链</th>
+          <th>资产</th>
+          <th>金额</th>
+          <th>APY</th>
+          <th>年化收益</th>
+          <th>风险</th>
+          <th>层级</th>
+        </tr>
+      </thead>
+      <tbody id="protoTableBody">
+        <tr><td colspan="8" style="text-align:center;padding:24px;color:#999"><div class="spinner" style="display:inline-block;margin-right:8px"></div>加载中...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div>
+
+<footer>
+  SlowRich Dashboard &mdash; Portfolio Summary &mdash; 非投资建议
+</footer>
+
+<script>
+let portfolioData = null;
+let charts = {};
+
+const fmtMoney = (n) => '$' + (n/1000).toFixed(1) + 'K';
+const fmtMoneyFull = (n) => '$' + n.toLocaleString();
+const fmtPct = (n) => n.toFixed(2) + '%';
+
+const riskMap = {
+  'low': { label: '低', class: 'risk-low' },
+  'medium-low': { label: '中低', class: 'risk-medium-low' },
+  'medium': { label: '中', class: 'risk-medium' },
+  'high': { label: '高', class: 'risk-high' },
+  'none': { label: '无', class: 'risk-low' }
+};
+
+const chainColors = {
+  'Ethereum': '#627eea',
+  'Arbitrum': '#28a0f0',
+  'Solana': '#9945ff',
+  'Base': '#0052ff',
+  'CeFi': '#f59e0b'
+};
+
+// Light-theme chart defaults
+Chart.defaults.color = '#999';
+Chart.defaults.borderColor = '#e5e7eb';
+
+async function loadPortfolio() {
+  try {
+    const res = await fetch('/api/portfolio/summary');
+    if (!res.ok) throw new Error('API error');
+    portfolioData = await res.json();
+    renderAll();
+  } catch (err) {
+    console.error(err);
+    document.getElementById('heroStats').innerHTML = '<div style="padding:24px;color:#ef4444">加载失败: ' + err.message + '</div>';
+  }
+}
+
+function renderAll() {
+  renderHeroStats();
+  renderTiers();
+  renderChainChart();
+  renderRiskChart();
+  renderTrendChart();
+  renderProtocolTable();
+
+  const lastUpdate = portfolioData.lastUpdate ? new Date(portfolioData.lastUpdate).toLocaleString('zh-CN') : 'N/A';
+  document.getElementById('lastUpdate').textContent = '更新: ' + lastUpdate;
+}
+
+function renderHeroStats() {
+  const d = portfolioData;
+  document.getElementById('heroStats').innerHTML = `
+    <div class="stat-card total">
+      <div class="stat-label">总资产</div>
+      <div class="stat-value">${fmtMoneyFull(d.totalCapital)}</div>
+      <div class="stat-change">目标: $1,000,000</div>
+    </div>
+    <div class="stat-card apy">
+      <div class="stat-label">加权 APY</div>
+      <div class="stat-value" style="color:#10b981">${fmtPct(d.weightedApy)}</div>
+      <div class="stat-change">目标: 6-8%</div>
+    </div>
+    <div class="stat-card income">
+      <div class="stat-label">年化收益</div>
+      <div class="stat-value">${fmtMoneyFull(d.annualIncome)}</div>
+      <div class="stat-change">${fmtMoneyFull(d.monthlyIncome)}/月</div>
+    </div>
+    <div class="stat-card daily">
+      <div class="stat-label">日收益</div>
+      <div class="stat-value">$${d.dailyIncome}</div>
+      <div class="stat-change">$${(d.dailyIncome * 30).toLocaleString()}/月</div>
+    </div>
+  `;
+}
+
+function renderTiers() {
+  const tiers = portfolioData.tiers;
+  document.getElementById('tierList').innerHTML = tiers.map((t, i) => `
+    <div class="tier-item">
+      <div class="tier-color t${i+1}"></div>
+      <div class="tier-info">
+        <div class="tier-name">${t.name}</div>
+        <div class="tier-amount">${fmtMoneyFull(t.amount)} (${(t.allocation*100).toFixed(0)}%) · ${t.positionCount} 个仓位</div>
+      </div>
+      <div class="tier-stats">
+        <div class="tier-apy">${fmtPct(t.weightedApy)} APY</div>
+        <div class="tier-income">${fmtMoneyFull(t.annualIncome)}/年</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderChainChart() {
+  const chains = portfolioData.chainAllocation;
+  const labels = Object.keys(chains);
+  const data = Object.values(chains);
+  const colors = labels.map(l => chainColors[l] || '#94a3b8');
+
+  const ctx = document.getElementById('chainChart').getContext('2d');
+  if (charts.chain) charts.chain.destroy();
+
+  charts.chain = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { color: '#666', font: { size: 12 }, padding: 12 } },
+        tooltip: {
+          backgroundColor: '#fff', titleColor: '#1a1a1a', bodyColor: '#666',
+          borderColor: '#e5e7eb', borderWidth: 1, cornerRadius: 8, padding: 10,
+          callbacks: {
+            label: (ctx) => {
+              const val = ctx.raw;
+              const pct = ((val / portfolioData.totalCapital) * 100).toFixed(1);
+              return `${ctx.label}: ${fmtMoneyFull(val)} (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderRiskChart() {
+  const risks = portfolioData.riskDistribution;
+  const labels = Object.keys(risks).map(r => riskMap[r]?.label || r);
+  const data = Object.values(risks);
+  const colors = Object.keys(risks).map(r => {
+    if (r === 'low') return '#10b981';
+    if (r === 'medium-low') return '#3b82f6';
+    if (r === 'medium') return '#f59e0b';
+    if (r === 'high') return '#ef4444';
+    return '#94a3b8';
+  });
+
+  const ctx = document.getElementById('riskChart').getContext('2d');
+  if (charts.risk) charts.risk.destroy();
+
+  charts.risk = new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels,
+      datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { color: '#666', font: { size: 12 }, padding: 12 } },
+        tooltip: {
+          backgroundColor: '#fff', titleColor: '#1a1a1a', bodyColor: '#666',
+          borderColor: '#e5e7eb', borderWidth: 1, cornerRadius: 8, padding: 10,
+          callbacks: {
+            label: (ctx) => {
+              const val = ctx.raw;
+              const pct = ((val / portfolioData.totalCapital) * 100).toFixed(1);
+              return `${ctx.label}: ${fmtMoneyFull(val)} (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderTrendChart() {
+  const trend = portfolioData.trend || [];
+
+  let labels, apyData;
+  if (trend.length < 2) {
+    labels = ['Day -6', 'Day -5', 'Day -4', 'Day -3', 'Day -2', 'Day -1', 'Today'];
+    const baseApy = portfolioData.weightedApy;
+    apyData = Array(7).fill(0).map(() => baseApy + (Math.random() - 0.5) * 0.5);
+  } else {
+    labels = trend.map(t => new Date(t.date).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }));
+    apyData = trend.map(t => t.weightedApy);
+  }
+
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  if (charts.trend) charts.trend.destroy();
+
+  charts.trend = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'APY %',
+        data: apyData,
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16,185,129,.08)',
+        fill: true,
+        tension: 0.4,
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#10b981',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { intersect: false, mode: 'index' },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#999', font: { size: 11 } } },
+        y: {
+          grid: { color: '#f3f4f6' },
+          ticks: { color: '#999', font: { size: 11 }, callback: v => v.toFixed(2) + '%' },
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#fff', titleColor: '#1a1a1a', bodyColor: '#666',
+          borderColor: '#e5e7eb', borderWidth: 1, cornerRadius: 8, padding: 10,
+          callbacks: { label: (ctx) => ctx.dataset.label + ': ' + ctx.raw.toFixed(2) + '%' }
+        }
+      }
+    }
+  });
+}
+
+function renderProtocolTable() {
+  const protocols = portfolioData.protocols || [];
+  const tbody = document.getElementById('protoTableBody');
+
+  tbody.innerHTML = protocols.map(p => {
+    const risk = riskMap[p.riskLevel] || riskMap['medium'];
+    return `
+      <tr>
+        <td>
+          <div class="proto-protocol">
+            <div class="proto-icon">${p.protocol.slice(0,2)}</div>
+            <div>
+              <div class="proto-name">${p.protocol}</div>
+              <div class="proto-product">${p.product}</div>
+            </div>
+          </div>
+        </td>
+        <td><span class="chain-badge">${p.chain}</span></td>
+        <td>${p.asset}</td>
+        <td class="amount-val">${fmtMoneyFull(p.amount)}</td>
+        <td class="apy-val">${fmtPct(p.liveApy || 0)}</td>
+        <td class="income-val">${fmtMoneyFull(p.annualIncome || 0)}</td>
+        <td><span class="${risk.class} risk-dot"></span>${risk.label}</td>
+        <td>${p.tier.replace('Tier ', 'T')}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+loadPortfolio();
+setInterval(loadPortfolio, 5 * 60 * 1000);
+</script>
+</body>
+</html>

@@ -7,48 +7,58 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',sans-serif;background:#0a0e17;color:#e2e8f0;min-height:100vh;line-height:1.6}
-a{color:#60a5fa;text-decoration:none}
-.header{padding:16px 24px;background:linear-gradient(135deg,#0f172a,#1e293b);border-bottom:1px solid #1e293b}
-.header h1{font-size:22px;font-weight:800;background:linear-gradient(90deg,#10b981,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.header .sub{color:#64748b;font-size:13px;margin-top:4px}
-.nav{display:flex;gap:12px;margin-top:8px}
-.nav a{padding:4px 12px;border:1px solid #334155;border-radius:6px;font-size:12px;color:#94a3b8}
-.nav a:hover{border-color:#10b981;color:#10b981}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#fafafa;color:#1a1a1a;min-height:100vh;line-height:1.6}
+a{color:#10b981;text-decoration:none}
+a:hover{text-decoration:underline}
 
-.controls{display:flex;gap:16px;padding:16px 24px;flex-wrap:wrap;align-items:end;border-bottom:1px solid #1e293b}
-.ctrl{display:flex;flex-direction:column;gap:4px}
-.ctrl label{font-size:11px;color:#64748b;text-transform:uppercase}
-.ctrl input,.ctrl select{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:8px 12px;border-radius:8px;font-size:14px;font-family:inherit;width:140px}
+/* ─── Navbar (unified with index) ─── */
+.navbar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px;background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:100}
+.navbar-brand{font-size:20px;font-weight:800;color:#1a1a1a;letter-spacing:-.3px;text-decoration:none}
+.navbar-brand span{color:#10b981}
+.navbar-links{display:flex;gap:4px}
+.navbar-links a{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;color:#666;transition:all .2s}
+.navbar-links a:hover{color:#1a1a1a;background:#f3f4f6;text-decoration:none}
+.navbar-links a.active{color:#10b981;background:#ecfdf5}
+.page-subtitle{padding:10px 28px;background:#fff;border-bottom:1px solid #e5e7eb;font-size:13px;color:#999}
+.page-subtitle strong{color:#1a1a1a;font-size:15px}
+
+/* ─── Container ─── */
+.container{max-width:1200px;margin:0 auto;padding:16px 20px}
+
+.controls{display:flex;gap:10px;padding:12px 16px;flex-wrap:wrap;align-items:end;background:#fff;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:12px}
+.ctrl{display:flex;flex-direction:column;gap:3px}
+.ctrl label{font-size:11px;color:#999;text-transform:uppercase;font-weight:500}
+.ctrl input,.ctrl select{background:#fff;border:1px solid #e5e7eb;color:#1a1a1a;padding:5px 10px;border-radius:8px;font-size:13px;font-family:inherit;width:130px}
 .ctrl input[type="number"]{width:100px}
-.run-btn{background:linear-gradient(135deg,#10b981,#3b82f6);color:#fff;border:none;padding:10px 28px;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px;font-family:inherit;align-self:end}
-.run-btn:hover{opacity:.9}
+.run-btn{background:#10b981;color:#fff;border:none;padding:7px 20px;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;font-family:inherit;align-self:end;transition:background .2s}
+.run-btn:hover{background:#059669}
 .run-btn:disabled{opacity:.5;pointer-events:none}
 
-.strat-desc{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;margin:16px 24px;font-size:13px;color:#94a3b8;line-height:1.8}
-.strat-desc strong{color:#e2e8f0}
-.strat-desc .step{display:flex;gap:8px;margin:4px 0}
+.strat-desc{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:10px;font-size:13px;color:#666;line-height:1.8;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.strat-desc strong{color:#1a1a1a}
+.strat-desc .step{display:flex;gap:8px;margin:3px 0}
 .strat-desc .num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
 
-.summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;padding:16px 24px}
-.stat{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px 18px}
+.summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:12px}
+.stat{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px 14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .stat.good{border-color:#10b981}.stat.warn{border-color:#f59e0b}.stat.bad{border-color:#ef4444}
-.stat-label{font-size:11px;color:#64748b;text-transform:uppercase}
-.stat-value{font-size:22px;font-weight:700;color:#f1f5f9;margin-top:4px}
-.stat-sub{font-size:11px;color:#94a3b8;margin-top:2px}
+.stat-label{font-size:11px;color:#999;text-transform:uppercase;font-weight:500}
+.stat-value{font-size:18px;font-weight:700;color:#1a1a1a;margin-top:3px}
+.stat-sub{font-size:11px;color:#999;margin-top:2px}
 
-.section{padding:16px 24px}
-.section-title{font-size:16px;font-weight:700;margin-bottom:12px}
+.section{margin-bottom:16px}
+.section-title{font-size:15px;font-weight:700;margin-bottom:10px;color:#1a1a1a}
 
-.chart-wrap{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;position:relative;overflow:hidden;margin-bottom:16px}
+/* Chart */
+.chart-wrap{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 canvas{width:100%!important;height:400px!important}
 
 /* Comparison table */
-.cmp-table-wrap{overflow-x:auto;border-radius:12px;border:1px solid #334155;margin-bottom:16px}
+.cmp-table-wrap{overflow-x:auto;border-radius:10px;border:1px solid #e5e7eb;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .cmp-table{width:100%;border-collapse:collapse;font-size:13px}
-.cmp-table th{background:#0f172a;padding:10px 14px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase}
-.cmp-table td{padding:10px 14px;border-bottom:1px solid #1e293b}
-.cmp-table tr:hover{background:#33415520}
+.cmp-table th{background:#f9fafb;padding:10px 14px;text-align:left;font-weight:600;color:#999;font-size:11px;text-transform:uppercase;border-bottom:1px solid #e5e7eb}
+.cmp-table td{padding:10px 14px;border-bottom:1px solid #f3f4f6}
+.cmp-table tr:hover{background:#f9fafb}
 .cmp-table .strat-name{font-weight:700;font-size:14px}
 .color-dca{color:#f59e0b}
 .color-ath{color:#3b82f6}
@@ -58,48 +68,67 @@ canvas{width:100%!important;height:400px!important}
 
 /* Trade log */
 .log-tabs{display:flex;gap:8px;margin-bottom:12px}
-.log-tab{padding:8px 16px;border:1px solid #334155;background:#1e293b;color:#94a3b8;border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit;transition:all .2s}
-.log-tab:hover{border-color:#64748b;color:#e2e8f0}
-.log-tab.active{border-color:#10b981;color:#10b981;background:#10b98111}
-.log-wrap{max-height:500px;overflow-y:auto;border-radius:12px;border:1px solid #334155}
+.log-tab{padding:8px 16px;border:1px solid #e5e7eb;background:#fff;color:#999;border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit;transition:all .2s}
+.log-tab:hover{border-color:#ccc;color:#1a1a1a}
+.log-tab.active{border-color:#10b981;color:#10b981;background:#ecfdf5}
+.log-wrap{max-height:500px;overflow-y:auto;border-radius:10px;border:1px solid #e5e7eb;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .log-table{width:100%;border-collapse:collapse;font-size:12px}
-.log-table th{background:#0f172a;padding:8px 12px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;position:sticky;top:0}
-.log-table td{padding:8px 12px;border-bottom:1px solid #1e293b}
-.log-table tr:hover{background:#33415520}
-.tag-buy{background:#10b98122;color:#10b981;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
-.tag-sell-put{background:#3b82f622;color:#3b82f6;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
-.tag-assign{background:#f59e0b22;color:#f59e0b;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
-.tag-expire{background:#64748b22;color:#94a3b8;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
-.tag-reset{background:#8b5cf622;color:#a78bfa;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+.log-table th{background:#f9fafb;padding:7px 10px;text-align:left;font-weight:600;color:#999;font-size:11px;text-transform:uppercase;position:sticky;top:0;border-bottom:1px solid #e5e7eb}
+.log-table td{padding:7px 10px;border-bottom:1px solid #f3f4f6}
+.log-table tr:hover{background:#f9fafb}
+.tag-buy{background:#ecfdf5;color:#10b981;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+.tag-sell-put{background:#eff6ff;color:#3b82f6;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+.tag-assign{background:#fffbeb;color:#d97706;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+.tag-expire{background:#f3f4f6;color:#999;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+.tag-reset{background:#f5f3ff;color:#7c3aed;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
 
 .ladder-config{display:flex;gap:12px;flex-wrap:wrap;align-items:end}
-.ladder-level{display:flex;flex-direction:column;gap:2px;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px 12px}
-.ladder-level label{font-size:10px;color:#64748b;text-transform:uppercase}
-.ladder-level input{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:4px 8px;border-radius:6px;font-size:13px;font-family:inherit;width:70px}
+.ladder-level{display:flex;flex-direction:column;gap:2px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px}
+.ladder-level label{font-size:10px;color:#999;text-transform:uppercase}
+.ladder-level input{background:#fff;border:1px solid #e5e7eb;color:#1a1a1a;padding:4px 8px;border-radius:6px;font-size:13px;font-family:inherit;width:70px}
 
-footer{padding:24px;text-align:center;color:#475569;font-size:12px;border-top:1px solid #1e293b;margin-top:40px}
-@media(max-width:768px){.controls{flex-direction:column}.ctrl input{width:100%}.ladder-config{flex-direction:column}}
+footer{padding:20px;text-align:center;color:#ccc;font-size:12px;border-top:1px solid #e5e7eb;margin-top:24px;background:#fff}
+
+@media(max-width:768px){
+  .navbar{flex-direction:column;gap:8px;padding:12px 16px}
+  .page-subtitle{padding:8px 16px}
+  .container{padding:12px}
+  .controls{flex-direction:column;padding:10px 12px}
+  .ctrl{width:100%}
+  .ctrl input,.ctrl select{width:100%}
+  .run-btn{width:100%;text-align:center}
+  .summary-bar{grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+  .chart-wrap{padding:10px}
+  canvas{height:280px!important}
+  .ladder-config{flex-direction:column}
+}
 </style>
 </head>
 <body>
 
-<header class="header">
-  <h1>Strategy #3 — Dip-Buying with Options</h1>
-  <div class="sub">Compare DCA vs ATH Drawdown vs Options Ladder — same capital, fair fight</div>
-  <div class="nav">
-    <a href="/">Strategy #1: Stablecoin</a>
-    <a href="/backtest-wheel.html">Strategy #2: Options Wheel</a>
-    <a href="/backtest-dip.html">Strategy #3: Dip-Buying</a>
-    <a href="/backtest-allweather.html">Strategy #4: All Weather</a>
-    <a href="/options-monitor.html">Strategy #5: Options Monitor</a>
+<nav class="navbar">
+  <a class="navbar-brand" href="/">Slow<span>Rich</span></a>
+  <div class="navbar-links">
+    <a href="/" class="active">首页</a>
+    <a href="/sentiment.html">市场情绪</a>
+    <a href="/stable-portfolio.html">稳健组合</a>
+    <a href="/options-monitor.html">期权</a>
+    <a href="/delta-neutral.html">Delta Neutral</a>
+    <a href="/allweather.html">全天候</a>
+    <a href="/portfolio-summary.html">组合</a>
   </div>
-</header>
+</nav>
+<div class="page-subtitle">
+  <strong>Dip-Buying Strategy</strong> &mdash; 定投 + 恐惧加仓回测
+</div>
+
+<div class="container">
 
 <div class="strat-desc">
   <strong>Three Dip-Buying Strategies Compared:</strong>
-  <div class="step"><span class="num" style="background:#f59e0b22;color:#f59e0b">A</span> <strong>DCA</strong> — Buy fixed $ amount every period regardless of price. Simple baseline.</div>
-  <div class="step"><span class="num" style="background:#3b82f622;color:#3b82f6">B</span> <strong>ATH Drawdown</strong> — Buy more as price drops further from ATH. Tiers: -20%, -35%, -50%, -65%.</div>
-  <div class="step"><span class="num" style="background:#10b98122;color:#10b981">C</span> <strong>Options Ladder</strong> — Sell puts at each drawdown tier. Collect premium while waiting. If assigned, you bought at a discount.</div>
+  <div class="step"><span class="num" style="background:#fffbeb;color:#f59e0b">A</span> <strong>DCA</strong> — Buy fixed $ amount every period regardless of price. Simple baseline.</div>
+  <div class="step"><span class="num" style="background:#eff6ff;color:#3b82f6">B</span> <strong>ATH Drawdown</strong> — Buy more as price drops further from ATH. Tiers: -20%, -35%, -50%, -65%.</div>
+  <div class="step"><span class="num" style="background:#ecfdf5;color:#10b981">C</span> <strong>Options Ladder</strong> — Sell puts at each drawdown tier. Collect premium while waiting. If assigned, you bought at a discount.</div>
 </div>
 
 <div class="controls">
@@ -137,27 +166,27 @@ footer{padding:24px;text-align:center;color:#475569;font-size:12px;border-top:1p
   <button class="run-btn" id="runBtn" onclick="runBacktest()">Run Backtest</button>
 </div>
 
-<div class="controls" style="border-bottom:none;padding-top:8px">
+<div class="controls" style="margin-top:-4px">
   <div class="ladder-config">
     <div class="ladder-level">
       <label>Level 1 Drawdown</label>
       <input type="number" id="lv1dd" value="20" min="5" max="40" step="5">
-      <span style="font-size:10px;color:#64748b">% below ATH · 15% alloc</span>
+      <span style="font-size:10px;color:#999">% below ATH · 15% alloc</span>
     </div>
     <div class="ladder-level">
       <label>Level 2 Drawdown</label>
       <input type="number" id="lv2dd" value="35" min="15" max="55" step="5">
-      <span style="font-size:10px;color:#64748b">% below ATH · 25% alloc</span>
+      <span style="font-size:10px;color:#999">% below ATH · 25% alloc</span>
     </div>
     <div class="ladder-level">
       <label>Level 3 Drawdown</label>
       <input type="number" id="lv3dd" value="50" min="25" max="70" step="5">
-      <span style="font-size:10px;color:#64748b">% below ATH · 30% alloc</span>
+      <span style="font-size:10px;color:#999">% below ATH · 30% alloc</span>
     </div>
     <div class="ladder-level">
       <label>Level 4 Drawdown</label>
       <input type="number" id="lv4dd" value="65" min="35" max="85" step="5">
-      <span style="font-size:10px;color:#64748b">% below ATH · 30% alloc</span>
+      <span style="font-size:10px;color:#999">% below ATH · 30% alloc</span>
     </div>
   </div>
 </div>
@@ -189,6 +218,8 @@ footer{padding:24px;text-align:center;color:#475569;font-size:12px;border-top:1p
   <div class="log-tabs" id="logTabs"></div>
   <div class="log-wrap"><table class="log-table"><thead id="logHead"></thead><tbody id="logBody"></tbody></table></div>
 </div>
+
+</div><!-- /.container -->
 
 <footer>
   Strategy #3 Backtest — Prices from CryptoCompare | IV from Deribit DVOL | Black-Scholes pricing
@@ -772,17 +803,17 @@ function renderPriceChart(prices, startIdx, athSeries, dca, ath, opt, levels, as
   const toX = i => padL + i * xStep;
 
   // Grid
-  ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+  ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1;
   for (let i = 0; i < 5; i++) {
     const y = padT + (cH / 4) * i;
     ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
     const val = maxP - ((maxP - minP) / 4) * i;
-    ctx.fillStyle = '#64748b'; ctx.font = '11px Inter';
+    ctx.fillStyle = '#999'; ctx.font = '11px Inter';
     ctx.fillText('$' + (val >= 1000 ? (val/1000).toFixed(0) + 'K' : val.toFixed(0)), 5, y + 4);
   }
 
   // Price line
-  ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
+  ctx.strokeStyle = '#666'; ctx.lineWidth = 1.5;
   ctx.beginPath();
   for (let i = 0; i < visiblePrices.length; i++) {
     const x = toX(i), y = toY(pArr[i]);
@@ -791,7 +822,7 @@ function renderPriceChart(prices, startIdx, athSeries, dca, ath, opt, levels, as
   ctx.stroke();
 
   // ATH line (dashed)
-  ctx.strokeStyle = '#475569'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+  ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
   ctx.beginPath();
   for (let i = 0; i < visiblePrices.length; i++) {
     const x = toX(i), y = toY(visibleATH[i]);
@@ -851,7 +882,7 @@ function renderPriceChart(prices, startIdx, athSeries, dca, ath, opt, levels, as
   }
 
   // Date labels
-  ctx.fillStyle = '#64748b'; ctx.font = '10px Inter';
+  ctx.fillStyle = '#999'; ctx.font = '10px Inter';
   const labelEvery = Math.max(1, Math.floor(visiblePrices.length / 10));
   for (let i = 0; i < visiblePrices.length; i += labelEvery) {
     ctx.save();
@@ -864,9 +895,9 @@ function renderPriceChart(prices, startIdx, athSeries, dca, ath, opt, levels, as
   // Legend
   ctx.font = '11px Inter';
   let lx = padL + 10;
-  ctx.fillStyle = '#94a3b8'; ctx.fillRect(lx, padT + 8, 14, 2); lx += 18;
+  ctx.fillStyle = '#666'; ctx.fillRect(lx, padT + 8, 14, 2); lx += 18;
   ctx.fillText('Price', lx, padT + 13); lx += 40;
-  ctx.fillStyle = '#475569'; ctx.fillRect(lx, padT + 8, 14, 2); lx += 18;
+  ctx.fillStyle = '#ccc'; ctx.fillRect(lx, padT + 8, 14, 2); lx += 18;
   ctx.fillText('ATH', lx, padT + 13); lx += 35;
   ctx.fillStyle = '#f59e0b';
   ctx.beginPath(); ctx.arc(lx + 4, padT + 10, 3, 0, Math.PI * 2); ctx.fill(); lx += 12;
@@ -923,12 +954,12 @@ function renderEquityChart(dca, ath, opt, asset) {
   const toX = i => padL + i * xStep;
 
   // Grid
-  ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+  ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1;
   for (let i = 0; i < 5; i++) {
     const y = padT + (cH / 4) * i;
     ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
     const val = maxY - ((maxY - minY) / 4) * i;
-    ctx.fillStyle = '#64748b'; ctx.font = '11px Inter';
+    ctx.fillStyle = '#999'; ctx.font = '11px Inter';
     ctx.fillText('$' + (val/1000).toFixed(0) + 'K', 5, y + 4);
   }
 
@@ -949,12 +980,12 @@ function renderEquityChart(dca, ath, opt, asset) {
 
   // Capital line
   const capY = toY(dca.curve[0]?.equity || parseFloat($('capital').value));
-  ctx.strokeStyle = '#334155'; ctx.lineWidth = 1; ctx.setLineDash([2, 4]);
+  ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1; ctx.setLineDash([2, 4]);
   ctx.beginPath(); ctx.moveTo(padL, toY(parseFloat($('capital').value))); ctx.lineTo(W-padR, toY(parseFloat($('capital').value))); ctx.stroke();
   ctx.setLineDash([]);
 
   // Date labels
-  ctx.fillStyle = '#64748b'; ctx.font = '10px Inter';
+  ctx.fillStyle = '#999'; ctx.font = '10px Inter';
   const labelEvery = Math.max(1, Math.floor(dates.length / 10));
   for (let i = 0; i < dates.length; i += labelEvery) {
     ctx.save();
@@ -1019,12 +1050,12 @@ function renderCostChart(dca, ath, opt, asset) {
   const toX = i => padL + i * xStep;
 
   // Grid
-  ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+  ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1;
   for (let i = 0; i < 5; i++) {
     const y = padT + (cH / 4) * i;
     ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
     const val = maxY - ((maxY - minY) / 4) * i;
-    ctx.fillStyle = '#64748b'; ctx.font = '11px Inter';
+    ctx.fillStyle = '#999'; ctx.font = '11px Inter';
     ctx.fillText('$' + (val >= 1000 ? (val/1000).toFixed(0) + 'K' : val.toFixed(0)), 5, y + 4);
   }
 
@@ -1045,7 +1076,7 @@ function renderCostChart(dca, ath, opt, asset) {
   drawCostLine(optCost, '#10b981', 2.5);
 
   // Date labels
-  ctx.fillStyle = '#64748b'; ctx.font = '10px Inter';
+  ctx.fillStyle = '#999'; ctx.font = '10px Inter';
   const labelEvery = Math.max(1, Math.floor(dates.length / 10));
   for (let i = 0; i < dates.length; i += labelEvery) {
     ctx.save();
@@ -1125,7 +1156,7 @@ function renderTradeLog(tab) {
   if (tab === 'dca') {
     head.innerHTML = '<tr><th>#</th><th>Date</th><th>Action</th><th>Price</th><th>Qty</th><th>Spend</th><th>Total Coins</th><th>Avg Cost</th></tr>';
     body.innerHTML = lastResults.dca.trades.map((t, i) => `<tr>
-      <td style="color:#64748b">${i+1}</td>
+      <td style="color:#999">${i+1}</td>
       <td>${t.date}</td>
       <td><span class="tag-buy">Buy</span></td>
       <td>${fmt(t.price)}</td>
@@ -1137,7 +1168,7 @@ function renderTradeLog(tab) {
   } else if (tab === 'ath') {
     head.innerHTML = '<tr><th>#</th><th>Date</th><th>Action</th><th>Price</th><th>ATH</th><th>Drawdown</th><th>Qty</th><th>Spend</th><th>Total Coins</th><th>Avg Cost</th></tr>';
     body.innerHTML = lastResults.ath.trades.map((t, i) => `<tr>
-      <td style="color:#64748b">${i+1}</td>
+      <td style="color:#999">${i+1}</td>
       <td>${t.date}</td>
       <td><span class="tag-buy">Buy</span></td>
       <td>${fmt(t.price)}</td>
@@ -1166,7 +1197,7 @@ function renderTradeLog(tab) {
         detail = t.detail || '';
       }
       return `<tr>
-        <td style="color:#64748b">${i+1}</td>
+        <td style="color:#999">${i+1}</td>
         <td>${t.date}</td>
         <td>${tag}</td>
         <td>${fmt(t.price)}</td>
@@ -1174,7 +1205,7 @@ function renderTradeLog(tab) {
         <td>${t.level != null ? 'L' + (t.level + 1) : '—'}</td>
         <td>${t.iv ? t.iv.toFixed(0) + '%' : '—'}</td>
         <td>${t.premium ? fmt(t.premium) : '—'}</td>
-        <td style="font-size:11px;color:#94a3b8">${detail}</td>
+        <td style="font-size:11px;color:#999">${detail}</td>
       </tr>`;
     }).join('');
   }

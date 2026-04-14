@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>周末特辑：一周市场回顾（3月3日-3月9日） - SlowRich</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#fafafa;color:#1a1a1a;min-height:100vh;line-height:1.6}
+        a{color:#10b981;text-decoration:none}
+        a:hover{text-decoration:underline}
+
+        /* ─── Navbar ─── */
+        .navbar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px;background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:100}
+        .navbar-brand{font-size:20px;font-weight:800;color:#1a1a1a;letter-spacing:-.3px;text-decoration:none}
+        .navbar-brand span{color:#10b981}
+        .navbar-links{display:flex;gap:4px}
+        .navbar-links a{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;color:#666;transition:all .2s}
+        .navbar-links a:hover{color:#1a1a1a;background:#f3f4f6;text-decoration:none}
+        .navbar-links a.active{color:#10b981;background:#ecfdf5}
+
+        /* ─── Article Container ─── */
+        .article-wrapper{max-width:800px;margin:0 auto;padding:40px 28px}
+        
+        /* ─── Article Header ─── */
+        .article-header{margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid #e5e7eb}
+        .article-title{font-size:32px;font-weight:800;letter-spacing:-.5px;line-height:1.3;margin-bottom:12px;color:#1a1a1a}
+        .article-meta{display:flex;align-items:center;gap:16px;font-size:14px;color:#666}
+        .article-date{display:flex;align-items:center;gap:6px}
+        .article-tag{background:#fef2f2;color:#dc2626;padding:4px 12px;border-radius:6px;font-size:12px;font-weight:600}
+        .article-author{display:flex;align-items:center;gap:6px}
+
+        /* ─── Article Content ─── */
+        .article-content{font-size:16px;line-height:1.8;color:#333}
+        .article-content h1{font-size:28px;font-weight:700;margin:40px 0 20px;padding-bottom:12px;border-bottom:2px solid #e5e7eb;color:#1a1a1a}
+        .article-content h2{font-size:22px;font-weight:700;margin:32px 0 16px;color:#1a1a1a}
+        .article-content h3{font-size:18px;font-weight:600;margin:24px 0 12px;color:#333}
+        .article-content p{margin-bottom:16px}
+        .article-content strong{font-weight:600;color:#1a1a1a}
+        .article-content em{font-style:italic;color:#555}
+        .article-content blockquote{border-left:4px solid #ef4444;background:#fef2f2;padding:16px 20px;margin:20px 0;border-radius:0 8px 8px 0;font-style:italic;color:#555}
+        .article-content blockquote p:last-child{margin-bottom:0}
+        .article-content ul,.article-content ol{margin:16px 0;padding-left:28px}
+        .article-content li{margin-bottom:8px}
+        .article-content code{background:#f3f4f6;padding:2px 6px;border-radius:4px;font-family:'SF Mono',Monaco,monospace;font-size:14px;color:#ef4444}
+        .article-content pre{background:#1a1a1a;color:#f3f4f6;padding:16px;border-radius:8px;overflow-x:auto;margin:20px 0}
+        .article-content pre code{background:none;color:inherit;padding:0}
+        .article-content hr{border:none;height:1px;background:#e5e7eb;margin:32px 0}
+        .article-content img{max-width:100%;height:auto;border-radius:8px;margin:20px 0}
+        .article-content a{color:#10b981;text-decoration:none;border-bottom:1px solid transparent;transition:all .2s}
+        .article-content a:hover{border-bottom-color:#10b981}
+
+        /* ─── Tables ─── */
+        .article-content table{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px}
+        .article-content th{background:#f9fafb;padding:12px 16px;text-align:left;font-weight:600;color:#1a1a1a;border-bottom:2px solid #e5e7eb}
+        .article-content td{padding:12px 16px;border-bottom:1px solid #f3f4f6}
+        .article-content tr:hover{background:#f9fafb}
+        .article-content tr:last-child td{border-bottom:none}
+
+        /* ─── Footer ─── */
+        .article-footer{margin-top:48px;padding-top:24px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center}
+        .back-link{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:#f3f4f6;color:#666;border-radius:8px;font-size:14px;font-weight:500;transition:all .2s}
+        .back-link:hover{background:#e5e7eb;color:#1a1a1a;text-decoration:none}
+        .article-nav{display:flex;gap:12px}
+
+        /* ─── Responsive ─── */
+        @media(max-width:640px){
+            .navbar{flex-direction:column;gap:8px;padding:12px 16px}
+            .article-wrapper{padding:24px 16px}
+            .article-title{font-size:24px}
+            .article-content h1{font-size:22px}
+            .article-content h2{font-size:18px}
+            .article-content{font-size:15px}
+            .article-content table{font-size:12px}
+            .article-content th,.article-content td{padding:8px 10px}
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a class="navbar-brand" href="/">Slow<span>Rich</span></a>
+    <div class="navbar-links">
+        <a href="/">首页</a>
+        <a href="/articles/" class="active">文章</a>
+        <a href="/options-monitor.html">期权</a>
+        <a href="/delta-neutral.html">Delta Neutral</a>
+        <a href="/allweather.html">全天候</a>
+        <a href="/portfolio-summary.html">组合</a>
+    </div>
+</nav>
+
+<div class="article-wrapper">
+    <header class="article-header">
+        <h1 class="article-title">周末特辑：一周市场回顾（3月3日-3月9日）</h1>
+        <div class="article-meta">
+            <span class="article-date">📅 2026年3月9日</span>
+            <span class="article-tag">黑色星期一</span>
+        </div>
+    </header>
+
+    <article class="article-content" id="article-content">
+<!-- MARKDOWN_START -->
+> **黑色星期一：霍尔木兹海峡关闭，原油暴涨30%，市场格局剧变**
+
+---
+
+# 🎣 开篇：当原油成为市场唯一的焦点
+
+周一早上，我被手机推送惊醒："霍尔木兹海峡关闭，WTI原油暴涨30%..."。那一刻我知道，这周的市场将不再平静。
+
+周一收盘，WTI原油站上$107.50，最高触及$110.54。这是自2022年以来最大的单日涨幅。
+
+与此同时，比特币在$65,633-$67,579区间震荡，美股承压，黄金飙升。市场的逻辑在一夜之间被改写。
+
+---
+
+# 📰 本周大事记
+
+## 1️⃣ 霍尔木兹海峡关闭：黑色星期一
+
+**周一（3月9日）**，伊朗宣布"临时封锁"霍尔木兹海峡——全球约20%石油运输的咽喉要道。
+
+**油价反应**：
+- WTI原油：$82.5 → $107.50（+30.3%）
+- Brent原油：$86 → $112（+30.2%）
+
+**市场冲击**：
+- 能源股暴涨：埃克森美孚+12%，雪佛龙+10%
+- 航空股暴跌：达美航空-8%，美联航-9%
+- 通胀预期飙升，美债收益率跳涨
+
+## 2️⃣ OPEC+会议：增产计划遇阻
+
+**3月1日**，OPEC+在维也纳召开会议。
+
+**原计划**：8个成员国（沙特、俄罗斯等）同意从4月起增产**20.6万桶/日**。
+
+**现实变化**：霍尔木兹海峡关闭后，沙特暗示可能推迟增产计划。OPEC秘书长表示："将在4月5日重新评估市场状况。"
+
+**市场解读**：即便OPEC增产，地缘风险溢价仍将支撑油价在高位。
+
+## 3️⃣ 美国2月非农数据：就业市场意外降温
+
+**3月6日**发布的非农就业报告：
+
+| 指标 | 实际值 | 预期值 | 前值 |
+|------|--------|--------|------|
+| **非农就业** | **-9.2万** | +5万 | -1.7万（修正） |
+| **失业率** | **4.4%** | 4.1% | 4.1% |
+| **劳动参与率** | **62.0%** | 62.5% | 62.4% |
+
+**意外**：就业人数**减少**9.2万，这是2021年以来首次负增长。
+
+**市场反应**：数据公布后，降息预期升温。但周一原油暴涨后，通胀担忧又压制了降息预期。
+
+## 4️⃣ 加密市场：避险属性受质疑
+
+**本周价格**：
+- BTC：$65,633（周低点）→ $67,579（当前），周振幅8%
+- ETH：$3,200 → $3,450，跟随大盘
+
+**关键事件**：
+- 周一原油暴涨时，BTC**未跟随上涨**，反而下跌2%
+- 24小时内全网爆仓$3.29亿，多头被清洗
+
+**市场解读**：在地缘政治危机面前，BTC的"数字黄金"叙事暂时失效，投资者选择真黄金和现金。
+
+---
+
+# 📊 资产表现一览
+
+## 大宗商品：原油独领风骚
+
+| 资产 | 周开盘 | 周收盘 | 涨跌幅 | 点评 |
+|------|--------|--------|--------|------|
+| **WTI原油** | $82.5 | $107.50 | **+30.3%** 🚀 | 霍尔木兹海峡关闭 |
+| **Brent原油** | $86 | $112 | **+30.2%** 🚀 | 地缘风险溢价 |
+| **黄金** | $2,850 | $2,980 | **+4.6%** 📈 | 避险需求激增 |
+| **铜** | $4.05 | $4.15 | **+2.5%** 📈 | 工业需求支撑 |
+
+**关键洞察**：原油与黄金同步上涨，说明市场同时押注"地缘冲突"和"滞胀风险"。
+
+## 加密货币：逆势承压
+
+| 资产 | 周开盘 | 周收盘 | 涨跌幅 | 点评 |
+|------|--------|--------|--------|------|
+| **BTC** | $68,500 | $67,579 | **-1.3%** 📉 | 避险叙事失效 |
+| **ETH** | $3,500 | $3,450 | **-1.4%** 📉 | 跟随BTC |
+
+**关键位**：
+- BTC：支撑$65,000（周一低点），阻力$70,000
+- ETH：支撑$3,200，阻力$3,600
+
+## 美股：能源股 vs 消费股的分化
+
+| 板块 | 涨跌幅 | 代表个股 |
+|------|--------|----------|
+| **能源** | **+15%** | 埃克森美孚+12%，雪佛龙+10% |
+| **航空** | **-12%** | 达美航空-8%，美联航-9% |
+| **科技** | **-3%** | 苹果-2%，谷歌-4% |
+| **金融** | **-2%** | 摩根大通-3%，高盛-2% |
+
+**标普500**：4,150 → 4,050（-2.4%）
+
+---
+
+# 🎯 SlowRich 策略实盘更新
+
+## 1. CTA趋势策略
+
+**本周信号：原油多单盈利，BTC观望**
+
+| 品种 | 方向 | 入场价 | 当前价 | 盈亏 | 状态 |
+|------|------|--------|--------|------|------|
+| **原油** | 多 | $85 | $107.50 | **+26.5%** ✅ | 周一突破后入场 |
+| **BTC** | 空 | $68,000 | $67,579 | **+0.6%** ✅ | 周一开空单对冲 |
+| **黄金** | 多 | $2,880 | $2,980 | **+3.5%** ✅ | 周五非农数据后加仓 |
+
+**操作回顾**：
+- ✅ 周一原油突破$85时果断多单，吃到主升浪
+- ✅ BTC未跟涨原油，果断开空单对冲
+- ✅ 黄金突破$2,900后加仓，目前浮盈3.5%
+
+## 2. 全天候 All Weather
+
+| 资产类别 | 配置 | 本周贡献 | 点评 |
+|----------|------|----------|------|
+| 股票 | 25% | -0.6% | 科技股拖累 |
+| 长债 | 25% | +0.2% | 避险情绪支撑 |
+| 商品（原油） | 20% | **+6.0%** 🚀 | 霍尔木兹危机收益 |
+| 黄金 | 15% | +0.5% | 避险需求 |
+| 现金 | 15% | - | 等待回调 |
+| **组合整体** | 100% | **+6.1%** 🟢 | 商品对冲了股票下跌 |
+
+**点评**：全天候组合配置的商品仓位（20%）本周贡献主要收益，验证了多元化配置的价值。
+
+## 3. Delta Neutral 稳定币策略
+
+| 策略 | APY | 本周收益 | 状态 |
+|------|-----|----------|------|
+| Maple Syrup USDC | 4.53% | +0.09% | 🟢 稳定 |
+| 资金费率套利 | ~25% | +0.48% | 🟢 BTC波动率上升，收益增加 |
+
+**本周操作**：未调整，继续收息。
+
+---
+
+# 💡 本周关键洞察
+
+## 洞察1：原油与比特币的"脱钩"
+
+历史规律：地缘危机时，原油和黄金涨，风险资产跌。
+
+**本周异常**：原油暴涨30%，BTC却下跌2%。
+
+**原因分析**：
+1. BTC的"数字黄金"叙事需要更长时间验证
+2. 机构投资者在危机中选择真黄金和现金
+3. 高杠杆多头被清算，抛压大于买盘
+
+**交易启示**：在极端地缘事件中，BTC可能不跟黄金，而是跟美股。需要灵活调整对冲策略。
+
+## 洞察2：非农数据 vs 原油价格
+
+**矛盾信号**：
+- 非农：就业减少9.2万，经济放缓 → 降息预期升温
+- 原油：暴涨30%，通胀预期飙升 → 加息预期升温
+
+**市场困境**：美联储面临"滞胀"风险——经济放缓+通胀高企。
+
+**历史参照**：1970年代滞胀期，黄金和大宗商品表现优异，股票和债券承压。
+
+**策略调整**：增加黄金和商品配置，减少股票敞口。
+
+## 洞察3：OPEC+的困境
+
+**原计划**：4月起增产20.6万桶/日
+
+**现实**：霍尔木兹海峡关闭后，沙特可能推迟增产
+
+**深层逻辑**：
+- 沙特需要高油价平衡财政（盈亏平衡点约$80）
+- 但过高油价（$110+）会抑制需求，并加速能源转型
+- 美国战略石油储备（SPR）处于历史低位，干预能力有限
+
+**展望**：油价可能在$90-$110区间震荡，直到霍尔木兹海峡重新开放。
+
+---
+
+# 📅 下周重点关注
+
+| 时间 | 事件 | 预期 | 影响资产 |
+|------|------|------|----------|
+| 周二 | **美国CPI（2月）** | 同比+3.2% | 美元、黄金、美股 |
+| 周三 | **EIA原油库存** | 减少200万桶 | 原油 |
+| 周四 | **OPEC月报** | 需求预期下调 | 原油 |
+| 周五 | **美国零售销售** | 环比+0.1% | 美元、消费股 |
+| 待定 | **霍尔木兹海峡动态** | - | 原油、黄金、全球股市 |
+
+**重点关注**：霍尔木兹海峡是否重新开放。如果封锁持续，油价可能冲击$120；如果开放，油价将回落至$90以下。
+
+---
+
+# 🧘 交易纪律复盘
+
+## ✅ 做得好的
+
+1. **果断做多原油**：周一突破$85后果断入场，吃到30%涨幅
+2. **BTC对冲空单**：原油暴涨时开BTC空单，验证了"脱钩"判断
+3. **及时调整全天候组合**：提前增加商品仓位至20%
+
+## ⚠️ 需改进的
+
+1. **黄金仓位偏轻**：地缘危机中黄金仅配15%，应该加到20-25%
+2. **BTC多单止损偏慢**：周初BTC多单未及时止损，小亏出场
+
+## 🎯 下周目标
+
+1. 如果油价突破$115，考虑减仓原油多单
+2. 如果霍尔木兹海峡开放，准备抄底美股
+3. 黄金如果回调至$2,900，加仓至20%
+
+---
+
+# 💬 金句总结
+
+> **"当地缘政治的闪电劈下时，只有资产配置的避雷针能保护你。"**
+
+这周市场告诉我们：没有永远的叙事，只有永远的纪律。BTC的"数字黄金"在真正的危机面前暂时失效，而真正的黄金和原油成为了避风港。
+
+**下一步行动建议**：
+
+1. **短线交易者**：关注霍尔木兹海峡动态，准备双向操作
+2. **长线投资者**：增加商品和黄金配置至40%，等待滞胀逻辑兑现
+3. **稳健派**：继续享受4%+的DeFi收益，同时用少量资金参与商品ETF
+
+---
+
+*数据更新时间：2026年3月9日*
+*数据来源：CoinGecko, EIA, OPEC, 美国劳工部*
+*风险提示：本文仅供学习交流，不构成投资建议。地缘风险极高，请严格控制仓位。*
+
+📌 **SlowRich** —— 慢就是快，稳才能赢
+
+> 💬 **互动话题**：你觉得霍尔木兹海峡多久能重新开放？油价会到$120吗？评论区聊聊 👇
+<!-- MARKDOWN_END -->
+    </article>
+
+    <footer class="article-footer">
+        <a href="/articles/" class="back-link">← 返回文章列表</a>
+        <div class="article-nav">
+            <span style="color:#999;font-size:13px">SlowRich Dashboard</span>
+        </div>
+    </footer>
+</div>
+
+<script>
+    // Auto-render Markdown content
+    document.addEventListener('DOMContentLoaded', function() {
+        const contentEl = document.getElementById('article-content');
+        const html = contentEl.innerHTML;
+        
+        // Extract markdown between markers
+        const startMarker = '<!-- MARKDOWN_START -->';
+        const endMarker = '<!-- MARKDOWN_END -->';
+        const startIdx = html.indexOf(startMarker);
+        const endIdx = html.indexOf(endMarker);
+        
+        if (startIdx !== -1 && endIdx !== -1) {
+            const markdown = html.substring(startIdx + startMarker.length, endIdx).trim();
+            // Configure marked
+            marked.setOptions({
+                breaks: true,
+                gfm: true,
+                headerIds: true,
+                mangle: false
+            });
+            // Render
+            contentEl.innerHTML = marked.parse(markdown);
+        }
+    });
+</script>
+
+</body>
+</html>

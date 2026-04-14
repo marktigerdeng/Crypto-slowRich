@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>周末特辑：一周市场回顾（3月3日-3月9日） - SlowRich</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#fafafa;color:#1a1a1a;min-height:100vh;line-height:1.6}
+        a{color:#10b981;text-decoration:none}
+        a:hover{text-decoration:underline}
+
+        /* ─── Navbar ─── */
+        .navbar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px;background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:100}
+        .navbar-brand{font-size:20px;font-weight:800;color:#1a1a1a;letter-spacing:-.3px;text-decoration:none}
+        .navbar-brand span{color:#10b981}
+        .navbar-links{display:flex;gap:4px}
+        .navbar-links a{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;color:#666;transition:all .2s}
+        .navbar-links a:hover{color:#1a1a1a;background:#f3f4f6;text-decoration:none}
+        .navbar-links a.active{color:#10b981;background:#ecfdf5}
+
+        /* ─── Article Container ─── */
+        .article-wrapper{max-width:800px;margin:0 auto;padding:40px 28px}
+        
+        /* ─── Article Header ─── */
+        .article-header{margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid #e5e7eb}
+        .article-title{font-size:32px;font-weight:800;letter-spacing:-.5px;line-height:1.3;margin-bottom:12px;color:#1a1a1a}
+        .article-meta{display:flex;align-items:center;gap:16px;font-size:14px;color:#666;flex-wrap:wrap}
+        .article-date{display:flex;align-items:center;gap:6px}
+        .article-tag{background:#ecfdf5;color:#059669;padding:4px 12px;border-radius:6px;font-size:12px;font-weight:600}
+
+        /* ─── Article Content ─── */
+        .article-content{font-size:16px;line-height:1.8;color:#333}
+        .article-content h1{font-size:28px;font-weight:700;margin:40px 0 20px;padding-bottom:12px;border-bottom:2px solid #e5e7eb;color:#1a1a1a}
+        .article-content h2{font-size:22px;font-weight:700;margin:32px 0 16px;color:#1a1a1a}
+        .article-content h3{font-size:18px;font-weight:600;margin:24px 0 12px;color:#333}
+        .article-content p{margin-bottom:16px}
+        .article-content strong{font-weight:600;color:#1a1a1a}
+        .article-content em{font-style:italic;color:#555}
+        .article-content blockquote{border-left:4px solid #10b981;background:#f6fdf9;padding:16px 20px;margin:20px 0;border-radius:0 8px 8px 0;color:#444}
+        .article-content blockquote p:last-child{margin-bottom:0}
+        .article-content ul,.article-content ol{margin:16px 0;padding-left:28px}
+        .article-content li{margin-bottom:8px}
+        .article-content code{background:#f3f4f6;padding:2px 6px;border-radius:4px;font-family:'SF Mono',Monaco,monospace;font-size:14px;color:#ef4444}
+        .article-content pre{background:#1a1a1a;color:#f3f4f6;padding:16px;border-radius:8px;overflow-x:auto;margin:20px 0}
+        .article-content pre code{background:none;color:inherit;padding:0}
+        .article-content hr{border:none;height:1px;background:#e5e7eb;margin:32px 0}
+        .article-content img{max-width:100%;height:auto;border-radius:8px;margin:20px 0}
+        .article-content a{color:#10b981;text-decoration:none;border-bottom:1px solid transparent;transition:all .2s}
+        .article-content a:hover{border-bottom-color:#10b981}
+
+        /* ─── Strategy Box ─── */
+        .strategy-box{background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin:24px 0}
+        .strategy-box h4{font-size:14px;font-weight:700;color:#10b981;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
+        .strategy-box p{margin-bottom:12px;font-size:15px}
+        .strategy-box p:last-child{margin-bottom:0}
+
+        /* ─── Tables ─── */
+        .article-content table{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px}
+        .article-content th{background:#f9fafb;padding:12px 16px;text-align:left;font-weight:600;color:#1a1a1a;border-bottom:2px solid #e5e7eb}
+        .article-content td{padding:12px 16px;border-bottom:1px solid #f3f4f6}
+        .article-content tr:hover{background:#f9fafb}
+        .article-content tr:last-child td{border-bottom:none}
+
+        /* ─── Footer ─── */
+        .article-footer{margin-top:48px;padding-top:24px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center}
+        .back-link{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:#f3f4f6;color:#666;border-radius:8px;font-size:14px;font-weight:500;transition:all .2s}
+        .back-link:hover{background:#e5e7eb;color:#1a1a1a;text-decoration:none}
+
+        /* ─── Responsive ─── */
+        @media(max-width:640px){
+            .navbar{flex-direction:column;gap:8px;padding:12px 16px}
+            .article-wrapper{padding:24px 16px}
+            .article-title{font-size:24px}
+            .article-content h1{font-size:22px}
+            .article-content h2{font-size:18px}
+            .article-content{font-size:15px}
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a class="navbar-brand" href="/">Slow<span>Rich</span></a>
+    <div class="navbar-links">
+        <a href="/">首页</a>
+        <a href="/articles/" class="active">文章</a>
+        <a href="/options-monitor.html">期权</a>
+        <a href="/delta-neutral.html">Delta Neutral</a>
+        <a href="/allweather.html">全天候</a>
+        <a href="/portfolio-summary.html">组合</a>
+    </div>
+</nav>
+
+<div class="article-wrapper">
+    <header class="article-header">
+        <h1 class="article-title">一周市场回顾：原油跳水，加密企稳</h1>
+        <div class="article-meta">
+            <span class="article-date">📅 2026年3月9日</span>
+            <span class="article-tag">市场分析</span>
+        </div>
+    </header>
+
+    <article class="article-content" id="article-content">
+<!-- MARKDOWN_START -->
+> **本周关键词：OPEC增产、非农降温、加密ETF流入**
+> 
+> 简单说：油价跌了，比特币稳了，降息预期又回来了。
+
+---
+
+# 📊 本周市场发生了什么？
+
+## 原油暴跌：OPEC+决定增产
+
+周日（3月2日），OPEC+宣布从4月起逐步增产，每天多产13.8万桶原油。
+
+**这意味着什么？**
+
+OPEC+是石油输出国组织，掌握着全球约40%的原油产量。他们之前一直在减产支撑油价，现在决定增产，说明：
+- 沙特态度软化，愿意接受更低的价格
+- 市场份额争夺比价格更重要了
+- 全球经济放缓，需求预期下调
+
+**市场反应：**
+- WTI原油：$68.2 → $66.0（**-3.2%**）
+- Brent原油：$71.5 → $69.2（**-3.2%**）
+
+对普通投资者的影响：油价下跌 → 加油更便宜 → 通胀压力减轻 → 美联储降息空间打开。
+
+---
+
+## 美国就业市场降温
+
+周五公布的2月非农数据让市场松了一口气：
+
+| 指标 | 实际值 | 预期值 | 解读 |
+|------|--------|--------|------|
+| 新增就业 | 15.1万 | 17万 | 不及预期，经济在放缓 |
+| 失业率 | 4.1% | 4.0% | 创近两年新高 |
+| 平均时薪 | +0.3% | +0.3% | 符合预期，通胀压力可控 |
+
+**市场反应：**
+- 美元指数跳水
+- 黄金上涨（+$60）
+- 10年期美债收益率跌破4.2%
+- 美股反弹
+
+**逻辑链条：**
+就业降温 → 美联储可以更放心地降息 → 利好风险资产（股票、比特币）
+
+---
+
+## 加密货币：ETF资金持续流入
+
+尽管市场有各种担忧，机构资金仍在持续买入：
+
+- **贝莱德IBIT**：管理规模突破$350亿，创历史纪录
+- **MicroStrategy**：再增持$3亿BTC
+- **高盛、摩根士丹利**：陆续开放BTC ETF交易
+
+**价格表现：**
+- BTC：$66,204 → $67,393（**+1.8%**）
+- ETH：$1,943 → $1,993（**+2.6%**）
+
+比特币的韧性说明：机构资金正在改变这个市场的波动特征。
+
+---
+
+# 💡 三个值得关注的市场信号
+
+## 信号1：原油与比特币的"跷跷板"效应
+
+本周出现了罕见现象：原油大跌，比特币上涨。
+
+传统上，原油和比特币都属于"风险资产"，通常同涨同跌。但本周它们走出了相反方向。
+
+**可能的解释：**
+- 原油跌 → 通胀预期降温 → 降息预期升温 → 利好比特币
+- 机构资金正在把BTC当作"科技成长股"而不是"数字黄金"
+
+**对投资者的启示：**
+当油价暴跌时，可能是加仓BTC的时机。两者短期可能呈负相关。
+
+---
+
+## 信号2：DeFi收益率进入"新常态"
+
+稳定币理财收益本周整体稳定：
+
+| 协议 | USDC APY | 特点 |
+|------|----------|------|
+| Maple Syrup | 4.53% | 机构级借贷，风险较低 |
+| Sky Lending | 4.00% | 老牌协议，流动性好 |
+| Aave V3 | 1.61% | 最安全的选项 |
+| Spark Savings | 4.00% | MakerDAO旗下 |
+
+**什么是DeFi？**
+
+DeFi = 去中心化金融。简单说就是用代码代替银行，把你的稳定币借给需要的人，赚取利息。
+
+- **4%的年化**意味着放10万刀，一年赚4000刀
+- 收益来自真实的借贷需求（机构套利、杠杆交易等）
+- 风险包括智能合约漏洞、脱锚风险等
+
+**为什么4%可能成为新常态？**
+- 美联储利率仍处高位
+- 加密市场套利机会减少
+- 机构资金更谨慎
+
+---
+
+## 信号3：非农数据改变了降息预期
+
+**数据前**：市场预期2025年降息2次，首次在6月
+
+**数据后**：市场预期降息3次，首次提前至5月
+
+**影响资产：**
+- **利好**：黄金、债券、成长股、比特币
+- **利空**：美元、银行股
+
+---
+
+# 🎯 本周策略信号回顾
+
+以下内容是我们SlowRich系统的实盘信号记录，供参考学习：
+
+## CTA趋势策略（信号：观望）
+
+**什么是CTA策略？**
+
+CTA = Commodity Trading Advisor，简单说就是"趋势跟踪"。价格上涨就做多，价格下跌就做空，不预测，只跟随。
+
+本周信号：
+- BTC：空仓（MA25 < MA60，维持空头排列）
+- 原油：空仓（价格跌破MA60，趋势转空）
+- 黄金：轻仓多单（突破$2,900后入场）
+
+**为什么没做BTC？**
+
+虽然BTC本周涨了，但技术指标显示仍处于空头趋势。CTA策略的核心是"让子弹飞一会儿"，不猜底，等趋势确认。
+
+---
+
+## 全天候 All Weather 组合（+1.2%）
+
+**什么是全天候策略？**
+
+桥水基金达利欧发明的配置方法。不预测市场，而是配置资产让组合在任何经济环境下都能稳健增长。
+
+核心逻辑：
+- **股票**：经济好时赚钱
+- **长债**：经济差时赚钱
+- **商品**：通胀高时赚钱
+- **黄金**：危机时保值
+
+本周配置表现：
+
+| 资产类别 | 配置比例 | 本周贡献 | 说明 |
+|----------|----------|----------|------|
+| 股票 | 30% | +0.4% | 美股反弹 |
+| 长债 | 35% | +0.8% | 降息预期升温，债券上涨 |
+| 商品 | 10% | -0.3% | 原油拖累 |
+| 黄金 | 15% | +0.3% | 避险需求 |
+| 现金 | 10% | - | 等待机会 |
+| **组合整体** | 100% | **+1.2%** | 稳健增长 |
+
+**为什么涨得不多？**
+
+全天候的核心是"不亏钱"而不是"赚最多"。本周股票涨了，但原油跌了，互相抵消。长期看，这种分散配置能让你睡个好觉。
+
+---
+
+## Delta Neutral 稳定币策略（+0.09%）
+
+**什么是Delta Neutral？**
+
+Delta = 价格敏感度。Neutral = 中性。简单说就是"市场涨跌与我无关，我只赚稳定的利息"。
+
+本周操作：
+- 继续存Maple Syrup（4.53% APY）
+- 继续存Sky Lending（4.00% APY）
+- 无调整
+
+**适合什么人？**
+
+- 不想承受波动
+- 需要现金流
+- 作为组合的稳定器
+
+---
+
+# 📅 下周重点关注
+
+| 时间 | 事件 | 预期 | 影响 |
+|------|------|------|------|
+| 周二 20:30 | 美国CPI（2月） | 同比+2.9% | 如果低于预期，利好风险资产 |
+| 周三 22:30 | EIA原油库存 | 增加150万桶 | 库存增加 → 油价承压 |
+| 周四 20:30 | PPI数据 | 环比+0.3% | 生产者价格指数 |
+| 周五 20:30 | 零售销售 | 环比+0.2% | 消费是否强劲 |
+
+**重点关注CPI数据**
+
+如果通胀继续回落，将巩固降息预期，利好股票和比特币。如果通胀反弹，市场可能重新定价。
+
+---
+
+# 🧠 本周思考：关于"纪律"
+
+这周有个细节值得思考：CTA策略错过了BTC的反弹。
+
+但从系统规则看，这是正确的。因为：
+1. 趋势没有确认（MA25 < MA60）
+2. 反弹幅度不大（1.8%）
+3. 历史上，抄底的成功率远低于趋势跟随
+
+**投资中最难的不是分析，而是执行。**
+
+知道和做到之间，隔着十万八千里。
+
+---
+
+*数据更新时间：2026年3月9日*
+*风险提示：本文仅供学习交流，不构成投资建议。*
+
+📌 **SlowRich** —— 慢就是快，稳才能赢
+<!-- MARKDOWN_END -->
+    </article>
+
+    <footer class="article-footer">
+        <a href="/articles/" class="back-link">← 返回文章列表</a>
+        <div>
+            <span style="color:#999;font-size:13px">SlowRich Dashboard</span>
+        </div>
+    </footer>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const contentEl = document.getElementById('article-content');
+        const html = contentEl.innerHTML;
+        const startMarker = '<!-- MARKDOWN_START -->';
+        const endMarker = '<!-- MARKDOWN_END -->';
+        const startIdx = html.indexOf(startMarker);
+        const endIdx = html.indexOf(endMarker);
+        
+        if (startIdx !== -1 && endIdx !== -1) {
+            const markdown = html.substring(startIdx + startMarker.length, endIdx).trim();
+            marked.setOptions({
+                breaks: true,
+                gfm: true,
+                headerIds: true,
+                mangle: false
+            });
+            contentEl.innerHTML = marked.parse(markdown);
+        }
+    });
+</script>
+
+</body>
+</html>

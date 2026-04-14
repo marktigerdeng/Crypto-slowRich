@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>稳健组合 — SlowRich</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#fafafa;color:#1a1a1a;min-height:100vh;line-height:1.6}
+a{color:#10b981;text-decoration:none}
+a:hover{text-decoration:underline}
+
+.navbar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px;background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:100}
+.navbar-brand{font-size:20px;font-weight:800;color:#1a1a1a;letter-spacing:-.3px;text-decoration:none}
+.navbar-brand span{color:#10b981}
+.navbar-links{display:flex;gap:4px}
+.navbar-links a{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;color:#666;transition:all .2s}
+.navbar-links a:hover{color:#1a1a1a;background:#f3f4f6;text-decoration:none}
+.navbar-links a.active{color:#10b981;background:#ecfdf5}
+
+.container{max-width:1200px;margin:0 auto;padding:24px 28px}
+.page-title{font-size:24px;font-weight:800;margin-bottom:4px}
+.page-sub{font-size:14px;color:#666;margin-bottom:28px}
+
+/* ─── Targets Banner ─── */
+.targets-row{display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.target-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;flex:1;min-width:160px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.target-label{font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.5px;font-weight:500}
+.target-value{font-size:28px;font-weight:800;margin-top:4px}
+.target-sub{font-size:12px;color:#999;margin-top:2px}
+.target-green{color:#10b981}
+.target-amber{color:#f59e0b}
+.target-blue{color:#3b82f6}
+
+/* ─── Status Indicator ─── */
+.status-banner{padding:14px 20px;border-radius:12px;margin-bottom:24px;font-size:13px;font-weight:500;border:1px solid}
+.status-green{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
+.status-amber{background:#fffbeb;border-color:#fde68a;color:#92400e}
+.status-red{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+
+/* ─── 3-Layer Portfolio ─── */
+.layers-wrap{display:flex;flex-direction:column;gap:16px;margin-bottom:24px}
+.layer-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.layer-header{padding:16px 20px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.layer-bar{width:5px;border-radius:3px;height:100%;min-height:40px}
+.layer-title{font-size:15px;font-weight:700}
+.layer-desc{font-size:12px;color:#666;margin-top:2px}
+.layer-right{text-align:right}
+.layer-pct{font-size:20px;font-weight:800}
+.layer-target-apy{font-size:11px;color:#999;margin-top:2px}
+.layer-body{padding:0 20px 20px;border-top:1px solid #f3f4f6}
+
+/* Strategy rows inside layer */
+.strategy-rows{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.strategy-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:#f9fafb;border-radius:10px}
+.strategy-icon{font-size:20px;flex-shrink:0}
+.strategy-info{flex:1}
+.strategy-name{font-size:13px;font-weight:600}
+.strategy-rule{font-size:11px;color:#666;margin-top:2px}
+.strategy-alloc{font-size:16px;font-weight:700;color:#10b981;min-width:40px;text-align:right}
+.strategy-apy{font-size:11px;color:#999;text-align:right}
+
+/* ─── Conditions Grid ─── */
+.conditions-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:24px}
+.cond-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.cond-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.cond-name{font-size:12px;font-weight:600;color:#666}
+.cond-dot{width:8px;height:8px;border-radius:50%}
+.cond-value{font-size:18px;font-weight:700}
+.cond-rule{font-size:11px;color:#999;margin-top:4px}
+
+/* ─── Rebalance Checklist ─── */
+.rebalance-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:24px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.rebalance-title{font-size:14px;font-weight:700;margin-bottom:14px}
+.check-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:13px}
+.check-item:last-child{border-bottom:none}
+.check-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.check-text{flex:1}
+.check-title{font-weight:600}
+.check-sub{font-size:11px;color:#999;margin-top:2px}
+.check-action{font-size:12px;font-weight:600;padding:3px 10px;border-radius:6px;flex-shrink:0}
+.action-hold{background:#ecfdf5;color:#059669}
+.action-reduce{background:#fef3c7;color:#d97706}
+.action-exit{background:#fef2f2;color:#dc2626}
+.action-enter{background:#eff6ff;color:#2563eb}
+
+/* ─── Loading ─── */
+.loading-overlay{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px;gap:12px;color:#999}
+.spinner{width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:#10b981;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+footer{padding:24px;text-align:center;color:#ccc;font-size:12px;border-top:1px solid #e5e7eb;margin-top:40px;background:#fff}
+
+@media(max-width:640px){
+  .navbar{flex-direction:column;gap:8px;padding:12px 16px}
+  .container{padding:16px}
+  .targets-row{flex-direction:column}
+  .conditions-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" href="/">Slow<span>Rich</span></a>
+  <div class="navbar-links">
+    <a href="/">首页</a>
+    <a href="/sentiment.html">市场情绪</a>
+    <a href="/stable-portfolio.html" class="active">稳健组合</a>
+    <a href="/options-monitor.html">期权</a>
+    <a href="/delta-neutral.html">Delta Neutral</a>
+    <a href="/allweather.html">全天候</a>
+    <a href="/portfolio-summary.html">组合</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="page-title">稳健组合</div>
+  <div class="page-sub">目标：15% 年化收益 · 最大回撤 &lt;5% · 穿越牛熊</div>
+
+  <!-- Targets -->
+  <div class="targets-row">
+    <div class="target-card">
+      <div class="target-label">目标年化</div>
+      <div class="target-value target-green">15%</div>
+      <div class="target-sub">综合加权收益</div>
+    </div>
+    <div class="target-card">
+      <div class="target-label">最大回撤线</div>
+      <div class="target-value target-amber">5%</div>
+      <div class="target-sub">触发则全面减仓</div>
+    </div>
+    <div class="target-card">
+      <div class="target-label">策略层数</div>
+      <div class="target-value target-blue">3</div>
+      <div class="target-sub">安全垫 + 增强 + 趋势</div>
+    </div>
+    <div class="target-card">
+      <div class="target-label">当前综合情绪</div>
+      <div class="target-value" id="sentimentScore" style="color:#f59e0b">—</div>
+      <div class="target-sub" id="sentimentLabel">加载中...</div>
+    </div>
+  </div>
+
+  <!-- Status Banner -->
+  <div id="statusBanner" class="status-banner status-amber">
+    正在加载市场状态...
+  </div>
+
+  <!-- Market Conditions -->
+  <div style="font-size:14px;font-weight:700;margin-bottom:12px">当前市场条件</div>
+  <div class="conditions-grid" id="conditionsGrid">
+    <div class="cond-card"><div class="cond-value" style="color:#999">—</div><div class="cond-rule">加载中</div></div>
+  </div>
+
+  <!-- 3-Layer Portfolio -->
+  <div style="font-size:14px;font-weight:700;margin-bottom:12px">三层防御体系</div>
+  <div class="layers-wrap" id="layersWrap">
+    <!-- rendered by JS -->
+  </div>
+
+  <!-- Risk Control Checklist -->
+  <div class="rebalance-card">
+    <div class="rebalance-title">风控规则 & 当前指令</div>
+    <div id="checklistBody">
+      <div class="check-item"><div class="check-icon">⏳</div><div class="check-text">加载中...</div></div>
+    </div>
+  </div>
+
+  <!-- Philosophy -->
+  <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+    <div style="font-size:14px;font-weight:700;margin-bottom:12px">投资哲学</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;font-size:13px;color:#666">
+      <div><strong style="color:#1a1a1a;display:block;margin-bottom:4px">不预测，只配置</strong>我们不猜顶部和底部，只根据当前市场结构调整仓位。</div>
+      <div><strong style="color:#1a1a1a;display:block;margin-bottom:4px">回撤是底线</strong>5% 回撤是不可逾越的红线。超过即清仓，不允许"再等等"。</div>
+      <div><strong style="color:#1a1a1a;display:block;margin-bottom:4px">情绪是工具</strong>CDRI、恐慌指数只告诉我们"现在在哪里"，不是交易信号，是风控依据。</div>
+      <div><strong style="color:#1a1a1a;display:block;margin-bottom:4px">月度再平衡</strong>每月固定时间检查偏离，偏差 ±5% 即调仓，纪律优先于感觉。</div>
+    </div>
+  </div>
+</div>
+
+<footer>SlowRich — 稳健组合设计 · 目标年化15% · 最大回撤5%</footer>
+
+<script>
+// Portfolio design: 3 layers
+const LAYERS = [
+  {
+    name: '第一层：安全垫',
+    desc: '保底收益，无论市场如何都要持有',
+    color: '#10b981',
+    targetPct: 50,
+    targetApy: '4–6%',
+    strategies: [
+      { icon: '💵', name: '稳定币理财', rule: 'Aave / Sky / Ethena sUSDe', alloc: '30%', apy: '4–8%' },
+      { icon: '🥇', name: '黄金 ETF', rule: 'GLD · 避险资产', alloc: '10%', apy: '0–5%（增值）' },
+      { icon: '📄', name: '短期美债', rule: 'TLT / IEF · 利率锁定', alloc: '10%', apy: '4–5%' },
+    ],
+  },
+  {
+    name: '第二层：增强收益',
+    desc: '市场条件满足时激活，否则退回安全垫',
+    color: '#f59e0b',
+    targetPct: 35,
+    targetApy: '8–15%',
+    strategies: [
+      { icon: '⚙️', name: 'Delta Neutral', rule: 'JLP持多 + 永续对冲 · 净收益>5%时开仓', alloc: '20%', apy: '8–15%' },
+      { icon: '📉', name: '期权 Sell Put', rule: '恐慌<30 + VRP>0 · 两条件同时满足', alloc: '15%', apy: '10–20%' },
+    ],
+  },
+  {
+    name: '第三层：趋势捕获',
+    desc: '跟随大趋势，情绪极端时强制空仓',
+    color: '#3b82f6',
+    targetPct: 15,
+    targetApy: '15–30%',
+    strategies: [
+      { icon: '📈', name: 'CTA 双均线', rule: '25/60日均线金叉入场 · 情绪>70时减半仓', alloc: '10%', apy: '15–30%' },
+      { icon: '₿', name: 'BTC 长期持有', rule: '定投，不择时，不卖出', alloc: '5%', apy: '20%+（历史）' },
+    ],
+  },
+];
+
+// Risk rules
+const RISK_RULES = [
+  {
+    icon: '🛡️',
+    title: '组合回撤 > 3%',
+    sub: '达到预警线，整体减仓至目标的70%',
+    conditionKey: 'drawdown3',
+  },
+  {
+    icon: '🚨',
+    title: '组合回撤 > 5%',
+    sub: '触发止损线，清仓所有风险资产，只留稳定币',
+    conditionKey: 'drawdown5',
+  },
+  {
+    icon: '📊',
+    title: '情绪评分 > 70',
+    sub: 'CTA减仓至5%，期权停止开新仓',
+    conditionKey: 'sentimentHigh',
+  },
+  {
+    icon: '😱',
+    title: '情绪评分 < 20',
+    sub: '极度恐慌，期权最佳窗口，CTA可加仓至20%',
+    conditionKey: 'sentimentLow',
+  },
+  {
+    icon: '⚙️',
+    title: 'Delta Neutral 净收益 < 5%',
+    sub: '关闭Delta Neutral，资金转移至稳定币',
+    conditionKey: 'dnLow',
+  },
+  {
+    icon: '🔄',
+    title: '月度再平衡',
+    sub: '每月固定日期检查，偏离目标 ±5% 即调仓',
+    conditionKey: 'rebalance',
+  },
+];
+
+function scoreColor(score) {
+  if (score <= 20) return '#ef4444';
+  if (score <= 35) return '#f97316';
+  if (score <= 55) return '#f59e0b';
+  if (score <= 70) return '#10b981';
+  return '#8b5cf6';
+}
+
+function renderLayers(sentiment) {
+  const composite = sentiment?.composite ?? 50;
+  const container = document.getElementById('layersWrap');
+
+  // Adjust allocation hints based on sentiment
+  const stableBonus = composite > 70 ? '+5%' : composite < 20 ? '-5%' : '';
+  const ctaHint = composite > 70 ? '⚠️ 减仓' : composite < 20 ? '✅ 正常' : '✅ 正常';
+
+  container.innerHTML = LAYERS.map(layer => `
+    <div class="layer-card">
+      <div class="layer-header" style="display:flex;gap:12px;align-items:center">
+        <div class="layer-bar" style="background:${layer.color}"></div>
+        <div style="flex:1">
+          <div class="layer-title">${layer.name}</div>
+          <div class="layer-desc">${layer.desc}</div>
+        </div>
+        <div class="layer-right">
+          <div class="layer-pct" style="color:${layer.color}">${layer.targetPct}%</div>
+          <div class="layer-target-apy">目标 ${layer.targetApy}</div>
+        </div>
+      </div>
+      <div class="layer-body">
+        <div class="strategy-rows">
+          ${layer.strategies.map(s => `
+            <div class="strategy-row">
+              <div class="strategy-icon">${s.icon}</div>
+              <div class="strategy-info">
+                <div class="strategy-name">${s.name}</div>
+                <div class="strategy-rule">${s.rule}</div>
+              </div>
+              <div>
+                <div class="strategy-alloc">${s.alloc}</div>
+                <div class="strategy-apy">${s.apy}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderConditions(sentiment) {
+  const s = sentiment;
+  const composite = s?.composite ?? null;
+  const fg = s?.dimensions?.fearGreed?.value ?? null;
+  const funding = s?.dimensions?.funding?.btcRate ?? null;
+  const vrp = s?.dimensions?.vrp?.spread ?? null;
+  const ctaSignal = s?.dimensions?.cta?.signal ?? null;
+
+  const conditions = [
+    {
+      name: '综合情绪评分',
+      value: composite != null ? composite : '—',
+      suffix: composite != null ? ' / 100' : '',
+      color: composite != null ? scoreColor(composite) : '#999',
+      rule: composite != null
+        ? (composite > 70 ? '⚠️ 偏热，降低风险敞口' : composite < 20 ? '✅ 恐慌，期权最佳窗口' : '✅ 正常区间')
+        : '加载中',
+      dot: composite != null ? (composite > 70 ? '#f97316' : composite < 20 ? '#ef4444' : '#10b981') : '#e5e7eb',
+    },
+    {
+      name: '恐慌贪婪指数',
+      value: fg != null ? fg : '—',
+      suffix: '',
+      color: fg != null ? scoreColor(fg) : '#999',
+      rule: fg != null ? (fg < 25 ? '✅ 极度恐慌，可开期权' : fg > 75 ? '⚠️ 极度贪婪' : '正常') : '加载中',
+      dot: fg != null ? (fg < 25 ? '#ef4444' : fg > 75 ? '#8b5cf6' : '#10b981') : '#e5e7eb',
+    },
+    {
+      name: 'BTC 资金费率/8h',
+      value: funding != null ? (funding > 0 ? '+' : '') + funding.toFixed(4) + '%' : '—',
+      suffix: '',
+      color: funding != null ? (funding > 0.01 ? '#f97316' : funding < -0.005 ? '#3b82f6' : '#10b981') : '#999',
+      rule: funding != null ? (funding > 0.01 ? '⚠️ 多头过热' : funding < 0 ? '空头主导' : '✅ 均衡') : '加载中',
+      dot: funding != null ? (Math.abs(funding) > 0.01 ? '#f97316' : '#10b981') : '#e5e7eb',
+    },
+    {
+      name: 'VRP 波动率溢价',
+      value: vrp != null ? (vrp > 0 ? '+' : '') + vrp.toFixed(1) + '%' : '—',
+      suffix: '',
+      color: vrp != null ? (vrp > 10 ? '#ef4444' : vrp < 0 ? '#10b981' : '#f59e0b') : '#999',
+      rule: vrp != null ? (vrp > 5 ? '期权开仓条件之一 ✅' : vrp < 0 ? 'IV偏低，期权便宜' : '正常区间') : '加载中',
+      dot: vrp != null ? (vrp > 5 ? '#10b981' : '#f59e0b') : '#e5e7eb',
+    },
+    {
+      name: 'CTA 趋势信号',
+      value: ctaSignal ? (ctaSignal === 'bullish' ? '看涨 ↑' : ctaSignal === 'bearish' ? '看跌 ↓' : '震荡') : '—',
+      suffix: '',
+      color: ctaSignal === 'bullish' ? '#10b981' : ctaSignal === 'bearish' ? '#ef4444' : '#f59e0b',
+      rule: ctaSignal === 'bullish' ? '✅ CTA 正常持仓' : ctaSignal === 'bearish' ? '⚠️ CTA 空仓观望' : '减半仓',
+      dot: ctaSignal === 'bullish' ? '#10b981' : ctaSignal === 'bearish' ? '#ef4444' : '#f59e0b',
+    },
+    {
+      name: '期权开仓条件',
+      value: (fg != null && vrp != null) ? (fg < 30 && vrp > 0 ? '满足 ✅' : '不满足') : '—',
+      suffix: '',
+      color: (fg != null && vrp != null) ? (fg < 30 && vrp > 0 ? '#10b981' : '#ef4444') : '#999',
+      rule: '恐慌<30 同时 VRP>0',
+      dot: (fg != null && vrp != null) ? (fg < 30 && vrp > 0 ? '#10b981' : '#ef4444') : '#e5e7eb',
+    },
+  ];
+
+  document.getElementById('conditionsGrid').innerHTML = conditions.map(c => `
+    <div class="cond-card">
+      <div class="cond-top">
+        <div class="cond-name">${c.name}</div>
+        <div class="cond-dot" style="background:${c.dot}"></div>
+      </div>
+      <div class="cond-value" style="color:${c.color}">${c.value}${c.suffix}</div>
+      <div class="cond-rule">${c.rule}</div>
+    </div>
+  `).join('');
+}
+
+function renderChecklist(sentiment) {
+  const composite = sentiment?.composite ?? 50;
+  const fg = sentiment?.dimensions?.fearGreed?.value ?? 50;
+  const vrp = sentiment?.dimensions?.vrp?.spread ?? 0;
+  const ctaSignal = sentiment?.dimensions?.cta?.signal ?? 'neutral';
+
+  const checks = [
+    {
+      icon: composite > 70 ? '⚠️' : '✅',
+      title: `CTA 持仓 — ${ctaSignal === 'bullish' ? '金叉持有' : ctaSignal === 'bearish' ? '死叉空仓' : '震荡观望'}`,
+      sub: ctaSignal === 'bullish' ? '趋势向上，维持10%仓位' : ctaSignal === 'bearish' ? '趋势向下，CTA空仓，资金转移至稳定币' : '均线接近，持半仓',
+      action: ctaSignal === 'bullish' ? '持有' : ctaSignal === 'bearish' ? '空仓' : '减半',
+      actionClass: ctaSignal === 'bullish' ? 'action-hold' : ctaSignal === 'bearish' ? 'action-exit' : 'action-reduce',
+    },
+    {
+      icon: (fg < 30 && vrp > 0) ? '✅' : '⏸️',
+      title: `期权 Sell Put — ${fg < 30 && vrp > 0 ? '开仓条件满足' : '条件未满足'}`,
+      sub: fg < 30 && vrp > 0 ? `恐慌指数${fg}(<30) + VRP正值，可开仓 BTC Sell Put` : `需要：恐慌<30（当前${fg ?? '—'}）且 VRP>0（当前${vrp != null ? vrp.toFixed(1) : '—'}%）`,
+      action: fg < 30 && vrp > 0 ? '开仓' : '等待',
+      actionClass: fg < 30 && vrp > 0 ? 'action-enter' : 'action-hold',
+    },
+    {
+      icon: '✅',
+      title: 'Delta Neutral — 检查净收益',
+      sub: 'JLP APR 减去对冲成本 > 5% 时开仓，否则关闭。每周检查一次资金费率。',
+      action: '每周检查',
+      actionClass: 'action-hold',
+    },
+    {
+      icon: '✅',
+      title: '稳定币理财 — 持续运作',
+      sub: '无论市场如何，安全垫30%始终保持，收取4-8%基础收益',
+      action: '持有',
+      actionClass: 'action-hold',
+    },
+    {
+      icon: composite > 70 ? '⚠️' : '✅',
+      title: composite > 70 ? '情绪过热 — 建议减仓' : '情绪正常 — 维持配置',
+      sub: composite > 70 ? `综合情绪${composite}，偏热区间。建议CTA减至5%，稳定币提升至40%+` : `综合情绪${composite}，正常区间，维持三层配置`,
+      action: composite > 70 ? '减仓' : '维持',
+      actionClass: composite > 70 ? 'action-reduce' : 'action-hold',
+    },
+    {
+      icon: '🔄',
+      title: '月度再平衡',
+      sub: '每月1日检查各层实际占比，偏离目标±5%时调仓。下次再平衡：5月1日。',
+      action: '定期执行',
+      actionClass: 'action-hold',
+    },
+  ];
+
+  document.getElementById('checklistBody').innerHTML = checks.map(c => `
+    <div class="check-item">
+      <div class="check-icon">${c.icon}</div>
+      <div class="check-text">
+        <div class="check-title">${c.title}</div>
+        <div class="check-sub">${c.sub}</div>
+      </div>
+      <div class="check-action ${c.actionClass}">${c.action}</div>
+    </div>
+  `).join('');
+}
+
+function renderStatusBanner(sentiment) {
+  const composite = sentiment?.composite ?? 50;
+  const banner = document.getElementById('statusBanner');
+  let cls, text;
+  if (composite > 70) {
+    cls = 'status-red';
+    text = `⚠️ 市场偏热（情绪评分 ${composite}）— 建议减仓，等待回调后再加码`;
+  } else if (composite < 20) {
+    cls = 'status-amber';
+    text = `😱 极度恐慌（情绪评分 ${composite}）— 恐慌中寻找机会，Sell Put 窗口开启`;
+  } else {
+    cls = 'status-green';
+    text = `✅ 市场中性（情绪评分 ${composite}）— 按计划维持三层配置，不追涨不杀跌`;
+  }
+  banner.className = `status-banner ${cls}`;
+  banner.textContent = text;
+}
+
+async function load() {
+  try {
+    const resp = await fetch('/api/sentiment');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const sentiment = await resp.json();
+
+    // Update score card
+    const scoreEl = document.getElementById('sentimentScore');
+    const labelEl = document.getElementById('sentimentLabel');
+    scoreEl.textContent = sentiment.composite;
+    scoreEl.style.color = scoreColor(sentiment.composite);
+    labelEl.textContent = sentiment.riskLevel;
+
+    renderStatusBanner(sentiment);
+    renderConditions(sentiment);
+    renderLayers(sentiment);
+    renderChecklist(sentiment);
+  } catch (err) {
+    // Render with null data (static design still shows)
+    renderConditions(null);
+    renderLayers(null);
+    renderChecklist(null);
+    document.getElementById('statusBanner').className = 'status-banner status-amber';
+    document.getElementById('statusBanner').textContent = '⚠️ 情绪数据加载失败，显示默认配置';
+  }
+}
+
+load();
+setInterval(load, 5 * 60 * 1000);
+</script>
+</body>
+</html>

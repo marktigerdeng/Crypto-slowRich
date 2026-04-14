@@ -7,75 +7,83 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',sans-serif;background:#0a0e17;color:#e2e8f0;min-height:100vh;line-height:1.6}
-a{color:#60a5fa;text-decoration:none}
-.header{padding:16px 24px;background:linear-gradient(135deg,#0f172a,#1e293b);border-bottom:1px solid #1e293b}
-.header h1{font-size:22px;font-weight:800;background:linear-gradient(90deg,#f97316,#ef4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.header .sub{color:#64748b;font-size:13px;margin-top:4px}
-.nav{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap}
-.nav a{padding:4px 12px;border:1px solid #334155;border-radius:6px;font-size:12px;color:#94a3b8}
-.nav a:hover{border-color:#f97316;color:#f97316}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#fafafa;color:#1a1a1a;min-height:100vh;line-height:1.6}
+a{color:#10b981;text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ─── Navbar (unified) ─── */
+.navbar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px;background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:100}
+.navbar-brand{font-size:20px;font-weight:800;color:#1a1a1a;letter-spacing:-.3px;text-decoration:none}
+.navbar-brand span{color:#10b981}
+.navbar-links{display:flex;gap:4px}
+.navbar-links a{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;color:#666;transition:all .2s}
+.navbar-links a:hover{color:#1a1a1a;background:#f3f4f6;text-decoration:none}
+.navbar-links a.active{color:#10b981;background:#ecfdf5}
+.page-subtitle{padding:10px 28px;background:#fff;border-bottom:1px solid #e5e7eb;font-size:13px;color:#999}
+.page-subtitle strong{color:#1a1a1a;font-size:15px}
+
+/* ─── Container ─── */
+.container{max-width:1200px;margin:0 auto;padding:16px 20px}
 
 /* Summary bar */
-.summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;padding:16px 24px}
-.stat{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px 18px}
-.stat-label{font-size:11px;color:#64748b;text-transform:uppercase}
-.stat-value{font-size:22px;font-weight:700;color:#f1f5f9;margin-top:4px}
-.stat-sub{font-size:11px;color:#94a3b8;margin-top:2px}
+.summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;padding:16px 0}
+.stat{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px 14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.stat-label{font-size:11px;color:#999;text-transform:uppercase}
+.stat-value{font-size:22px;font-weight:700;color:#1a1a1a;margin-top:4px}
+.stat-sub{font-size:11px;color:#999;margin-top:2px}
 
-.section{padding:16px 24px}
-.section-title{font-size:16px;font-weight:700;margin-bottom:12px}
+.section{padding:16px 0}
+.section-title{font-size:16px;font-weight:700;margin-bottom:12px;color:#1a1a1a}
 
 /* Timing */
 .timing-grid{display:grid;grid-template-columns:200px 1fr;gap:20px;align-items:start}
-@media(max-width:768px){.timing-grid{grid-template-columns:1fr}}
 .gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
 .gauge-canvas{width:180px;height:110px}
-.gauge-score{font-size:36px;font-weight:800;margin-top:-8px}
+.gauge-score{font-size:36px;font-weight:800;margin-top:-8px;color:#1a1a1a}
 .gauge-label{font-size:14px;font-weight:600;padding:4px 14px;border-radius:20px}
-.gauge-label.favorable{background:#10b98122;color:#10b981}
-.gauge-label.neutral{background:#f59e0b22;color:#f59e0b}
-.gauge-label.unfavorable{background:#ef444422;color:#ef4444}
+.gauge-label.favorable{background:#ecfdf5;color:#10b981}
+.gauge-label.neutral{background:#fefce8;color:#f59e0b}
+.gauge-label.unfavorable{background:#fef2f2;color:#ef4444}
 
 .signal-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-.signal-card{background:#0f172a;border:1px solid #334155;border-radius:10px;padding:14px}
-.signal-card-title{font-size:11px;color:#64748b;text-transform:uppercase;margin-bottom:6px}
+.signal-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.signal-card-title{font-size:11px;color:#999;text-transform:uppercase;margin-bottom:6px}
 .signal-card-value{font-size:24px;font-weight:700}
-.signal-card-sub{font-size:11px;color:#94a3b8;margin-top:4px}
+.signal-card-sub{font-size:11px;color:#999;margin-top:4px}
 
 /* Filters */
-.filters{display:flex;gap:16px;padding:12px 24px;flex-wrap:wrap;align-items:end;background:#0f172a;border-bottom:1px solid #1e293b}
+.filters{display:flex;gap:16px;padding:12px 16px;flex-wrap:wrap;align-items:end;background:#fff;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:16px}
 .ctrl{display:flex;flex-direction:column;gap:4px}
-.ctrl label{font-size:11px;color:#64748b;text-transform:uppercase}
-.ctrl input,.ctrl select{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:8px 12px;border-radius:8px;font-size:14px;font-family:inherit;width:120px}
-.apply-btn{background:linear-gradient(135deg,#f97316,#ef4444);color:#fff;border:none;padding:8px 20px;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;font-family:inherit;align-self:end}
-.apply-btn:hover{opacity:.9}
-.reset-btn{background:#334155;color:#e2e8f0;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit;align-self:end}
+.ctrl label{font-size:11px;color:#999;text-transform:uppercase;font-weight:500}
+.ctrl input,.ctrl select{background:#fff;border:1px solid #e5e7eb;color:#1a1a1a;padding:8px 12px;border-radius:8px;font-size:14px;font-family:inherit;width:120px}
+.apply-btn{background:#10b981;color:#fff;border:none;padding:8px 20px;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;font-family:inherit;align-self:end}
+.apply-btn:hover{background:#059669}
+.reset-btn{background:#f3f4f6;color:#666;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit;align-self:end}
 
 /* Options table */
 .expiry-group{margin-bottom:16px}
-.expiry-header{display:flex;justify-content:space-between;align-items:center;background:#0f172a;border:1px solid #334155;border-radius:10px 10px 0 0;padding:12px 16px;cursor:pointer;user-select:none}
-.expiry-header:hover{border-color:#f97316}
+.expiry-header{display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #e5e7eb;border-radius:10px 10px 0 0;padding:12px 16px;cursor:pointer;user-select:none;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.expiry-header:hover{border-color:#10b981}
 .expiry-header.collapsed{border-radius:10px}
-.expiry-title{font-size:14px;font-weight:700}
-.expiry-meta{display:flex;gap:16px;font-size:12px;color:#94a3b8}
-.expiry-toggle{color:#64748b;font-size:16px;transition:transform .2s}
+.expiry-title{font-size:14px;font-weight:700;color:#1a1a1a}
+.expiry-meta{display:flex;gap:16px;font-size:12px;color:#999}
+.expiry-toggle{color:#999;font-size:16px;transition:transform .2s}
 .expiry-toggle.collapsed{transform:rotate(-90deg)}
 
-.opts-wrap{border:1px solid #334155;border-top:none;border-radius:0 0 10px 10px;overflow:hidden}
+.opts-wrap{border:1px solid #e5e7eb;border-top:none;border-radius:0 0 10px 10px;overflow:hidden}
 .opts-table{width:100%;border-collapse:collapse;font-size:13px}
-.opts-table th{background:#1e293b;padding:8px 12px;text-align:right;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;position:sticky;top:0}
+.opts-table th{background:#f9fafb;padding:8px 12px;text-align:right;font-weight:600;color:#999;font-size:11px;text-transform:uppercase;position:sticky;top:0}
 .opts-table th:first-child{text-align:left}
-.opts-table td{padding:8px 12px;border-bottom:1px solid #1e293b22;text-align:right}
+.opts-table td{padding:8px 12px;border-bottom:1px solid #f3f4f6;text-align:right}
 .opts-table td:first-child{text-align:left}
 .opts-table tr{cursor:pointer}
-.opts-table tr:hover{background:#33415530}
-.opts-table tr.selected{background:#f9731615}
+.opts-table tr:hover{background:#f9fafb}
+.opts-table tr.selected{background:#ecfdf5}
 
 /* Yield color */
 .yield-high{color:#10b981;font-weight:600}
 .yield-mid{color:#f59e0b;font-weight:600}
-.yield-low{color:#64748b}
+.yield-low{color:#999}
 
 /* Delta color */
 .delta-safe{color:#10b981}
@@ -83,46 +91,62 @@ a{color:#60a5fa;text-decoration:none}
 .delta-risky{color:#ef4444;font-weight:600}
 
 /* Snapshot panel */
-.snapshot-panel{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;margin-top:16px;display:none}
+.snapshot-panel{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-top:16px;display:none;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .snapshot-panel.visible{display:block}
 .snapshot-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.snapshot-title{font-size:15px;font-weight:700}
-.snapshot-close{background:#334155;border:none;color:#e2e8f0;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:14px}
+.snapshot-title{font-size:15px;font-weight:700;color:#1a1a1a}
+.snapshot-close{background:#f3f4f6;border:none;color:#666;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:14px}
 .snap-table{width:100%;border-collapse:collapse;font-size:13px}
-.snap-table th{padding:8px 12px;text-align:right;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;border-bottom:1px solid #334155}
+.snap-table th{padding:8px 12px;text-align:right;font-weight:600;color:#999;font-size:11px;text-transform:uppercase;border-bottom:1px solid #e5e7eb}
 .snap-table th:first-child{text-align:left}
-.snap-table td{padding:8px 12px;text-align:right;border-bottom:1px solid #334155}
+.snap-table td{padding:8px 12px;text-align:right;border-bottom:1px solid #e5e7eb}
 .snap-table td:first-child{text-align:left}
-.snap-loading{color:#64748b;font-size:13px;padding:12px}
+.snap-loading{color:#999;font-size:13px;padding:12px}
 
 /* Charts */
-.chart-wrap{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;position:relative;overflow:hidden;margin-bottom:16px}
-.chart-title{font-size:14px;font-weight:700;margin-bottom:12px}
-canvas{width:100%!important;height:300px!important}
+.chart-wrap{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;position:relative;overflow:hidden;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.chart-title{font-size:14px;font-weight:700;margin-bottom:12px;color:#1a1a1a}
+canvas.chart-canvas{width:100%;height:300px;display:block}
 
 /* Status */
-.status-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 24px;font-size:11px;color:#475569;border-bottom:1px solid #1e293b}
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 0;font-size:11px;color:#999}
 .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
 .status-dot.live{background:#10b981}
 .status-dot.stale{background:#f59e0b}
 
-footer{padding:24px;text-align:center;color:#475569;font-size:12px;border-top:1px solid #1e293b;margin-top:40px}
-@media(max-width:768px){.filters{flex-direction:column}.ctrl input{width:100%}.timing-grid{grid-template-columns:1fr}.expiry-meta{flex-wrap:wrap}}
+footer{padding:24px;text-align:center;color:#ccc;font-size:12px;border-top:1px solid #e5e7eb;margin-top:40px;background:#fff}
+
+@media(max-width:768px){
+  .navbar{flex-direction:column;gap:8px;padding:12px 16px}
+  .page-subtitle{padding:8px 16px}
+  .container{padding:12px}
+  .filters{flex-direction:column;padding:10px 12px}
+  .ctrl{width:100%}
+  .ctrl input,.ctrl select{width:100%}
+  .timing-grid{grid-template-columns:1fr}
+  .summary-bar{grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+  .chart-wrap{padding:10px}
+  .expiry-meta{flex-wrap:wrap}
+}
 </style>
 </head>
 <body>
 
-<header class="header">
-  <h1>Strategy #5 — BTC Options Monitor</h1>
-  <div class="sub">Real-time BTC Sell Put scanner with timing signals — powered by Deribit + Black-Scholes</div>
-  <div class="nav">
-    <a href="/">Strategy #1: Stablecoin</a>
-    <a href="/backtest-wheel.html">Strategy #2: Options Wheel</a>
-    <a href="/backtest-dip.html">Strategy #3: Dip-Buying</a>
-    <a href="/backtest-allweather.html">Strategy #4: All Weather</a>
-    <a href="/options-monitor.html">Strategy #5: Options Monitor</a>
+<nav class="navbar">
+  <a class="navbar-brand" href="/">Slow<span>Rich</span></a>
+  <div class="navbar-links">
+    <a href="/">首页</a>
+    <a href="/options-monitor.html" class="active">期权</a>
+    <a href="/delta-neutral.html">Delta Neutral</a>
+    <a href="/allweather.html">全天候</a>
+    <a href="/portfolio-summary.html">组合</a>
   </div>
-</header>
+</nav>
+<div class="page-subtitle">
+  <strong>BTC Options Monitor</strong> &mdash; Real-time Sell Put scanner with timing signals
+</div>
+
+<div class="container">
 
 <!-- Status bar -->
 <div class="status-bar">
@@ -194,7 +218,7 @@ footer{padding:24px;text-align:center;color:#475569;font-size:12px;border-top:1p
 <div class="section" id="optionsSection">
   <div class="section-title">Put Options by Expiration</div>
   <div id="optionsContainer">
-    <div style="color:#64748b;font-size:13px;padding:24px;text-align:center">Loading options data...</div>
+    <div style="color:#999;font-size:13px;padding:24px;text-align:center">Loading options data...</div>
   </div>
 </div>
 
@@ -215,7 +239,7 @@ footer{padding:24px;text-align:center;color:#475569;font-size:12px;border-top:1p
 <div class="section">
   <div class="chart-wrap">
     <div class="chart-title">IV Term Structure (by Days to Expiry)</div>
-    <canvas id="ivTermChart" width="900" height="300"></canvas>
+    <canvas id="ivTermChart" class="chart-canvas"></canvas>
   </div>
 </div>
 
@@ -223,9 +247,11 @@ footer{padding:24px;text-align:center;color:#475569;font-size:12px;border-top:1p
 <div class="section">
   <div class="chart-wrap">
     <div class="chart-title">DVOL History (BTC Implied Volatility Index)</div>
-    <canvas id="dvolChart" width="900" height="300"></canvas>
+    <canvas id="dvolChart" class="chart-canvas"></canvas>
   </div>
 </div>
+
+</div><!-- /.container -->
 
 <footer>
   Data from <a href="https://www.deribit.com" target="_blank">Deribit</a> (options) &middot;
@@ -368,7 +394,7 @@ function drawGauge(score) {
   ctx.beginPath();
   ctx.arc(cx, cy, r, startAngle, endAngle);
   ctx.lineWidth = 14;
-  ctx.strokeStyle = '#1e293b';
+  ctx.strokeStyle = '#e5e7eb';
   ctx.stroke();
 
   // Colored segments
@@ -401,7 +427,7 @@ function drawGauge(score) {
   // Center dot
   ctx.beginPath();
   ctx.arc(cx, cy, 5, 0, 2 * Math.PI);
-  ctx.fillStyle = '#e2e8f0';
+  ctx.fillStyle = '#1a1a1a';
   ctx.fill();
 }
 
@@ -426,7 +452,7 @@ function resetFilters() {
 
 function renderOptions() {
   if (!optionsData || !optionsData.expirations.length) {
-    document.getElementById('optionsContainer').innerHTML = '<div style="color:#64748b;font-size:13px;padding:24px;text-align:center">No options data available</div>';
+    document.getElementById('optionsContainer').innerHTML = '<div style="color:#999;font-size:13px;padding:24px;text-align:center">No options data available</div>';
     return;
   }
 
@@ -460,7 +486,7 @@ function renderOptions() {
     html += `<div class="expiry-header" onclick="toggleExpiry(this)">
       <div>
         <span class="expiry-title">${group.expiry}</span>
-        <span style="color:#64748b;font-size:12px;margin-left:8px">${group.expiryDate}</span>
+        <span style="color:#999;font-size:12px;margin-left:8px">${group.expiryDate}</span>
       </div>
       <div class="expiry-meta">
         <span>${Math.round(group.daysToExpiry)}d</span>
@@ -501,7 +527,7 @@ function renderOptions() {
     html += `</tbody></table></div></div>`;
   }
 
-  document.getElementById('optionsContainer').innerHTML = html || '<div style="color:#64748b;padding:24px;text-align:center">No puts match the current filters</div>';
+  document.getElementById('optionsContainer').innerHTML = html || '<div style="color:#999;padding:24px;text-align:center">No puts match the current filters</div>';
 }
 
 function toggleExpiry(el) {
@@ -629,12 +655,12 @@ function renderIvTermStructure() {
   const yScale = iv => pad.top + ch - ((iv - minIv) / (maxIv - minIv)) * ch;
 
   // Grid
-  ctx.strokeStyle = '#334155';
+  ctx.strokeStyle = '#e5e7eb';
   ctx.lineWidth = 0.5;
   for (let iv = Math.ceil(minIv / 10) * 10; iv <= maxIv; iv += 10) {
     const y = yScale(iv);
     ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
-    ctx.fillStyle = '#64748b'; ctx.font = '11px Inter'; ctx.textAlign = 'right';
+    ctx.fillStyle = '#999'; ctx.font = '11px Inter'; ctx.textAlign = 'right';
     ctx.fillText(iv.toFixed(0) + '%', pad.left - 8, y + 4);
   }
 
@@ -643,7 +669,7 @@ function renderIvTermStructure() {
   const xStep = Math.max(1, Math.ceil(maxDays / 8));
   for (let d = 0; d <= maxDays; d += xStep) {
     const x = xScale(d);
-    ctx.fillStyle = '#64748b'; ctx.font = '11px Inter';
+    ctx.fillStyle = '#999'; ctx.font = '11px Inter';
     ctx.fillText(d + 'd', x, H - pad.bottom + 20);
   }
 
@@ -664,7 +690,7 @@ function renderIvTermStructure() {
     ctx.arc(x, y, 4, 0, 2 * Math.PI);
     ctx.fillStyle = '#f97316';
     ctx.fill();
-    ctx.fillStyle = '#e2e8f0';
+    ctx.fillStyle = '#1a1a1a';
     ctx.font = '10px Inter';
     ctx.textAlign = 'center';
     ctx.fillText(p.iv.toFixed(1), x, y - 10);
@@ -692,12 +718,12 @@ function renderDvolChart() {
   const yScale = iv => pad.top + ch - ((iv - minIv) / (maxIv - minIv)) * ch;
 
   // Grid + Y labels
-  ctx.strokeStyle = '#334155';
+  ctx.strokeStyle = '#e5e7eb';
   ctx.lineWidth = 0.5;
   for (let iv = Math.ceil(minIv / 10) * 10; iv <= maxIv; iv += 10) {
     const y = yScale(iv);
     ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
-    ctx.fillStyle = '#64748b'; ctx.font = '11px Inter'; ctx.textAlign = 'right';
+    ctx.fillStyle = '#999'; ctx.font = '11px Inter'; ctx.textAlign = 'right';
     ctx.fillText(iv + '%', pad.left - 8, y + 4);
   }
 
@@ -730,7 +756,7 @@ function renderDvolChart() {
   for (let i = 0; i < labelCount; i++) {
     const idx = Math.round((i / (labelCount - 1)) * (data.length - 1));
     const x = xScale(idx);
-    ctx.fillStyle = '#64748b'; ctx.font = '11px Inter';
+    ctx.fillStyle = '#999'; ctx.font = '11px Inter';
     ctx.fillText(data[idx].date.slice(5), x, H - pad.bottom + 20);
   }
 

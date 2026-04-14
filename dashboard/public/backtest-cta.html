@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strategy #4 — CTA双均线策略回测</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#fafafa;color:#1a1a1a;min-height:100vh;line-height:1.6}
+a{color:#10b981;text-decoration:none}
+.navbar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px;background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:100}
+.navbar-brand{font-size:20px;font-weight:800;color:#1a1a1a;letter-spacing:-.3px;text-decoration:none}
+.navbar-brand span{color:#10b981}
+.navbar-links{display:flex;gap:4px}
+.navbar-links a{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;color:#666;transition:all .2s}
+.navbar-links a:hover{color:#1a1a1a;background:#f3f4f6;text-decoration:none}
+.navbar-links a.active{color:#10b981;background:#ecfdf5}
+.page-subtitle{padding:10px 28px;background:#fff;border-bottom:1px solid #e5e7eb;font-size:13px;color:#999}
+.page-subtitle strong{color:#1a1a1a;font-size:15px}
+
+.container{max-width:1200px;margin:0 auto;padding:16px 20px}
+
+.controls{display:flex;gap:16px;padding:16px 20px;flex-wrap:wrap;align-items:end;background:#fff;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.ctrl{display:flex;flex-direction:column;gap:4px}
+.ctrl label{font-size:11px;color:#999;text-transform:uppercase}
+.ctrl input,.ctrl select{background:#fff;border:1px solid #e5e7eb;color:#1a1a1a;padding:5px 10px;border-radius:8px;font-size:14px;font-family:inherit;width:140px}
+.ctrl input[type="checkbox"]{width:auto;margin-top:4px}
+.ctrl-check{flex-direction:row;align-items:center;gap:6px;padding-bottom:6px}
+.ctrl-check label{text-transform:none;font-size:12px;color:#666}
+.run-btn{background:#10b981;color:#fff;border:none;padding:10px 28px;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px;font-family:inherit;align-self:end}
+.run-btn:hover{opacity:.9}
+.run-btn:disabled{opacity:.5;cursor:not-allowed}
+
+.summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;padding:16px 0}
+.stat{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px 14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.stat.good{border-color:#10b981}.stat.warn{border-color:#f59e0b}.stat.bad{border-color:#ef4444}
+.stat-label{font-size:11px;color:#999;text-transform:uppercase}
+.stat-value{font-size:22px;font-weight:700;color:#1a1a1a;margin-top:4px}
+.stat-sub{font-size:11px;color:#999;margin-top:2px}
+
+.section{padding:16px 0}
+.section-title{font-size:16px;font-weight:700;margin-bottom:12px;color:#1a1a1a}
+
+.chart-wrap{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+canvas{width:100%!important;height:400px!important}
+#equityChart{height:420px!important}
+#drawdownChart{height:200px!important}
+#priceChart{height:420px!important}
+
+.log-wrap{max-height:500px;overflow-y:auto;border-radius:10px;border:1px solid #e5e7eb;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.log-table{width:100%;border-collapse:collapse;font-size:12px}
+.log-table th{background:#f9fafb;padding:8px 12px;text-align:left;font-weight:600;color:#999;font-size:11px;text-transform:uppercase;position:sticky;top:0}
+.log-table td{padding:8px 12px;border-bottom:1px solid #f3f4f6}
+.log-table tr:hover{background:#f9fafb}
+.pnl-pos{color:#10b981;font-weight:600}.pnl-neg{color:#ef4444;font-weight:600}
+.tag-buy{background:#3b82f622;color:#3b82f6;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+.tag-add{background:#8b5cf622;color:#a78bfa;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+.tag-sell{background:#10b98122;color:#10b981;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+.tag-stop{background:#ef444422;color:#ef4444;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+.tag-trail{background:#f59e0b22;color:#f59e0b;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+.tag-regime{background:#6366f122;color:#6366f1;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+
+.strat-desc{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:10px;font-size:13px;color:#666;line-height:1.8;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.strat-desc strong{color:#1a1a1a}
+.strat-desc .step{display:flex;gap:8px;margin:4px 0}
+.strat-desc .num{background:#10b98122;color:#10b981;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+
+.yearly-table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.yearly-table th{background:#f9fafb;padding:10px 14px;text-align:right;font-weight:600;color:#999;font-size:11px;text-transform:uppercase}
+.yearly-table th:first-child{text-align:left}
+.yearly-table td{padding:10px 14px;border-bottom:1px solid #f3f4f6;text-align:right;font-variant-numeric:tabular-nums}
+.yearly-table td:first-child{text-align:left;font-weight:600}
+.yearly-table tr:last-child td{border-bottom:none}
+
+.loading{text-align:center;padding:60px;color:#999;font-size:14px}
+.loading .spinner{display:inline-block;width:24px;height:24px;border:3px solid #e5e7eb;border-top-color:#10b981;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.toggle-row{display:flex;gap:20px;padding:8px 20px;flex-wrap:wrap;background:#fff;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 10px 10px;margin-bottom:10px;margin-top:-10px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+
+footer{padding:24px;text-align:center;color:#ccc;font-size:12px;border-top:1px solid #e5e7eb;margin-top:40px;background:#fff}
+@media(max-width:768px){
+  .navbar{flex-direction:column;gap:8px;padding:12px 16px}
+  .page-subtitle{padding:8px 16px}
+  .container{padding:12px}
+  .controls{flex-direction:column;padding:10px 12px}
+  .ctrl{width:100%}
+  .ctrl input,.ctrl select{width:100%}
+  .run-btn{width:100%;text-align:center}
+  .summary-bar{grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+  .chart-wrap{padding:10px}
+  canvas{height:280px!important}
+  #drawdownChart{height:160px!important}
+  .toggle-row{flex-direction:column;gap:8px;padding:8px 12px}
+}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="/">Slow<span>Rich</span></a>
+  <div class="navbar-links">
+    <a href="/" class="active">首页</a>
+    <a href="/sentiment.html">市场情绪</a>
+    <a href="/stable-portfolio.html">稳健组合</a>
+    <a href="/options-monitor.html">期权</a>
+    <a href="/delta-neutral.html">Delta Neutral</a>
+    <a href="/allweather.html">全天候</a>
+    <a href="/portfolio-summary.html">组合</a>
+  </div>
+</nav>
+<div class="page-subtitle">
+  <strong>CTA Dual MA v2 (BTC/ETH/SOL)</strong> &mdash; 趋势跟踪 + 波动率自适应 + 动量过滤
+</div>
+
+<div class="container">
+
+<!-- Strategy description -->
+<div class="strat-desc">
+  <strong>策略逻辑 v2：</strong>基于经典双均线趋势跟踪，针对加密货币波动特性优化（纯做多）
+  <div class="step"><div class="num">1</div><strong>趋势信号</strong>：短期均线上穿长期均线（金叉），ADX > 15 确认趋势，成交量 > 20日均量</div>
+  <div class="step"><div class="num">2</div><strong>熊市检测</strong>：200-MA 下行且价格远低于均线时不入场，避免接飞刀（可选 200-MA 硬过滤）</div>
+  <div class="step"><div class="num">3</div><strong>仓位控制</strong>：单笔仓位 35%（限制单笔风险），可选 ATR 波动率缩放</div>
+  <div class="step"><div class="num">4</div><strong>金字塔加仓</strong>：盈利 5% 加仓 25%，盈利 15% 再加仓 15%</div>
+  <div class="step"><div class="num">5</div><strong>出场机制</strong>：死叉退出为主；可选 ATR 自适应移动止盈（至少 4×ATR，5日最小持仓期）</div>
+  <div class="step"><div class="num">6</div><strong>ATR 止损</strong>：跌破长均线 - 2×ATR 止损（适应不同波动率环境）</div>
+  <div class="step"><div class="num">7</div><strong>冷却期</strong>：止损后 15 日内不开新仓（避免震荡市反复割肉）</div>
+</div>
+
+<!-- Preset buttons -->
+<div class="controls" style="padding:10px 20px;gap:10px">
+  <span style="font-size:12px;color:#999;font-weight:600;align-self:center">预设：</span>
+  <button class="run-btn" style="background:#3b82f6;padding:6px 16px;font-size:12px" onclick="applyPreset('active')">积极型 (高收益/高回撤)</button>
+  <button class="run-btn" style="background:#10b981;padding:6px 16px;font-size:12px" onclick="applyPreset('balanced')">均衡型 (默认)</button>
+  <button class="run-btn" style="background:#8b5cf6;padding:6px 16px;font-size:12px" onclick="applyPreset('conservative')">保守型 (低回撤/高胜率)</button>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <div class="ctrl">
+    <label>交易对</label>
+    <select id="ctaAsset">
+      <option value="BTC" selected>BTC/USDT</option>
+      <option value="ETH">ETH/USDT</option>
+      <option value="SOL">SOL/USDT</option>
+    </select>
+  </div>
+  <div class="ctrl">
+    <label>短期均线</label>
+    <input type="number" id="shortMA" value="25" min="5" max="100" step="1">
+  </div>
+  <div class="ctrl">
+    <label>长期均线</label>
+    <input type="number" id="longMA" value="60" min="10" max="200" step="1">
+  </div>
+  <div class="ctrl">
+    <label>初始资金 ($)</label>
+    <input type="number" id="initCapital" value="100000" min="10000" max="1000000" step="10000">
+  </div>
+  <div class="ctrl">
+    <label>首仓比例 (%)</label>
+    <input type="number" id="posSize" value="35" min="10" max="80" step="5">
+  </div>
+  <div class="ctrl">
+    <label>止盈回撤 (%)</label>
+    <input type="number" id="trailPct" value="20" min="5" max="40" step="1">
+  </div>
+  <div class="ctrl">
+    <label>冷却期 (天)</label>
+    <input type="number" id="cooldown" value="15" min="0" max="60" step="1">
+  </div>
+  <button class="run-btn" id="runBtn" onclick="runBacktest()">运行回测</button>
+</div>
+<div class="toggle-row">
+  <div class="ctrl ctrl-check">
+    <input type="checkbox" id="useVolConfirm" checked>
+    <label for="useVolConfirm">成交量确认</label>
+  </div>
+  <div class="ctrl ctrl-check">
+    <input type="checkbox" id="useADX" checked>
+    <label for="useADX">ADX 趋势过滤</label>
+  </div>
+  <div class="ctrl ctrl-check">
+    <input type="checkbox" id="useVolScale">
+    <label for="useVolScale">波动率仓位缩放</label>
+  </div>
+  <div class="ctrl ctrl-check">
+    <input type="checkbox" id="useDynTrail">
+    <label for="useDynTrail">移动止盈</label>
+  </div>
+  <div class="ctrl ctrl-check">
+    <input type="checkbox" id="useATRStop" checked>
+    <label for="useATRStop">ATR 止损</label>
+  </div>
+  <div class="ctrl ctrl-check">
+    <input type="checkbox" id="useMultiAdd" checked>
+    <label for="useMultiAdd">多级加仓</label>
+  </div>
+  <div class="ctrl ctrl-check">
+    <input type="checkbox" id="useTrendFilter">
+    <label for="useTrendFilter">200日趋势过滤</label>
+  </div>
+  <div class="ctrl ctrl-check">
+    <input type="checkbox" id="useBearDetect" checked>
+    <label for="useBearDetect">熊市检测</label>
+  </div>
+  <div class="ctrl ctrl-check">
+    <input type="checkbox" id="useMomentum">
+    <label for="useMomentum">30日动量过滤 (&gt;10%)</label>
+  </div>
+</div>
+
+<!-- Summary -->
+<div class="summary-bar" id="summaryBar">
+  <div class="stat"><div class="stat-label">总收益率</div><div class="stat-value" id="s-return">—</div><div class="stat-sub" id="s-return-sub"></div></div>
+  <div class="stat"><div class="stat-label">年化收益</div><div class="stat-value" id="s-annual">—</div></div>
+  <div class="stat"><div class="stat-label">最大回撤</div><div class="stat-value" id="s-dd">—</div></div>
+  <div class="stat"><div class="stat-label">夏普比率</div><div class="stat-value" id="s-sharpe">—</div></div>
+  <div class="stat"><div class="stat-label">Sortino</div><div class="stat-value" id="s-sortino">—</div></div>
+  <div class="stat"><div class="stat-label">Calmar</div><div class="stat-value" id="s-calmar">—</div></div>
+  <div class="stat"><div class="stat-label">胜率</div><div class="stat-value" id="s-winrate">—</div><div class="stat-sub" id="s-winrate-sub"></div></div>
+  <div class="stat"><div class="stat-label">盈亏比</div><div class="stat-value" id="s-pf">—</div></div>
+  <div class="stat"><div class="stat-label">交易次数</div><div class="stat-value" id="s-trades">—</div><div class="stat-sub" id="s-trades-sub"></div></div>
+  <div class="stat"><div class="stat-label">最终资产</div><div class="stat-value" id="s-final">—</div></div>
+</div>
+
+<!-- Equity Chart -->
+<div class="section">
+  <div class="section-title">权益曲线 vs 持有基准</div>
+  <div class="chart-wrap">
+    <div class="loading" id="loadingEquity"><div class="spinner"></div><br>点击"运行回测"开始</div>
+    <canvas id="equityChart" style="display:none"></canvas>
+  </div>
+</div>
+
+<!-- Drawdown Chart -->
+<div class="section">
+  <div class="section-title">滚动回撤</div>
+  <div class="chart-wrap">
+    <canvas id="drawdownChart" style="display:none"></canvas>
+  </div>
+</div>
+
+<!-- Price + MA + Signals Chart -->
+<div class="section">
+  <div class="section-title">价格 + 均线 + 买卖点</div>
+  <div class="chart-wrap">
+    <canvas id="priceChart" style="display:none"></canvas>
+  </div>
+</div>
+
+<!-- Yearly breakdown -->
+<div class="section">
+  <div class="section-title">年度收益拆分</div>
+  <div class="log-wrap">
+    <table class="yearly-table" id="yearlyTable">
+      <thead>
+        <tr><th>年份</th><th>策略收益</th><th>基准收益</th><th>超额收益</th><th>最大回撤</th><th>夏普</th><th>交易次数</th></tr>
+      </thead>
+      <tbody id="yearlyBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Trade log -->
+<div class="section">
+  <div class="section-title">交易记录</div>
+  <div class="log-wrap">
+    <table class="log-table" id="tradeTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>日期</th>
+          <th>类型</th>
+          <th>信号</th>
+          <th>价格</th>
+          <th>数量</th>
+          <th>金额 ($)</th>
+          <th>盈亏 ($)</th>
+          <th>盈亏 (%)</th>
+        </tr>
+      </thead>
+      <tbody id="tradeBody"></tbody>
+    </table>
+  </div>
+</div>
+
+</div>
+
+<footer>SlowRich Dashboard &copy; 2024 &mdash; CTA双均线策略仅供研究，不构成投资建议</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+let equityChartInstance = null;
+let priceChartInstance = null;
+let drawdownChartInstance = null;
+
+async function fetchPrices(asset) {
+  const resp = await fetch(`/api/crypto-prices?asset=${asset}&days=2000`);
+  const data = await resp.json();
+  return data.prices || [];
+}
+
+// ── Technical Indicators ──
+
+function calcSMA(arr, period, idx) {
+  if (idx < period - 1) return null;
+  let sum = 0;
+  for (let j = idx - period + 1; j <= idx; j++) sum += arr[j];
+  return sum / period;
+}
+
+function calcEMA(arr, period, idx, prevEma) {
+  if (idx < period - 1) return calcSMA(arr, period, idx);
+  const k = 2 / (period + 1);
+  return arr[idx] * k + prevEma * (1 - k);
+}
+
+// ATR (Average True Range) — Wilder's smoothing
+function calcATRSeries(highs, lows, closes, period) {
+  const tr = [highs[0] - lows[0]];
+  for (let i = 1; i < closes.length; i++) {
+    tr.push(Math.max(
+      highs[i] - lows[i],
+      Math.abs(highs[i] - closes[i - 1]),
+      Math.abs(lows[i] - closes[i - 1])
+    ));
+  }
+  const atr = new Array(closes.length).fill(null);
+  // Initial ATR = SMA of first `period` TRs
+  if (tr.length >= period) {
+    let sum = 0;
+    for (let i = 0; i < period; i++) sum += tr[i];
+    atr[period - 1] = sum / period;
+    for (let i = period; i < tr.length; i++) {
+      atr[i] = (atr[i - 1] * (period - 1) + tr[i]) / period;
+    }
+  }
+  return atr;
+}
+
+// ADX (Average Directional Index) — Welles Wilder
+function calcADXSeries(highs, lows, closes, period) {
+  const len = closes.length;
+  const adx = new Array(len).fill(null);
+  if (len < period * 2 + 1) return adx;
+
+  const plusDM = [0], minusDM = [0], tr = [highs[0] - lows[0]];
+  for (let i = 1; i < len; i++) {
+    const upMove = highs[i] - highs[i - 1];
+    const downMove = lows[i - 1] - lows[i];
+    plusDM.push(upMove > downMove && upMove > 0 ? upMove : 0);
+    minusDM.push(downMove > upMove && downMove > 0 ? downMove : 0);
+    tr.push(Math.max(highs[i] - lows[i], Math.abs(highs[i] - closes[i - 1]), Math.abs(lows[i] - closes[i - 1])));
+  }
+
+  // Wilder smoothing
+  function smooth(arr, p) {
+    const out = new Array(arr.length).fill(null);
+    let sum = 0;
+    for (let i = 0; i < p; i++) sum += arr[i];
+    out[p - 1] = sum;
+    for (let i = p; i < arr.length; i++) {
+      out[i] = out[i - 1] - out[i - 1] / p + arr[i];
+    }
+    return out;
+  }
+
+  const smoothTR = smooth(tr, period);
+  const smoothPlusDM = smooth(plusDM, period);
+  const smoothMinusDM = smooth(minusDM, period);
+
+  const dx = new Array(len).fill(null);
+  for (let i = period - 1; i < len; i++) {
+    if (smoothTR[i] === null || smoothTR[i] === 0) continue;
+    const pdi = (smoothPlusDM[i] / smoothTR[i]) * 100;
+    const mdi = (smoothMinusDM[i] / smoothTR[i]) * 100;
+    const sum = pdi + mdi;
+    dx[i] = sum > 0 ? (Math.abs(pdi - mdi) / sum) * 100 : 0;
+  }
+
+  // Smooth DX to get ADX
+  let dxSum = 0, dxCount = 0;
+  for (let i = period - 1; i < period * 2 - 1 && i < len; i++) {
+    if (dx[i] !== null) { dxSum += dx[i]; dxCount++; }
+  }
+  if (dxCount > 0 && period * 2 - 2 < len) {
+    adx[period * 2 - 2] = dxSum / dxCount;
+    for (let i = period * 2 - 1; i < len; i++) {
+      if (dx[i] !== null && adx[i - 1] !== null) {
+        adx[i] = (adx[i - 1] * (period - 1) + dx[i]) / period;
+      }
+    }
+  }
+  return adx;
+}
+
+// Volume SMA
+function calcVolSMA(volumes, period, idx) {
+  if (idx < period - 1) return null;
+  let sum = 0;
+  for (let j = idx - period + 1; j <= idx; j++) sum += volumes[j];
+  return sum / period;
+}
+
+// ── Backtest Engine v2 ──
+
+function runBacktestEngine(pricesData, params) {
+  const {
+    shortPeriod, longPeriod, initialCapital, positionSize,
+    trailPct, cooldownDays,
+    useVolConfirm, useADX, useVolScale, useDynTrail, useATRStop, useMultiAdd,
+    useTrendFilter, useBearDetect, useMomentum
+  } = params;
+
+  const dates = pricesData.map(p => p.date);
+  const prices = pricesData.map(p => p.price);
+  const highs = pricesData.map(p => p.high || p.price);
+  const lows = pricesData.map(p => p.low || p.price);
+  const volumes = pricesData.map(p => p.volume || 0);
+
+  // Precompute indicators
+  const atrSeries = calcATRSeries(highs, lows, prices, 14);
+  const adxSeries = useADX ? calcADXSeries(highs, lows, prices, 14) : null;
+
+  // Median ATR for volatility scaling baseline
+  const validATRs = atrSeries.filter(v => v !== null && v > 0);
+  const medianATR = validATRs.length > 0
+    ? validATRs.sort((a, b) => a - b)[Math.floor(validATRs.length / 2)]
+    : 1;
+
+  let capital = initialCapital;
+  let position = 0;
+  let entryPrice = 0;
+  let peakPrice = 0;
+  let addCount = 0;
+  let entryDay = 0; // index of entry day for holding period calc
+  let lastStopDay = -Infinity; // cooldown tracking
+  let roundBuys = []; // track buys for current round only
+
+  const trades = [];
+  const equityCurve = [];
+
+  const startIdx = Math.max(longPeriod, 60); // need enough data for indicators
+
+  for (let i = startIdx; i < prices.length; i++) {
+    const date = dates[i];
+    const price = prices[i];
+
+    const shortSMA = calcSMA(prices, shortPeriod, i);
+    const longSMA = calcSMA(prices, longPeriod, i);
+    const prevShort = calcSMA(prices, shortPeriod, i - 1);
+    const prevLong = calcSMA(prices, longPeriod, i - 1);
+
+    if (shortSMA === null || longSMA === null || prevShort === null || prevLong === null) continue;
+
+    const goldenCross = shortSMA > longSMA && prevShort <= prevLong;
+    const deathCross = shortSMA < longSMA && prevShort >= prevLong;
+    const atr = atrSeries[i] || 0;
+    const adx = adxSeries ? adxSeries[i] : 30; // default pass if ADX disabled
+    const volSMA = calcVolSMA(volumes, 20, i);
+
+    const positionValue = position * price;
+    const totalValue = capital + positionValue;
+
+    // Drawdown tracking
+    equityCurve.push({
+      date, price, shortSMA, longSMA, atr, adx,
+      capital, position, totalValue,
+      signal: goldenCross ? 'golden' : deathCross ? 'death' : shortSMA > longSMA ? 'bullish' : 'bearish'
+    });
+
+    // Track peak price while in position
+    if (position > 0 && price > peakPrice) {
+      peakPrice = price;
+    }
+
+    // ── EXIT LOGIC (checked first) ──
+    if (position > 0) {
+      // Calculate current P&L
+      const totalCost = roundBuys.reduce((s, t) => s + t.value, 0);
+      const totalAmt = roundBuys.reduce((s, t) => s + t.amount, 0);
+      const avgCost = totalAmt > 0 ? totalCost / totalAmt : entryPrice;
+      const unrealizedPct = ((price - avgCost) / avgCost) * 100;
+
+      // Dynamic trailing stop (Baz et al. 2015 — adaptive trend following)
+      // Crypto-adapted: use ATR-based floor to avoid getting shaken out by normal volatility
+      let effectiveTrail = trailPct;
+      if (useDynTrail) {
+        // ATR-based minimum: at least 4×ATR from peak (crypto needs wider room)
+        const atrFloor = atr > 0 && peakPrice > 0 ? (4 * atr / peakPrice) : trailPct;
+        const baseTrail = Math.max(trailPct, atrFloor);
+        if (unrealizedPct > 80) effectiveTrail = Math.min(baseTrail * 1.5, 0.35);
+        else if (unrealizedPct > 40) effectiveTrail = Math.min(baseTrail * 1.3, 0.30);
+        else effectiveTrail = baseTrail;
+      }
+
+      // Trailing stop — only activate after minimum holding period (5 days)
+      const holdingDays = i - entryDay;
+      if (peakPrice > 0 && holdingDays >= 5 && price <= peakPrice * (1 - effectiveTrail)) {
+        const sellValue = position * price;
+        const pnl = sellValue - totalCost;
+        const pnlPct = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
+        capital += sellValue;
+        trades.push({ date, type: 'TRAIL', price, amount: position, value: sellValue, pnl, pnlPct, signal: 'trailing_stop' });
+        position = 0; entryPrice = 0; peakPrice = 0; addCount = 0; roundBuys = [];
+        continue;
+      }
+
+      // ATR stop loss (replaces fixed % below long MA)
+      if (useATRStop && atr > 0) {
+        const stopLevel = longSMA - 2 * atr;
+        if (price < stopLevel) {
+          const sellValue = position * price;
+          const pnl = sellValue - totalCost;
+          const pnlPct = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
+          capital += sellValue;
+          trades.push({ date, type: 'STOP', price, amount: position, value: sellValue, pnl, pnlPct, signal: 'atr_stop' });
+          position = 0; entryPrice = 0; peakPrice = 0; addCount = 0; roundBuys = [];
+          lastStopDay = i;
+          continue;
+        }
+      } else if (!useATRStop && price < longSMA * 0.98) {
+        // Fallback: fixed 2% below long MA
+        const sellValue = position * price;
+        const pnl = sellValue - totalCost;
+        const pnlPct = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
+        capital += sellValue;
+        trades.push({ date, type: 'STOP', price, amount: position, value: sellValue, pnl, pnlPct, signal: 'stop_loss' });
+        position = 0; entryPrice = 0; peakPrice = 0; addCount = 0; roundBuys = [];
+        lastStopDay = i;
+        continue;
+      }
+
+      // Death cross exit
+      if (deathCross) {
+        const sellValue = position * price;
+        const pnl = sellValue - totalCost;
+        const pnlPct = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
+        capital += sellValue;
+        trades.push({ date, type: 'SELL', price, amount: position, value: sellValue, pnl, pnlPct, signal: 'death_cross' });
+        position = 0; entryPrice = 0; peakPrice = 0; addCount = 0; roundBuys = [];
+        continue;
+      }
+
+      // ── ADD POSITION LOGIC ──
+      const maxAdds = useMultiAdd ? 2 : 1;
+      if (addCount < maxAdds) {
+        const addThreshold = addCount === 0 ? 1.05 : 1.15; // 5% for first add, 15% for second
+        const addPct = addCount === 0 ? 0.25 : 0.15; // 25% then 15%
+        if (price >= entryPrice * addThreshold) {
+          const addAmount = totalValue * addPct;
+          if (addAmount > 500 && addAmount <= capital * 0.95) {
+            const addPosition = addAmount / price;
+            position += addPosition;
+            capital -= addAmount;
+            addCount++;
+            roundBuys.push({ value: addAmount, amount: addPosition });
+            trades.push({ date, type: 'ADD', price, amount: addPosition, value: addAmount, signal: addCount === 1 ? 'profit_add_1' : 'profit_add_2' });
+          }
+        }
+      }
+
+      continue; // skip entry logic while in position
+    }
+
+    // ── ENTRY LOGIC ──
+    if (goldenCross && position === 0) {
+      // Cooldown check
+      if (i - lastStopDay < cooldownDays) continue;
+
+      // 200-day MA hard filter — only enter when price > 200-MA
+      if (useTrendFilter) {
+        const ma200 = calcSMA(prices, 200, i);
+        if (ma200 !== null && price < ma200) continue;
+      }
+
+      // Bear market detector — block entries when 200-MA declining AND price far below
+      // Gentler than hard 200-MA filter: allows recovery entries near the bottom
+      if (useBearDetect && !useTrendFilter && i >= 220) {
+        const ma200 = calcSMA(prices, 200, i);
+        const prevMa200 = calcSMA(prices, 200, i - 20);
+        if (ma200 !== null && prevMa200 !== null && ma200 < prevMa200 && price < ma200 * 0.85) continue;
+      }
+
+      // 30-day momentum filter — require 10%+ recent price increase
+      if (useMomentum && i >= 30) {
+        const ret30 = (price - prices[i - 30]) / prices[i - 30];
+        if (ret30 < 0.10) continue;
+      }
+
+      // ADX regime filter (Wilder 1978 — confirm trend exists)
+      if (useADX && (adx === null || adx < 15)) continue;
+
+      // Volume confirmation — require above-average volume
+      if (useVolConfirm && volSMA !== null && volumes[i] > 0) {
+        if (volumes[i] < volSMA * 1.0) continue;
+      }
+
+      // Volatility-scaled position sizing (inverse vol, risk parity concept)
+      // Capped at 55% to prevent over-concentration in deceptively calm markets
+      let scaledPosSize = positionSize;
+      if (useVolScale && atr > 0) {
+        const volRatio = medianATR / atr;
+        scaledPosSize = Math.max(0.20, Math.min(0.55, positionSize * volRatio));
+      }
+
+      const investAmount = totalValue * scaledPosSize;
+      position = investAmount / price;
+      capital -= investAmount;
+      entryPrice = price;
+      peakPrice = price;
+      addCount = 0;
+      entryDay = i;
+      roundBuys = [{ value: investAmount, amount: position }];
+      const signal = useVolScale && atr > 0
+        ? `golden_cross (vol_adj ${(scaledPosSize * 100).toFixed(0)}%)`
+        : 'golden_cross';
+      trades.push({ date, type: 'BUY', price, amount: position, value: investAmount, signal });
+    }
+  }
+
+  // Close any open position at end
+  if (position > 0) {
+    const finalPrice = prices[prices.length - 1];
+    const sellValue = position * finalPrice;
+    const totalCost = roundBuys.reduce((s, t) => s + t.value, 0);
+    const pnl = sellValue - totalCost;
+    const pnlPct = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
+    capital += sellValue;
+    trades.push({ date: dates[dates.length - 1], type: 'SELL', price: finalPrice, amount: position, value: sellValue, pnl, pnlPct, signal: 'end_of_data' });
+    position = 0;
+    roundBuys = [];
+  }
+
+  const finalValue = capital;
+  const totalReturn = ((finalValue - initialCapital) / initialCapital) * 100;
+
+  // ── Metrics ──
+  let peak = initialCapital, maxDD = 0;
+  const drawdowns = [];
+  for (const pt of equityCurve) {
+    if (pt.totalValue > peak) peak = pt.totalValue;
+    const dd = (peak - pt.totalValue) / peak;
+    if (dd > maxDD) maxDD = dd;
+    drawdowns.push({ date: pt.date, dd: -dd * 100 });
+  }
+
+  const days = equityCurve.length;
+  const years = Math.max(days / 365, 0.1);
+  const annReturn = finalValue > 0 && initialCapital > 0
+    ? (Math.pow(finalValue / initialCapital, 1 / years) - 1) * 100 : 0;
+
+  // Completed trades (exits)
+  const completedTrades = trades.filter(t => ['SELL', 'STOP', 'TRAIL'].includes(t.type));
+  const wins = completedTrades.filter(t => (t.pnl || 0) > 0).length;
+  const total = completedTrades.length;
+  const winRate = total > 0 ? (wins / total) * 100 : 0;
+
+  // Profit factor: total win $ / total loss $ (standard)
+  const totalWin = completedTrades.filter(t => (t.pnl || 0) > 0).reduce((s, t) => s + t.pnl, 0);
+  const totalLoss = Math.abs(completedTrades.filter(t => (t.pnl || 0) < 0).reduce((s, t) => s + t.pnl, 0));
+  const profitFactor = totalLoss > 0 ? totalWin / totalLoss : totalWin > 0 ? Infinity : 0;
+
+  // Daily returns
+  const dailyReturns = [];
+  for (let i = 1; i < equityCurve.length; i++) {
+    if (equityCurve[i - 1].totalValue > 0) {
+      dailyReturns.push((equityCurve[i].totalValue - equityCurve[i - 1].totalValue) / equityCurve[i - 1].totalValue);
+    }
+  }
+
+  // Sharpe ratio (with risk-free rate 4% annualized)
+  const RF_DAILY = 0.04 / 365;
+  let sharpe = 0;
+  if (dailyReturns.length > 1) {
+    const excessReturns = dailyReturns.map(r => r - RF_DAILY);
+    const mean = excessReturns.reduce((a, b) => a + b, 0) / excessReturns.length;
+    const variance = excessReturns.reduce((s, r) => s + (r - mean) ** 2, 0) / (excessReturns.length - 1);
+    const std = Math.sqrt(variance);
+    sharpe = std > 0 ? (mean * Math.sqrt(365)) / std : 0;
+  }
+
+  // Sortino ratio (downside deviation only)
+  let sortino = 0;
+  if (dailyReturns.length > 1) {
+    const excessReturns = dailyReturns.map(r => r - RF_DAILY);
+    const mean = excessReturns.reduce((a, b) => a + b, 0) / excessReturns.length;
+    // Downside deviation: sqrt(mean of squared negative excess returns) * sqrt(365)
+    const downsideSquares = excessReturns.filter(r => r < 0).map(r => r * r);
+    const downsideDev = downsideSquares.length > 0
+      ? Math.sqrt(downsideSquares.reduce((a, b) => a + b, 0) / excessReturns.length) : 0;
+    const annualizedDownside = downsideDev * Math.sqrt(365);
+    const annualizedMean = mean * 365;
+    sortino = annualizedDownside > 0 ? annualizedMean / annualizedDownside : 0;
+  }
+
+  // Calmar ratio = annualized return / max drawdown
+  const calmar = maxDD > 0 ? annReturn / (maxDD * 100) : 0;
+
+  const assetStart = prices[startIdx];
+  const assetEnd = prices[prices.length - 1];
+  const assetReturn = ((assetEnd - assetStart) / assetStart) * 100;
+
+  // ── Yearly breakdown ──
+  const yearlyMap = {};
+  let prevYearEnd = initialCapital;
+  let prevYearAssetPrice = prices[startIdx];
+  for (const pt of equityCurve) {
+    const year = pt.date.slice(0, 4);
+    if (!yearlyMap[year]) {
+      yearlyMap[year] = { startValue: prevYearEnd, endValue: pt.totalValue, startPrice: prevYearAssetPrice, endPrice: pt.price, peak: prevYearEnd, maxDD: 0, returns: [], trades: 0 };
+    }
+    const ym = yearlyMap[year];
+    ym.endValue = pt.totalValue;
+    ym.endPrice = pt.price;
+    if (pt.totalValue > ym.peak) ym.peak = pt.totalValue;
+    const dd = (ym.peak - pt.totalValue) / ym.peak;
+    if (dd > ym.maxDD) ym.maxDD = dd;
+  }
+  // Count trades per year
+  for (const t of completedTrades) {
+    const year = t.date.slice(0, 4);
+    if (yearlyMap[year]) yearlyMap[year].trades++;
+  }
+  // Compute daily returns per year for Sharpe
+  for (let i = 1; i < equityCurve.length; i++) {
+    const year = equityCurve[i].date.slice(0, 4);
+    if (yearlyMap[year] && equityCurve[i - 1].totalValue > 0) {
+      yearlyMap[year].returns.push((equityCurve[i].totalValue - equityCurve[i - 1].totalValue) / equityCurve[i - 1].totalValue);
+    }
+  }
+  // Update prevYearEnd for each year
+  const sortedYears = Object.keys(yearlyMap).sort();
+  for (let yi = 0; yi < sortedYears.length; yi++) {
+    const y = sortedYears[yi];
+    if (yi > 0) {
+      yearlyMap[y].startValue = yearlyMap[sortedYears[yi - 1]].endValue;
+      yearlyMap[y].startPrice = yearlyMap[sortedYears[yi - 1]].endPrice;
+    }
+  }
+
+  const yearly = sortedYears.map(year => {
+    const ym = yearlyMap[year];
+    const ret = ((ym.endValue - ym.startValue) / ym.startValue) * 100;
+    const benchRet = ((ym.endPrice - ym.startPrice) / ym.startPrice) * 100;
+    let ySharpe = 0;
+    if (ym.returns.length > 1) {
+      const exr = ym.returns.map(r => r - RF_DAILY);
+      const mn = exr.reduce((a, b) => a + b, 0) / exr.length;
+      const vr = exr.reduce((s, r) => s + (r - mn) ** 2, 0) / (exr.length - 1);
+      const sd = Math.sqrt(vr);
+      ySharpe = sd > 0 ? (mn * Math.sqrt(365)) / sd : 0;
+    }
+    return { year, return: ret, benchReturn: benchRet, excess: ret - benchRet, maxDD: ym.maxDD * 100, sharpe: ySharpe, trades: ym.trades };
+  });
+
+  return {
+    summary: {
+      startDate: equityCurve[0]?.date,
+      endDate: equityCurve[equityCurve.length - 1]?.date,
+      initialCapital, finalValue, totalReturn, assetReturn,
+      totalTrades: trades.length,
+      winningTrades: wins,
+      losingTrades: total - wins
+    },
+    metrics: { annReturn, maxDD: maxDD * 100, sharpe, sortino, calmar, winRate, profitFactor, completedTrades: total },
+    trades,
+    equityCurve,
+    drawdowns,
+    yearly
+  };
+}
+
+function fmt$(v) { return '$' + v.toLocaleString('en-US', { maximumFractionDigits: 0 }); }
+function fmtPct(v) { return v.toFixed(2) + '%'; }
+
+function updateSummary(result) {
+  const s = result.summary;
+  const m = result.metrics;
+  const asset = document.getElementById('ctaAsset').value;
+
+  const retEl = document.getElementById('s-return');
+  retEl.textContent = fmtPct(s.totalReturn);
+  retEl.parentElement.className = 'stat ' + (s.totalReturn >= 0 ? 'good' : 'bad');
+  document.getElementById('s-return-sub').textContent = `${asset}持有: ${fmtPct(s.assetReturn)}`;
+
+  document.getElementById('s-annual').textContent = fmtPct(m.annReturn);
+  document.getElementById('s-annual').parentElement.className = 'stat ' + (m.annReturn >= 0 ? 'good' : 'warn');
+
+  const ddEl = document.getElementById('s-dd');
+  ddEl.textContent = fmtPct(m.maxDD);
+  ddEl.parentElement.className = 'stat ' + (m.maxDD < 20 ? 'good' : m.maxDD < 40 ? 'warn' : 'bad');
+
+  document.getElementById('s-sharpe').textContent = m.sharpe.toFixed(2);
+  document.getElementById('s-sharpe').parentElement.className = 'stat ' + (m.sharpe > 1 ? 'good' : m.sharpe > 0 ? 'warn' : 'bad');
+
+  document.getElementById('s-sortino').textContent = m.sortino.toFixed(2);
+  document.getElementById('s-sortino').parentElement.className = 'stat ' + (m.sortino > 1.5 ? 'good' : m.sortino > 0 ? 'warn' : 'bad');
+
+  document.getElementById('s-calmar').textContent = m.calmar.toFixed(2);
+  document.getElementById('s-calmar').parentElement.className = 'stat ' + (m.calmar > 1 ? 'good' : m.calmar > 0.5 ? 'warn' : 'bad');
+
+  document.getElementById('s-winrate').textContent = fmtPct(m.winRate);
+  document.getElementById('s-winrate-sub').textContent = `${s.winningTrades}胜 / ${s.losingTrades}负`;
+
+  document.getElementById('s-pf').textContent = m.profitFactor === Infinity ? '∞' : m.profitFactor.toFixed(2);
+
+  document.getElementById('s-trades').textContent = s.totalTrades;
+  document.getElementById('s-trades-sub').textContent = `${s.startDate} ~ ${s.endDate}`;
+
+  document.getElementById('s-final').textContent = fmt$(s.finalValue);
+  document.getElementById('s-final').parentElement.className = 'stat ' + (s.finalValue >= s.initialCapital ? 'good' : 'bad');
+}
+
+function renderEquityChart(result) {
+  const ec = result.equityCurve;
+  const step = Math.max(1, Math.floor(ec.length / 500));
+  const sampled = ec.filter((_, i) => i % step === 0 || i === ec.length - 1);
+
+  const labels = sampled.map(p => p.date);
+  const equity = sampled.map(p => p.totalValue);
+  const benchNorm = sampled.map(p => (p.price / sampled[0].price) * result.summary.initialCapital);
+
+  const canvas = document.getElementById('equityChart');
+  canvas.style.display = 'block';
+  document.getElementById('loadingEquity').style.display = 'none';
+
+  if (equityChartInstance) equityChartInstance.destroy();
+
+  const asset = document.getElementById('ctaAsset').value;
+  equityChartInstance = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'CTA策略权益',
+          data: equity,
+          borderColor: '#10b981',
+          backgroundColor: '#10b98118',
+          fill: true,
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.1
+        },
+        {
+          label: `${asset}持有(归一化)`,
+          data: benchNorm,
+          borderColor: '#f59e0b',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          borderDash: [4, 3],
+          tension: 0.1,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { usePointStyle: true, padding: 16 } },
+        tooltip: {
+          callbacks: {
+            label: ctx => ctx.dataset.label + ': ' + fmt$(ctx.parsed.y)
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 12, font: { size: 10 } } },
+        y: {
+          grid: { color: '#f3f4f6' },
+          ticks: { callback: v => '$' + (v / 1000).toFixed(0) + 'k', font: { size: 10 } }
+        }
+      }
+    }
+  });
+}
+
+function renderDrawdownChart(result) {
+  const dd = result.drawdowns;
+  const step = Math.max(1, Math.floor(dd.length / 500));
+  const sampled = dd.filter((_, i) => i % step === 0 || i === dd.length - 1);
+
+  const canvas = document.getElementById('drawdownChart');
+  canvas.style.display = 'block';
+
+  if (drawdownChartInstance) drawdownChartInstance.destroy();
+
+  drawdownChartInstance = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: sampled.map(p => p.date),
+      datasets: [{
+        label: '回撤 %',
+        data: sampled.map(p => p.dd),
+        borderColor: '#ef4444',
+        backgroundColor: '#ef444418',
+        fill: true,
+        borderWidth: 1.5,
+        pointRadius: 0,
+        tension: 0.1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: ctx => `回撤: ${ctx.parsed.y.toFixed(2)}%` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 12, font: { size: 10 } } },
+        y: {
+          grid: { color: '#f3f4f6' },
+          ticks: { callback: v => v.toFixed(0) + '%', font: { size: 10 } },
+          max: 0
+        }
+      }
+    }
+  });
+}
+
+function renderPriceChart(result) {
+  const ec = result.equityCurve;
+  const step = Math.max(1, Math.floor(ec.length / 500));
+  const sampled = ec.filter((_, i) => i % step === 0 || i === ec.length - 1);
+
+  const labels = sampled.map(p => p.date);
+  const priceData = sampled.map(p => p.price);
+  const shortData = sampled.map(p => p.shortSMA);
+  const longData = sampled.map(p => p.longSMA);
+
+  const buyPoints = [], sellPoints = [];
+  const dateSet = new Map(sampled.map((p, i) => [p.date, i]));
+  for (const t of result.trades) {
+    const idx = dateSet.get(t.date);
+    if (idx === undefined) continue;
+    if (t.type === 'BUY' || t.type === 'ADD') {
+      buyPoints.push({ x: labels[idx], y: t.price });
+    } else {
+      sellPoints.push({ x: labels[idx], y: t.price });
+    }
+  }
+
+  const canvas = document.getElementById('priceChart');
+  canvas.style.display = 'block';
+
+  if (priceChartInstance) priceChartInstance.destroy();
+
+  const asset = document.getElementById('ctaAsset').value;
+
+  priceChartInstance = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: asset + '价格',
+          data: priceData,
+          borderColor: '#6b7280',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          tension: 0.1,
+          fill: false
+        },
+        {
+          label: `MA${document.getElementById('shortMA').value}`,
+          data: shortData,
+          borderColor: '#3b82f6',
+          borderWidth: 1,
+          pointRadius: 0,
+          borderDash: [3, 2],
+          tension: 0.1,
+          fill: false
+        },
+        {
+          label: `MA${document.getElementById('longMA').value}`,
+          data: longData,
+          borderColor: '#ef4444',
+          borderWidth: 1,
+          pointRadius: 0,
+          borderDash: [3, 2],
+          tension: 0.1,
+          fill: false
+        },
+        {
+          label: '买入/加仓',
+          data: buyPoints,
+          type: 'scatter',
+          backgroundColor: '#3b82f6',
+          borderColor: '#fff',
+          borderWidth: 1,
+          pointRadius: 6,
+          pointStyle: 'triangle'
+        },
+        {
+          label: '卖出/止盈/止损',
+          data: sellPoints,
+          type: 'scatter',
+          backgroundColor: '#ef4444',
+          borderColor: '#fff',
+          borderWidth: 1,
+          pointRadius: 6,
+          pointStyle: 'crossRot'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { usePointStyle: true, padding: 16 } },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              if (ctx.dataset.type === 'scatter') return ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString();
+              return ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString('en-US', {maximumFractionDigits: 0});
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 12, font: { size: 10 } } },
+        y: {
+          grid: { color: '#f3f4f6' },
+          ticks: { callback: v => '$' + (v / 1000).toFixed(0) + 'k', font: { size: 10 } }
+        }
+      }
+    }
+  });
+}
+
+function renderYearlyTable(yearly) {
+  const tbody = document.getElementById('yearlyBody');
+  tbody.innerHTML = yearly.map(y => {
+    const retClass = y.return >= 0 ? 'pnl-pos' : 'pnl-neg';
+    const benchClass = y.benchReturn >= 0 ? 'pnl-pos' : 'pnl-neg';
+    const excessClass = y.excess >= 0 ? 'pnl-pos' : 'pnl-neg';
+    return `<tr>
+      <td>${y.year}</td>
+      <td class="${retClass}">${y.return >= 0 ? '+' : ''}${y.return.toFixed(2)}%</td>
+      <td class="${benchClass}">${y.benchReturn >= 0 ? '+' : ''}${y.benchReturn.toFixed(2)}%</td>
+      <td class="${excessClass}">${y.excess >= 0 ? '+' : ''}${y.excess.toFixed(2)}%</td>
+      <td>${y.maxDD.toFixed(2)}%</td>
+      <td>${y.sharpe.toFixed(2)}</td>
+      <td>${y.trades}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderTradeLog(trades) {
+  const tbody = document.getElementById('tradeBody');
+  tbody.innerHTML = trades.map((t, i) => {
+    const typeClass = t.type === 'TRAIL' ? 'trail' : t.type.toLowerCase();
+    const typeTag = `<span class="tag-${typeClass}">${t.type}</span>`;
+    const signalMap = {
+      golden_cross: '金叉建仓', death_cross: '死叉清仓',
+      profit_add_1: '加仓①(+5%)', profit_add_2: '加仓②(+15%)',
+      profit_add: '盈利加仓',
+      atr_stop: 'ATR止损', stop_loss: '技术止损',
+      trailing_stop: '移动止盈', end_of_data: '数据截止'
+    };
+    // Handle vol-adjusted signals
+    let signalText = signalMap[t.signal] || t.signal;
+    if (t.signal && t.signal.startsWith('golden_cross (vol_adj')) {
+      signalText = '金叉建仓 ' + t.signal.match(/\(.*\)/)?.[0];
+    }
+    const pnlCell = t.pnl !== undefined
+      ? `<td class="${t.pnl >= 0 ? 'pnl-pos' : 'pnl-neg'}">${t.pnl >= 0 ? '+' : ''}$${t.pnl.toFixed(0)}</td>
+         <td class="${t.pnl >= 0 ? 'pnl-pos' : 'pnl-neg'}">${t.pnlPct >= 0 ? '+' : ''}${t.pnlPct.toFixed(2)}%</td>`
+      : '<td>—</td><td>—</td>';
+
+    return `<tr>
+      <td>${i + 1}</td>
+      <td>${t.date}</td>
+      <td>${typeTag}</td>
+      <td>${signalText}</td>
+      <td>$${t.price.toLocaleString('en-US', { maximumFractionDigits: 0 })}</td>
+      <td>${t.amount.toFixed(4)}</td>
+      <td>$${t.value.toLocaleString('en-US', { maximumFractionDigits: 0 })}</td>
+      ${pnlCell}
+    </tr>`;
+  }).join('');
+}
+
+const pricesCache = {};
+
+async function runBacktest() {
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  btn.textContent = '加载中...';
+  document.getElementById('loadingEquity').innerHTML = '<div class="spinner"></div><br>正在获取数据并计算...';
+  document.getElementById('loadingEquity').style.display = 'block';
+  document.getElementById('equityChart').style.display = 'none';
+  document.getElementById('drawdownChart').style.display = 'none';
+  document.getElementById('priceChart').style.display = 'none';
+
+  try {
+    const asset = document.getElementById('ctaAsset').value;
+    const shortPeriod = parseInt(document.getElementById('shortMA').value) || 25;
+    const longPeriod = parseInt(document.getElementById('longMA').value) || 60;
+    const initCapital = parseInt(document.getElementById('initCapital').value) || 100000;
+    const posSize = (parseInt(document.getElementById('posSize').value) || 50) / 100;
+    const trailPct = (parseInt(document.getElementById('trailPct').value) || 10) / 100;
+    const cooldown = parseInt(document.getElementById('cooldown').value) || 15;
+
+    if (shortPeriod >= longPeriod) {
+      alert('短期均线周期必须小于长期均线周期');
+      return;
+    }
+
+    if (!pricesCache[asset]) {
+      pricesCache[asset] = await fetchPrices(asset);
+    }
+
+    if (pricesCache[asset].length < longPeriod + 60) {
+      alert('价格数据不足，请稍后重试');
+      return;
+    }
+
+    const result = runBacktestEngine(pricesCache[asset], {
+      shortPeriod,
+      longPeriod,
+      initialCapital: initCapital,
+      positionSize: posSize,
+      trailPct,
+      cooldownDays: cooldown,
+      useVolConfirm: document.getElementById('useVolConfirm').checked,
+      useADX: document.getElementById('useADX').checked,
+      useVolScale: document.getElementById('useVolScale').checked,
+      useDynTrail: document.getElementById('useDynTrail').checked,
+      useATRStop: document.getElementById('useATRStop').checked,
+      useMultiAdd: document.getElementById('useMultiAdd').checked,
+      useTrendFilter: document.getElementById('useTrendFilter').checked,
+      useBearDetect: document.getElementById('useBearDetect').checked,
+      useMomentum: document.getElementById('useMomentum').checked,
+    });
+
+    updateSummary(result);
+    renderEquityChart(result);
+    renderDrawdownChart(result);
+    renderPriceChart(result);
+    renderYearlyTable(result.yearly);
+    renderTradeLog(result.trades);
+  } catch (e) {
+    console.error(e);
+    alert('回测失败: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '运行回测';
+  }
+}
+
+// Presets
+function applyPreset(mode) {
+  if (mode === 'active') {
+    // N: pos35% + bear85 + death cross — highest return, more trades
+    document.getElementById('posSize').value = 35;
+    document.getElementById('trailPct').value = 20;
+    document.getElementById('cooldown').value = 15;
+    document.getElementById('useVolConfirm').checked = true;
+    document.getElementById('useADX').checked = true;
+    document.getElementById('useVolScale').checked = false;
+    document.getElementById('useDynTrail').checked = false;
+    document.getElementById('useATRStop').checked = true;
+    document.getElementById('useMultiAdd').checked = true;
+    document.getElementById('useTrendFilter').checked = false;
+    document.getElementById('useBearDetect').checked = true;
+    document.getElementById('useMomentum').checked = false;
+  } else if (mode === 'balanced') {
+    // L: pos35% + MA200 + death cross — good balance
+    document.getElementById('posSize').value = 35;
+    document.getElementById('trailPct').value = 20;
+    document.getElementById('cooldown').value = 15;
+    document.getElementById('useVolConfirm').checked = true;
+    document.getElementById('useADX').checked = true;
+    document.getElementById('useVolScale').checked = false;
+    document.getElementById('useDynTrail').checked = false;
+    document.getElementById('useATRStop').checked = true;
+    document.getElementById('useMultiAdd').checked = true;
+    document.getElementById('useTrendFilter').checked = true;
+    document.getElementById('useBearDetect').checked = false;
+    document.getElementById('useMomentum').checked = false;
+  } else if (mode === 'conservative') {
+    // O: pos35% + MA200 + momentum — lowest DD, highest PF
+    document.getElementById('posSize').value = 35;
+    document.getElementById('trailPct').value = 20;
+    document.getElementById('cooldown').value = 15;
+    document.getElementById('useVolConfirm').checked = true;
+    document.getElementById('useADX').checked = true;
+    document.getElementById('useVolScale').checked = false;
+    document.getElementById('useDynTrail').checked = false;
+    document.getElementById('useATRStop').checked = true;
+    document.getElementById('useMultiAdd').checked = true;
+    document.getElementById('useTrendFilter').checked = true;
+    document.getElementById('useBearDetect').checked = false;
+    document.getElementById('useMomentum').checked = true;
+  }
+  runBacktest();
+}
+
+// Auto-run on load
+window.addEventListener('DOMContentLoaded', () => runBacktest());
+</script>
+</body>
+</html>

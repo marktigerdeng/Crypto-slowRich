@@ -3,550 +3,936 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stablecoin Dashboard — $1M Portfolio Monitor</title>
+<title>SlowRich Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',sans-serif;background:#0a0e17;color:#e2e8f0;min-height:100vh;line-height:1.5}
-a{color:#60a5fa;text-decoration:none}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#fafafa;color:#1a1a1a;min-height:100vh;line-height:1.6}
+a{color:#10b981;text-decoration:none}
 a:hover{text-decoration:underline}
 
-/* Header */
-.header{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;background:linear-gradient(135deg,#0f172a,#1e293b);border-bottom:1px solid #1e293b;flex-wrap:wrap;gap:12px}
-.header h1{font-size:22px;font-weight:800;background:linear-gradient(90deg,#f59e0b,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.header-right{display:flex;gap:12px;align-items:center}
-.refresh-btn{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit;transition:all .2s}
-.refresh-btn:hover{border-color:#f59e0b;color:#f59e0b}
-.refresh-btn.loading{opacity:.5;pointer-events:none}
-.last-update{font-size:11px;color:#64748b}
+/* ─── Navbar ─── */
+.navbar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px;background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:100}
+.navbar-brand{font-size:20px;font-weight:800;color:#1a1a1a;letter-spacing:-.3px;text-decoration:none}
+.navbar-brand span{color:#10b981}
+.navbar-links{display:flex;gap:4px}
+.navbar-links a{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;color:#666;transition:all .2s}
+.navbar-links a:hover{color:#1a1a1a;background:#f3f4f6;text-decoration:none}
+.navbar-links a.active{color:#10b981;background:#ecfdf5}
 
-/* Summary Bar */
-.summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;padding:16px 24px}
-.stat-card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px 18px}
-.stat-card.highlight{border-color:#f59e0b;background:linear-gradient(135deg,#1e293b,#1a1a2e)}
-.stat-label{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px}
-.stat-value{font-size:24px;font-weight:700;color:#f1f5f9;margin-top:4px}
-.stat-sub{font-size:11px;color:#94a3b8;margin-top:2px}
+/* ─── Container ─── */
+.container{max-width:1200px;margin:0 auto;padding:24px 28px}
 
-/* Section */
-.section{padding:16px 24px}
-.section-title{font-size:16px;font-weight:700;margin-bottom:12px;color:#f1f5f9;display:flex;align-items:center;gap:8px}
+/* ─── Section ─── */
+.section{margin-bottom:32px}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.section-title{font-size:18px;font-weight:700;color:#1a1a1a}
+.section-subtitle{font-size:13px;color:#999;margin-top:2px}
+.section-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600}
+.badge-live{background:#ecfdf5;color:#10b981}
+.badge-pulse{width:6px;height:6px;border-radius:50%;background:#10b981;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* Tier Cards */
-.tier-card{background:#1e293b;border:1px solid #334155;border-radius:12px;margin-bottom:16px;overflow:hidden}
-.tier-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:#0f172a;border-bottom:1px solid #334155}
-.tier-name{font-size:15px;font-weight:700}
-.tier-meta{display:flex;gap:16px;font-size:12px;color:#94a3b8}
-.tier-meta span{display:flex;align-items:center;gap:4px}
-.positions-table{width:100%;border-collapse:collapse;font-size:13px}
-.positions-table th{padding:10px 14px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;border-bottom:1px solid #334155}
-.positions-table td{padding:10px 14px;border-bottom:1px solid #1e293b22}
-.positions-table tr:last-child td{border-bottom:none}
-.positions-table tr:hover{background:#334155/20}
+/* ─── Cards ─── */
+.card{background:#fff;border-radius:12px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:hidden;transition:box-shadow .2s}
+.card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.card-header{padding:16px 20px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center}
+.card-title{font-size:14px;font-weight:700;color:#1a1a1a}
+.card-body{padding:20px}
 
-/* APY colors */
-.apy{font-weight:700;font-size:14px}
-.apy-high{color:#10b981}
-.apy-mid{color:#f59e0b}
-.apy-low{color:#94a3b8}
-.apy-na{color:#475569;font-style:italic;font-weight:400}
+/* ─── Signal Grid ─── */
+.signal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px}
+@media(max-width:768px){.signal-grid{grid-template-columns:1fr}}
 
-/* Source badge */
-.source-badge{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle}
-.source-live{background:#10b981}
-.source-manual{background:#f59e0b}
-.source-estimate{background:#64748b}
-.source-fixed{background:#475569}
+/* ─── Stats Row ─── */
+.stats-row{display:flex;gap:16px;flex-wrap:wrap}
+.stat-item{flex:1;min-width:80px;text-align:center;padding:12px}
+.stat-label{font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.5px;font-weight:500}
+.stat-value{font-size:22px;font-weight:700;margin-top:4px}
+.stat-sub{font-size:11px;color:#999;margin-top:2px}
+.stat-green{color:#10b981}
+.stat-amber{color:#f59e0b}
+.stat-red{color:#ef4444}
+.stat-gray{color:#999}
 
-/* Rate comparison table */
-.rate-table-wrap{overflow-x:auto;border-radius:12px;border:1px solid #334155}
-.rate-table{width:100%;border-collapse:collapse;font-size:13px}
-.rate-table th{background:#0f172a;padding:10px 14px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;position:sticky;top:0}
-.rate-table td{padding:10px 14px;border-bottom:1px solid #1e293b}
-.rate-table tr:hover{background:#334155/30}
-.in-portfolio{background:#10b98110}
-.in-portfolio td:first-child{border-left:3px solid #10b981}
-.chain-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;background:#334155;color:#94a3b8}
-.chain-badge.c-ethereum{background:#627eea22;color:#627eea}
-.chain-badge.c-arbitrum{background:#28a0f022;color:#28a0f0}
-.chain-badge.c-solana{background:#9945ff22;color:#9945ff}
-.chain-badge.c-base{background:#0052ff22;color:#0052ff}
-.chain-badge.c-bsc{background:#f0b90b22;color:#f0b90b}
-.chain-badge.c-polygon{background:#8247e522;color:#8247e5}
-.chain-badge.c-optimism{background:#ff042022;color:#ff0420}
-.chain-badge.c-avalanche{background:#e8414222;color:#e84142}
-.chain-badge.c-sui{background:#4da2ff22;color:#4da2ff}
-.chain-badge.c-aptos{background:#2ed8a322;color:#2ed8a3}
-.chain-badge.c-tron{background:#ff060a22;color:#ff060a}
-.chain-badge.c-gnosis{background:#3e6957aa;color:#3e6957}
-.chain-badge.c-monad{background:#836ef922;color:#836ef9}
-.chain-badge.c-berachain{background:#b4805022;color:#b48050}
-.chain-badge.c-hyperliquid{background:#50e3c222;color:#50e3c2}
-.chain-badge.c-cefi{background:#f59e0b22;color:#f59e0b}
+/* ─── VPR Meter ─── */
+.vpr-meter{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f9fafb;border-radius:8px;margin-top:8px}
+.vpr-bar-bg{flex:1;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;position:relative}
+.vpr-bar-fill{height:100%;border-radius:4px;transition:width .5s}
+.vpr-label{font-size:13px;font-weight:600;min-width:80px;text-align:right}
+.vpr-tag{font-size:11px;color:#999;min-width:40px}
 
-/* Subsidy tag */
-.subsidy-tag{display:inline-block;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:600;margin-left:4px;background:#8b5cf622;color:#8b5cf6;vertical-align:middle}
+/* ─── Signal Badge ─── */
+.signal-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;font-size:13px;font-weight:600}
+.signal-bullish{background:#ecfdf5;color:#059669}
+.signal-bearish{background:#fef2f2;color:#dc2626}
+.signal-neutral{background:#f3f4f6;color:#666}
 
-/* Clickable protocol links */
-.proto-link{color:#f1f5f9;text-decoration:none;border-bottom:1px dashed #475569;transition:all .15s}
-.proto-link:hover{color:#60a5fa;border-bottom-color:#60a5fa;text-decoration:none}
-.verify-link{font-size:10px;color:#64748b;text-decoration:none;margin-left:6px;opacity:.7;transition:opacity .15s}
-.verify-link:hover{opacity:1;color:#f59e0b;text-decoration:none}
-.link-group{display:flex;align-items:center;gap:0}
+/* ─── DeFi Table ─── */
+.defi-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.defi-table{width:100%;border-collapse:collapse;font-size:13px;min-width:700px}
+.defi-table th{padding:10px 14px;text-align:left;font-weight:600;color:#999;font-size:11px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;white-space:nowrap}
+.defi-table th.sortable{cursor:pointer;user-select:none}
+.defi-table th.sortable:hover{color:#1a1a1a}
+.defi-table td{padding:10px 14px;border-bottom:1px solid #f3f4f6;white-space:nowrap}
+.defi-table tr:last-child td{border-bottom:none}
+.defi-table tr:hover{background:#f9fafb}
+.chain-tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500;background:#f3f4f6;color:#666}
+.risk-tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500}
+.risk-low{background:#ecfdf5;color:#059669}
+.risk-med-low{background:#fffbeb;color:#d97706}
+.risk-med{background:#fef2f2;color:#dc2626}
+.portfolio-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981}
 
-/* Risk score badges */
-.risk-score{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
-.risk-low{background:#10b98118;color:#10b981}
-.risk-medium{background:#f59e0b18;color:#f59e0b}
-.risk-elevated{background:#f9731618;color:#f97316}
-.risk-high{background:#ef444418;color:#ef4444}
-.safety-legend{display:flex;gap:16px;margin-bottom:8px;font-size:11px;color:#64748b;flex-wrap:wrap}
-.safety-legend span{display:flex;align-items:center;gap:4px}
+/* ─── Strategy Cards Grid ─── */
+.strategy-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.strategy-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;transition:all .2s;cursor:pointer;text-decoration:none;color:inherit;display:block}
+.strategy-card:hover{border-color:#10b981;box-shadow:0 4px 12px rgba(16,185,129,.1);text-decoration:none}
+.strategy-icon{font-size:28px;margin-bottom:10px}
+.strategy-name{font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:4px}
+.strategy-desc{font-size:12px;color:#666;margin-bottom:12px;line-height:1.5}
+.strategy-metrics{display:flex;gap:12px;font-size:11px;color:#999}
+.strategy-metrics span{display:flex;flex-direction:column}
+.strategy-metrics .metric-val{font-size:13px;font-weight:600;color:#1a1a1a}
+.strategy-enter{margin-top:12px;display:inline-block;padding:6px 14px;border-radius:6px;background:#ecfdf5;color:#059669;font-size:12px;font-weight:600;transition:all .2s}
+.strategy-card:hover .strategy-enter{background:#059669;color:#fff}
 
-/* Chain filter tabs */
-.chain-filters{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
-.chain-filter{padding:6px 14px;border:1px solid #334155;background:#1e293b;color:#94a3b8;border-radius:8px;cursor:pointer;font-size:12px;font-family:inherit;transition:all .2s}
-.chain-filter:hover{border-color:#64748b;color:#e2e8f0}
-.chain-filter.active{border-color:#f59e0b;color:#f59e0b;background:#f59e0b11}
-.chain-filter .count{font-size:10px;opacity:.7;margin-left:4px}
+/* ─── Knowledge Links ─── */
+.knowledge-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.knowledge-item{display:flex;align-items:center;gap:12px;padding:14px 18px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;transition:all .2s;text-decoration:none;color:inherit}
+.knowledge-item:hover{border-color:#10b981;background:#ecfdf5;text-decoration:none}
+.knowledge-icon{font-size:20px;flex-shrink:0}
+.knowledge-text{font-size:13px;font-weight:500;color:#1a1a1a}
+.knowledge-sub{font-size:11px;color:#999}
 
-/* Announcements */
-.ann-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:768px){.ann-grid{grid-template-columns:1fr}}
-.ann-column{background:#1e293b;border:1px solid #334155;border-radius:12px;overflow:hidden}
-.ann-column-header{padding:12px 16px;background:#0f172a;border-bottom:1px solid #334155;font-weight:700;font-size:14px}
-.ann-list{max-height:400px;overflow-y:auto}
-.ann-item{padding:10px 16px;border-bottom:1px solid #33415544;font-size:13px;transition:background .15s}
-.ann-item:hover{background:#33415530}
-.ann-item.highlighted{border-left:3px solid #f59e0b}
-.ann-item a{color:#e2e8f0}
-.ann-item .ann-date{font-size:11px;color:#64748b;margin-top:2px}
-.ann-empty{padding:20px 16px;color:#475569;text-align:center;font-size:13px}
+/* ─── CTA Controls ─── */
+.cta-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.cta-controls select,.cta-controls input{padding:6px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a1a1a}
+.cta-controls label{font-size:12px;color:#666;font-weight:500}
+.cta-controls input[type=number]{width:70px}
 
-/* Footer */
-footer{padding:24px;text-align:center;color:#475569;font-size:12px;border-top:1px solid #1e293b;margin-top:40px}
-footer a{color:#f59e0b}
+/* ─── Chart Container ─── */
+.chart-wrap{position:relative;height:300px;margin-top:12px}
 
-/* Loading */
-.loading-msg{text-align:center;padding:40px;color:#64748b;font-size:14px}
+/* ─── Footer ─── */
+footer{padding:24px;text-align:center;color:#ccc;font-size:12px;border-top:1px solid #e5e7eb;margin-top:40px;background:#fff}
 
-/* Responsive */
-@media(max-width:768px){
-  .header{flex-direction:column;text-align:center}
-  .summary-bar{grid-template-columns:1fr 1fr}
-  .positions-table{font-size:12px}
-  .positions-table th,.positions-table td{padding:8px 10px}
+/* ─── Loading ─── */
+.loading-msg{text-align:center;padding:40px;color:#ccc;font-size:13px}
+.skeleton{background:linear-gradient(90deg,#f3f4f6 25%,#e5e7eb 50%,#f3f4f6 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px;height:20px;width:80px;display:inline-block}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.loading-spinner{display:inline-block;width:14px;height:14px;border:2px solid #e5e7eb;border-top-color:#10b981;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ─── Responsive ─── */
+@media(max-width:640px){
+  .navbar{flex-direction:column;gap:8px;padding:12px 16px}
+  .container{padding:16px}
+  .stats-row{flex-direction:column}
+  .signal-grid{grid-template-columns:1fr}
+  .strategy-grid{grid-template-columns:1fr}
+  .stat-value{font-size:18px}
+  .chart-wrap{height:220px}
 }
 </style>
 </head>
 <body>
 
-<!-- Header -->
-<header class="header">
-  <div>
-    <h1>Stablecoin Dashboard</h1>
-    <span class="last-update" id="lastUpdate">Loading...</span>
+<!-- ─── Navbar ─── -->
+<nav class="navbar">
+  <a class="navbar-brand" href="/">Slow<span>Rich</span></a>
+  <div class="navbar-links">
+    <a href="/" class="active">首页</a>
+    <a href="/sentiment.html">市场情绪</a>
+    <a href="/stable-portfolio.html">稳健组合</a>
+    <a href="/options-monitor.html">期权</a>
+    <a href="/delta-neutral.html">Delta Neutral</a>
+    <a href="/allweather.html">全天候</a>
+    <a href="/portfolio-summary.html">组合</a>
   </div>
-  <div class="header-right">
-    <a href="/backtest-wheel.html" style="padding:8px 16px;border:1px solid #334155;border-radius:8px;font-size:13px;color:#94a3b8;text-decoration:none">Strategy #2: Options Wheel</a>
-    <a href="/backtest-dip.html" style="padding:8px 16px;border:1px solid #334155;border-radius:8px;font-size:13px;color:#94a3b8;text-decoration:none">Strategy #3: Dip-Buying</a>
-    <a href="/backtest-allweather.html" style="padding:8px 16px;border:1px solid #334155;border-radius:8px;font-size:13px;color:#94a3b8;text-decoration:none">Strategy #4: All Weather</a>
-    <a href="/options-monitor.html" style="padding:8px 16px;border:1px solid #334155;border-radius:8px;font-size:13px;color:#94a3b8;text-decoration:none">Strategy #5: Options Monitor</a>
-    <a href="/backtest-wheel-ibit.html" style="padding:8px 16px;border:1px solid #334155;border-radius:8px;font-size:13px;color:#94a3b8;text-decoration:none">Strategy #6: IBIT Wheel</a>
-    <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">Refresh</button>
-  </div>
-</header>
+</nav>
 
-<!-- Summary Bar -->
-<div class="summary-bar" id="summaryBar">
-  <div class="stat-card highlight">
-    <div class="stat-label">Total Capital</div>
-    <div class="stat-value" id="totalCapital">$1,000,000</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label">Weighted APY</div>
-    <div class="stat-value" id="weightedApy">—</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label">Est. Annual Income</div>
-    <div class="stat-value" id="annualIncome">—</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label">Est. Monthly Income</div>
-    <div class="stat-value" id="monthlyIncome">—</div>
-  </div>
-</div>
+<div class="container">
 
-<!-- Portfolio Tiers -->
-<div class="section" id="tiersSection">
-  <div class="section-title">Portfolio Positions</div>
-  <div id="tiersContainer"><div class="loading-msg">Loading portfolio data...</div></div>
-</div>
-
-<!-- Rate Comparison -->
-<div class="section">
-  <div class="section-title">Rate Comparison — DeFi + CeFi</div>
-  <div class="safety-legend">
-    <span>Safety filter: TVL &ge; $10M | Risk score &ge; 3 | APY &le; 200%</span>
-    <span><span class="risk-score risk-low">8+</span> Low</span>
-    <span><span class="risk-score risk-medium">6-8</span> Medium</span>
-    <span><span class="risk-score risk-elevated">4-6</span> Elevated</span>
-    <span><span class="risk-score risk-high">&lt;4</span> High</span>
-  </div>
-  <div class="chain-filters" id="chainFilters"></div>
-  <div id="rateTableContainer"><div class="loading-msg">Loading rates...</div></div>
-</div>
-
-<!-- Announcements -->
-<div class="section">
-  <div class="section-title">Exchange Announcements</div>
-  <div class="ann-grid" id="annGrid">
-    <div class="ann-column">
-      <div class="ann-column-header">Binance</div>
-      <div class="ann-list" id="annBinance"><div class="ann-empty">Loading...</div></div>
+  <!-- ══════════════ Section 1: 实盘信号 ══════════════ -->
+  <div class="section" id="signals">
+    <div class="section-header">
+      <div>
+        <div class="section-title">实盘信号</div>
+        <div class="section-subtitle">期权波动率 / DeFi 收益 / CTA 趋势 / Delta Neutral</div>
+      </div>
+      <span class="section-badge badge-live"><span class="badge-pulse"></span> Live</span>
     </div>
-    <div class="ann-column">
-      <div class="ann-column-header">OKX</div>
-      <div class="ann-list" id="annOkx"><div class="ann-empty">Loading...</div></div>
+
+    <div class="signal-grid">
+
+      <!-- ─── 1.1 期权信号卡片 ─── -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">期权 DVOL / VPR</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <select id="vprPeriod" onchange="fetchOptionSignals()" style="padding:4px 8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;background:#fff;color:#1a1a1a">
+              <option value="30">30天周期</option>
+              <option value="7">7天周期</option>
+            </select>
+            <span style="font-size:11px;color:#999" id="optionDate">—</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="stats-row" id="optionStats">
+            <div class="stat-item">
+              <div class="stat-label">DVOL (IV)</div>
+              <div class="stat-value" id="dvol"><span class="skeleton"></span></div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">7D RV</div>
+              <div class="stat-value" id="rv7d"><span class="skeleton"></span></div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">30D RV</div>
+              <div class="stat-value" id="rv30d"><span class="skeleton"></span></div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label" id="vprLabel">VPR</div>
+              <div class="stat-value" id="vpr"><span class="skeleton"></span></div>
+            </div>
+          </div>
+          <div class="vpr-meter">
+            <span class="vpr-tag" id="vprMeterTag">30D</span>
+            <div class="vpr-bar-bg">
+              <div class="vpr-bar-fill" id="vprBarFill" style="width:50%;background:#ccc"></div>
+            </div>
+            <span class="vpr-label" id="vprJudge">—</span>
+          </div>
+          <div style="margin-top:16px;padding-top:16px;border-top:1px solid #e5e7eb;text-align:center">
+            <a href="/options-monitor.html" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#ecfdf5;color:#059669;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;transition:all .2s"
+               onmouseover="this.style.background='#059669';this.style.color='#fff'" onmouseout="this.style.background='#ecfdf5';this.style.color='#059669'">
+              <span>&#128202;</span> 查看详情 / Sell Put 监控
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── 1.3 CTA 双均线信号 ─── -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">CTA 双均线信号</span>
+          <span id="ctaSignalBadge" class="signal-badge signal-neutral"><span class="loading-spinner"></span>加载中</span>
+        </div>
+        <div class="card-body">
+          <div class="cta-controls">
+            <label>交易对
+              <select id="ctaAsset" onchange="fetchCTA()">
+                <option value="BTC">BTC/USDT</option>
+                <option value="ETH">ETH/USDT</option>
+              </select>
+            </label>
+            <label>短期均线
+              <input type="number" id="ctaShort" value="20" min="5" max="99" onchange="fetchCTA()">
+            </label>
+            <label>长期均线
+              <input type="number" id="ctaLong" value="50" min="10" max="200" onchange="fetchCTA()">
+            </label>
+            <label>历史天数
+              <select id="ctaDays" onchange="fetchCTA()">
+                <option value="60">60天</option>
+                <option value="120" selected>120天</option>
+                <option value="180">180天</option>
+                <option value="365">365天</option>
+              </select>
+            </label>
+          </div>
+          <div class="stats-row" id="ctaStats">
+            <div class="stat-item">
+              <div class="stat-label">当前价格</div>
+              <div class="stat-value" id="ctaPrice"><span class="skeleton"></span></div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label" id="ctaShortLabel">SMA 20</div>
+              <div class="stat-value stat-amber" id="ctaShortSMA"><span class="skeleton"></span></div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label" id="ctaLongLabel">SMA 50</div>
+              <div class="stat-value stat-red" id="ctaLongSMA"><span class="skeleton"></span></div>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="ctaChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── 1.4 Delta Neutral 策略信号 ─── -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Delta Neutral 策略</span>
+          <span class="section-badge badge-live"><span class="badge-pulse"></span> Live</span>
+        </div>
+        <div class="card-body">
+          <div class="stats-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px 16px">
+            <div class="stat-item">
+              <div class="stat-label">JLP 价格</div>
+              <div class="stat-value" id="dnJlpPrice"><span class="skeleton"></span></div>
+              <div class="stat-sub" id="dnJlpChange">—</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">JLP APR</div>
+              <div class="stat-value stat-green" id="dnJlpApr"><span class="skeleton"></span></div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">对冲费率(8h)</div>
+              <div class="stat-value stat-amber" id="dnHedgeRate"><span class="skeleton"></span></div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">预估净收益</div>
+              <div class="stat-value" id="dnNetYield"><span class="skeleton"></span></div>
+            </div>
+          </div>
+          <div style="margin-top:16px">
+            <div style="font-size:12px;font-weight:600;color:#10b981;margin-bottom:8px">正负 Top 3</div>
+            <div id="dnFundingTop5Positive" style="font-size:12px;color:#666;margin-bottom:12px">
+              <span class="loading-spinner"></span>加载中...
+            </div>
+            <div style="font-size:12px;font-weight:600;color:#ef4444;margin-bottom:8px">负费率 Top 5 (做空付费)</div>
+            <div id="dnFundingTop5Negative" style="font-size:12px;color:#666">
+              <span class="loading-spinner"></span>加载中...
+            </div>
+          </div>
+          <div style="margin-top:16px;padding-top:16px;border-top:1px solid #e5e7eb;text-align:center">
+            <a href="/delta-neutral.html" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#ecfdf5;color:#059669;border-radius:8px;font-size:13px;font-weight:500;text-decoration:none">
+              <span>&#9878;</span> 查看完整数据
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── 1.5 All Weather 全天候配置 ─── -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">All Weather 全天候</span>
+          <span id="awBadge" style="font-size:11px;color:#999">加载中...</span>
+        </div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="stat-item">
+              <div class="stat-label">AW 建议配置</div>
+              <div class="stat-value stat-green" id="awPct"><span class="skeleton"></span></div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">CTA 状态</div>
+              <div class="stat-value" id="awCtaStatus" style="font-size:16px"><span class="skeleton"></span></div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">再平衡提醒</div>
+              <div class="stat-value" id="awAlertCount"><span class="skeleton"></span></div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">持仓标的</div>
+              <div class="stat-value stat-gray" id="awPositionCount"><span class="skeleton"></span></div>
+            </div>
+          </div>
+          <!-- Sector mini bars -->
+          <div id="awSectorBars" style="margin-top:16px;padding-top:16px;border-top:1px solid #e5e7eb">
+            <div style="font-size:11px;color:#999;margin-bottom:8px">板块配置</div>
+          </div>
+          <div style="margin-top:16px;padding-top:16px;border-top:1px solid #e5e7eb;text-align:center">
+            <a href="/allweather.html" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#ecfdf5;color:#059669;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;transition:all .2s"
+               onmouseover="this.style.background='#059669';this.style.color='#fff'" onmouseout="this.style.background='#ecfdf5';this.style.color='#059669'">
+              <span>&#9730;</span> 查看全天候详情
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── 1.2 DeFi 收益监控 ─── -->
+      <div class="card" style="grid-column:1/-1">
+        <div class="card-header">
+          <span class="card-title">DeFi 稳定币收益 Top 10</span>
+          <span style="font-size:11px;color:#999">数据来源: DeFiLlama</span>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div class="defi-table-wrap">
+            <table class="defi-table" id="defiTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>持仓</th>
+                  <th>协议</th>
+                  <th>池子</th>
+                  <th>链</th>
+                  <th class="sortable" onclick="sortDefiTable('tvl')" id="thTvl">TVL <span id="tvlSort"></span></th>
+                  <th class="sortable" onclick="sortDefiTable('apy')" id="thApy">APY <span id="apySort"></span></th>
+                  <th>风险</th>
+                </tr>
+              </thead>
+              <tbody id="defiBody">
+                <tr><td colspan="8" class="loading-msg"><span class="loading-spinner"></span>加载中...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
+
+  <!-- ══════════════ Section 2: 策略回测库 ══════════════ -->
+  <div class="section" id="strategies">
+    <div class="section-header">
+      <div>
+        <div class="section-title">策略回测库</div>
+        <div class="section-subtitle">量化策略与历史回测</div>
+      </div>
+    </div>
+
+    <div class="strategy-grid">
+      <a class="strategy-card" href="/backtest-wheel.html">
+        <div class="strategy-icon">&#9881;</div>
+        <div class="strategy-name">Options Wheel (SPY)</div>
+        <div class="strategy-desc">SPY 期权 Wheel 策略，卖 Put + 卖 Call 循环收租</div>
+        <div class="strategy-metrics">
+          <span>Sharpe<span class="metric-val">1.2</span></span>
+          <span>Max DD<span class="metric-val">-18%</span></span>
+          <span>Ann. Return<span class="metric-val">12%</span></span>
+        </div>
+        <div class="strategy-enter">查看详情 &rarr;</div>
+      </a>
+
+      <a class="strategy-card" href="/backtest-wheel-ibit.html">
+        <div class="strategy-icon">&#8383;</div>
+        <div class="strategy-name">IBIT Wheel (BTC ETF)</div>
+        <div class="strategy-desc">IBIT BTC ETF 期权 Wheel，捕捉 BTC 波动率溢价</div>
+        <div class="strategy-metrics">
+          <span>Sharpe<span class="metric-val">0.9</span></span>
+          <span>Max DD<span class="metric-val">-25%</span></span>
+          <span>Ann. Return<span class="metric-val">18%</span></span>
+        </div>
+        <div class="strategy-enter">查看详情 &rarr;</div>
+      </a>
+
+      <a class="strategy-card" href="/backtest-dip.html">
+        <div class="strategy-icon">&#128200;</div>
+        <div class="strategy-name">Dip-Buying 定投</div>
+        <div class="strategy-desc">逢低加仓定投策略，结合恐慌指数择时</div>
+        <div class="strategy-metrics">
+          <span>Sharpe<span class="metric-val">1.0</span></span>
+          <span>Max DD<span class="metric-val">-35%</span></span>
+          <span>Ann. Return<span class="metric-val">15%</span></span>
+        </div>
+        <div class="strategy-enter">查看详情 &rarr;</div>
+      </a>
+
+      <a class="strategy-card" href="/backtest-cta.html">
+        <div class="strategy-icon">&#128200;</div>
+        <div class="strategy-name">CTA Dual MA (BTC/ETH)</div>
+        <div class="strategy-desc">双均线趋势跟踪，移动止盈优化</div>
+        <div class="strategy-metrics">
+          <span>Sharpe<span class="metric-val">1.1</span></span>
+          <span>Max DD<span class="metric-val">-22%</span></span>
+          <span>Ann. Return<span class="metric-val">15%</span></span>
+        </div>
+        <div class="strategy-enter">查看详情 &rarr;</div>
+      </a>
+
+      <a class="strategy-card" href="/backtest-allweather.html">
+        <div class="strategy-icon">&#9730;</div>
+        <div class="strategy-name">All Weather 全天候</div>
+        <div class="strategy-desc">桥水全天候策略复刻，多资产均衡配置</div>
+        <div class="strategy-metrics">
+          <span>Sharpe<span class="metric-val">1.4</span></span>
+          <span>Max DD<span class="metric-val">-12%</span></span>
+          <span>Ann. Return<span class="metric-val">8%</span></span>
+        </div>
+        <div class="strategy-enter">查看详情 &rarr;</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ══════════════ Section 3: 知识库 ══════════════ -->
+  <div class="section" id="knowledge">
+    <div class="section-header">
+      <div>
+        <div class="section-title">知识库</div>
+        <div class="section-subtitle">策略文档与学习资料</div>
+      </div>
+    </div>
+
+    <div class="knowledge-list">
+      <a class="knowledge-item" href="https://notion.so" target="_blank" rel="noopener">
+        <span class="knowledge-icon">&#128218;</span>
+        <div>
+          <div class="knowledge-text">Notion 知识库主页</div>
+          <div class="knowledge-sub">策略笔记、交易日志、学习记录</div>
+        </div>
+      </a>
+      <a class="knowledge-item" href="https://notion.so" target="_blank" rel="noopener">
+        <span class="knowledge-icon">&#128196;</span>
+        <div>
+          <div class="knowledge-text">策略文档</div>
+          <div class="knowledge-sub">每个策略的详细说明与参数</div>
+        </div>
+      </a>
+      <a class="knowledge-item" href="https://notion.so" target="_blank" rel="noopener">
+        <span class="knowledge-icon">&#128737;</span>
+        <div>
+          <div class="knowledge-text">风险管理手册</div>
+          <div class="knowledge-sub">仓位管理、止损规则、黑天鹅应对</div>
+        </div>
+      </a>
+      <a class="knowledge-item" href="/api/health" target="_blank">
+        <span class="knowledge-icon">&#128268;</span>
+        <div>
+          <div class="knowledge-text">API 文档</div>
+          <div class="knowledge-sub">Dashboard API 端点与数据结构</div>
+        </div>
+      </a>
+    </div>
+  </div>
+
 </div>
 
 <footer>
-  Stablecoin Dashboard — DeFi data from <a href="https://defillama.com" target="_blank">DeFiLlama</a> |
-  Auto-refreshes every 60s | Not financial advice
+  SlowRich Dashboard &mdash; 数据来源 Deribit / CryptoCompare / DeFiLlama &mdash; 非投资建议
 </footer>
 
 <script>
 const $ = id => document.getElementById(id);
 
-// --- Data fetching ---
+// ═══════════ API 缓存层 (5分钟TTL) ═══════════
+const apiCache = {};
+const CACHE_TTL = 5 * 60 * 1000;
 
 async function fetchJSON(url) {
-  const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-  return resp.json();
+  const now = Date.now();
+  if (apiCache[url] && (now - apiCache[url].ts) < CACHE_TTL) {
+    return apiCache[url].data;
+  }
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const data = await r.json();
+  apiCache[url] = { data, ts: now };
+  return data;
 }
 
-let portfolioData = null;
-let ratesDefi = null;
-let ratesCefi = null;
-let announcements = null;
+function invalidateCache(url) { delete apiCache[url]; }
 
-async function refreshAll() {
-  const btn = $('refreshBtn');
-  btn.classList.add('loading');
-  btn.textContent = 'Refreshing...';
+function fmt(n, d=0) { return n != null ? n.toLocaleString('en-US', {maximumFractionDigits:d}) : '—'; }
+function fmtUSD(n) { return n != null ? '$' + fmt(n) : '—'; }
+function fmtCompact(n) {
+  if (n >= 1e9) return '$' + (n/1e9).toFixed(1) + 'B';
+  if (n >= 1e6) return '$' + (n/1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return '$' + (n/1e3).toFixed(0) + 'K';
+  return '$' + (n||0).toFixed(0);
+}
+function fmtPriceCompact(v) {
+  if (v >= 1e6) return '$' + (v/1e6).toFixed(1) + 'M';
+  if (v >= 1e4) return '$' + (v/1e3).toFixed(1) + 'K';
+  return '$' + fmt(v);
+}
 
+// ═══════════ VPR Meter Helper ═══════════
+function updateVPRMeter(spread, barId, judgeId) {
+  if (spread == null) return;
+  // Scale -50 to +50 → 0% to 100%
+  const pct = Math.max(0, Math.min(100, ((spread + 50) / 100) * 100));
+  $(barId).style.width = pct + '%';
+  $(barId).style.background = spread > 0 ? '#10b981' : '#ef4444';
+  $(judgeId).textContent = spread > 5 ? '开仓有利' : spread > 0 ? '微利' : '观望';
+  $(judgeId).style.color = spread > 0 ? '#059669' : '#ef4444';
+}
+
+// ═══════════ 1.1 期权 DVOL / VPR ═══════════
+async function fetchOptionSignals() {
   try {
-    const [p, rd, rc, ann] = await Promise.allSettled([
-      fetchJSON('/api/portfolio'),
-      fetchJSON('/api/rates/defi'),
-      fetchJSON('/api/rates/cefi'),
-      fetchJSON('/api/announcements'),
-    ]);
+    const vrpPeriod = $('vprPeriod')?.value || '30';
+    const url = '/api/timing?vrpPeriod=' + vrpPeriod;
+    invalidateCache(url);
+    const data = await fetchJSON(url);
+    const s = data.signals;
 
-    if (p.status === 'fulfilled') { portfolioData = p.value; renderPortfolio(); }
-    if (rd.status === 'fulfilled') { ratesDefi = rd.value; }
-    if (rc.status === 'fulfilled') { ratesCefi = rc.value; }
-    if (rd.status === 'fulfilled' || rc.status === 'fulfilled') renderRateTable();
-    if (ann.status === 'fulfilled') { announcements = ann.value; renderAnnouncements(); }
-  } catch (err) {
-    console.error('Refresh error:', err);
-  }
+    const iv = s.ivPercentile?.value;
+    const rv30 = s.vrp?.rv30;
+    const rv7 = s.vrp?.rv7;
+    const vrpSpread = s.vrp?.spread;
 
-  btn.classList.remove('loading');
-  btn.textContent = 'Refresh';
-  $('lastUpdate').textContent = `Last refresh: ${new Date().toLocaleTimeString()}`;
-}
+    $('dvol').textContent = iv != null ? iv.toFixed(1) + '%' : '—';
+    $('rv7d').textContent = rv7 != null ? rv7.toFixed(1) + '%' : '—';
+    $('rv30d').textContent = rv30 != null ? rv30.toFixed(1) + '%' : '—';
 
-// --- Render Portfolio ---
-
-function renderPortfolio() {
-  if (!portfolioData) return;
-  const d = portfolioData;
-
-  $('totalCapital').textContent = formatUSD(d.totalCapital);
-  $('weightedApy').textContent = d.weightedApy != null ? d.weightedApy.toFixed(2) + '%' : '—';
-  $('annualIncome').textContent = d.annualIncome != null ? formatUSD(d.annualIncome) : '—';
-  $('monthlyIncome').textContent = d.annualIncome != null ? formatUSD(Math.round(d.annualIncome / 12)) : '—';
-
-  const container = $('tiersContainer');
-  container.innerHTML = '';
-
-  for (const tier of d.tiers) {
-    const card = document.createElement('div');
-    card.className = 'tier-card';
-    card.innerHTML = `
-      <div class="tier-header">
-        <span class="tier-name">${tier.name}</span>
-        <div class="tier-meta">
-          <span>${formatUSD(tier.amount)} (${(tier.allocation * 100).toFixed(0)}%)</span>
-          <span>APY: ${tier.weightedApy.toFixed(2)}%</span>
-          <span>Income: ${formatUSD(tier.annualIncome)}/yr</span>
-        </div>
-      </div>
-      <table class="positions-table">
-        <thead>
-          <tr>
-            <th>Protocol</th>
-            <th>Chain</th>
-            <th>Asset</th>
-            <th>Amount</th>
-            <th>Live APY</th>
-            <th>Annual Income</th>
-            <th>Source</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${tier.positions.map(pos => `
-            <tr>
-              <td>
-                <div class="link-group">
-                  ${pos.officialUrl
-                    ? `<a class="proto-link" href="${pos.officialUrl}" target="_blank" rel="noopener"><strong>${pos.protocol}</strong></a>`
-                    : `<strong>${pos.protocol}</strong>`}
-                  ${pos.matchedPoolId
-                    ? `<a class="verify-link" href="https://defillama.com/yields/pool/${pos.matchedPoolId}" target="_blank" rel="noopener" title="Verify on DeFiLlama">&#x2197;</a>`
-                    : ''}
-                </div>
-                <span style="color:#64748b;font-size:11px">${pos.product}</span>
-              </td>
-              <td>${pos.chain ? chainBadge(pos.chain) : '<span style="color:#64748b">CeFi</span>'}</td>
-              <td>${pos.asset}</td>
-              <td>${formatUSD(pos.amount)}</td>
-              <td>${renderApy(pos.liveApy, pos.apySource)}</td>
-              <td>${formatUSD(pos.annualIncome)}</td>
-              <td>${renderSourceBadge(pos.apySource)}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    `;
-    container.appendChild(card);
-  }
-}
-
-function renderApy(apy, source) {
-  if (apy === null || apy === undefined) return '<span class="apy apy-na">N/A</span>';
-  const cls = apy >= 8 ? 'apy-high' : apy >= 3 ? 'apy-mid' : 'apy-low';
-  return `<span class="apy ${cls}">${apy.toFixed(2)}%</span>`;
-}
-
-function renderSourceBadge(source) {
-  const map = {
-    live: ['source-live', 'Live'],
-    'auth-api': ['source-live', 'API'],
-    api: ['source-live', 'API'],
-    manual: ['source-manual', 'Manual'],
-    estimate: ['source-estimate', 'Est.'],
-    fixed: ['source-fixed', 'Fixed'],
-  };
-  const [cls, label] = map[source] || ['source-estimate', source || 'Unknown'];
-  return `<span class="source-badge ${cls}"></span>${label}`;
-}
-
-// --- Rate Comparison Table ---
-
-let allRateRows = [];
-let activeChainFilter = 'all';
-
-function buildRateRows() {
-  const rows = [];
-
-  // DeFi pools
-  if (ratesDefi && ratesDefi.pools) {
-    for (const p of ratesDefi.pools) {
-      rows.push({
-        type: 'DeFi',
-        protocol: p.project,
-        asset: p.symbol,
-        chain: p.chain,
-        apy: p.apy,
-        apyBase: p.apyBase || 0,
-        apyReward: p.apyReward || 0,
-        tvl: p.tvl,
-        inPortfolio: p.inPortfolio,
-        poolId: p.pool,
-        riskScore: p.riskScore,
-        riskLabel: p.riskLabel,
-        llamaUrl: `https://defillama.com/yields/pool/${p.pool}`,
-      });
+    // Update VPR label and display
+    $('vprLabel').textContent = 'VPR ' + vrpPeriod + 'D';
+    $('vprMeterTag').textContent = vrpPeriod + 'D';
+    if (vrpSpread != null) {
+      $('vpr').textContent = (vrpSpread > 0 ? '+' : '') + vrpSpread.toFixed(1) + '%';
+      $('vpr').className = 'stat-value ' + (vrpSpread > 0 ? 'stat-green' : 'stat-red');
+      updateVPRMeter(vrpSpread, 'vprBarFill', 'vprJudge');
+    } else {
+      $('vpr').textContent = '—';
     }
-  }
 
-  // CeFi rates
-  const cefiUrls = { binance: 'https://www.binance.com/en/earn', okx: 'https://www.okx.com/earn' };
-  if (ratesCefi) {
-    for (const platform of ['binance', 'okx']) {
-      const data = ratesCefi[platform];
-      if (!data || !data.rates) continue;
-      for (const r of data.rates) {
-        rows.push({
-          type: 'CeFi',
-          protocol: platform.charAt(0).toUpperCase() + platform.slice(1),
-          asset: `${r.asset} ${r.product}`,
-          chain: 'CeFi',
-          apy: r.apy,
-          tvl: null,
-          inPortfolio: platform === 'binance' || platform === 'okx',
-          source: data.source,
-          llamaUrl: cefiUrls[platform],
-        });
-      }
-    }
+    $('optionDate').textContent = '综合评分: ' + data.score + '/100 (' + data.label + ')';
+  } catch (e) {
+    console.error('Option signals error:', e);
   }
-
-  rows.sort((a, b) => (b.apy || 0) - (a.apy || 0));
-  allRateRows = rows;
 }
 
-function renderChainFilters() {
-  const counts = {};
-  for (const r of allRateRows) {
-    const c = r.chain || 'Other';
-    counts[c] = (counts[c] || 0) + 1;
+// ═══════════ 1.2 DeFi 收益 ═══════════
+let defiPoolsData = [];
+let defiSortField = 'apy';
+let defiSortAsc = false;
+
+async function fetchDefi() {
+  try {
+    const data = await fetchJSON('/api/rates/defi');
+    defiPoolsData = (data.pools || []).slice(0, 10);
+    renderDefiTable();
+  } catch (e) {
+    console.error('DeFi fetch error:', e);
   }
-  // Preferred order
-  const order = ['all', 'Ethereum', 'Solana', 'Base', 'Arbitrum', 'BSC', 'Polygon', 'Optimism', 'Avalanche', 'CeFi'];
-  const chains = ['all', ...order.filter(c => c !== 'all' && counts[c])];
-  // Add remaining chains not in the preferred order
-  for (const c of Object.keys(counts)) {
-    if (!chains.includes(c)) chains.push(c);
+}
+
+function sortDefiTable(field) {
+  if (defiSortField === field) {
+    defiSortAsc = !defiSortAsc;
+  } else {
+    defiSortField = field;
+    defiSortAsc = false;
   }
-
-  $('chainFilters').innerHTML = chains.map(c => {
-    const label = c === 'all' ? 'All' : c;
-    const count = c === 'all' ? allRateRows.length : (counts[c] || 0);
-    const active = c === activeChainFilter ? ' active' : '';
-    return `<button class="chain-filter${active}" onclick="setChainFilter('${c}')">${label}<span class="count">(${count})</span></button>`;
-  }).join('');
+  renderDefiTable();
 }
 
-function setChainFilter(chain) {
-  activeChainFilter = chain;
-  renderChainFilters();
-  renderRateTableBody();
-}
+function renderDefiTable() {
+  const pools = [...defiPoolsData];
+  const body = $('defiBody');
 
-function renderRateTable() {
-  buildRateRows();
-  renderChainFilters();
-  renderRateTableBody();
-}
-
-function renderRateTableBody() {
-  const filtered = activeChainFilter === 'all'
-    ? allRateRows
-    : allRateRows.filter(r => r.chain === activeChainFilter);
-
-  const container = $('rateTableContainer');
-  if (filtered.length === 0) {
-    container.innerHTML = '<div class="loading-msg">No rate data for this filter</div>';
+  if (pools.length === 0) {
+    body.innerHTML = '<tr><td colspan="8" class="loading-msg">暂无数据</td></tr>';
     return;
   }
 
-  container.innerHTML = `
-    <div class="rate-table-wrap">
-      <table class="rate-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Type</th>
-            <th>Protocol</th>
-            <th>Asset</th>
-            <th>Chain</th>
-            <th>APY</th>
-            <th>Breakdown</th>
-            <th>TVL</th>
-            <th>Safety</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${filtered.slice(0, 60).map((r, i) => `
-            <tr class="${r.inPortfolio ? 'in-portfolio' : ''}">
-              <td style="color:#64748b">${i + 1}</td>
-              <td>${r.type}</td>
-              <td><a class="proto-link" href="${r.llamaUrl}" target="_blank" rel="noopener"><strong>${r.protocol}</strong></a></td>
-              <td>${r.asset}</td>
-              <td>${chainBadge(r.chain)}</td>
-              <td>${renderApy(r.apy)}${r.apyReward > 1 ? '<span class="subsidy-tag">Reward</span>' : ''}</td>
-              <td style="font-size:11px;color:#94a3b8">${r.apyBase != null && r.type === 'DeFi' ? `Base ${r.apyBase.toFixed(1)}%${r.apyReward > 0 ? ` + Reward ${r.apyReward.toFixed(1)}%` : ''}` : '—'}</td>
-              <td>${r.tvl ? formatCompact(r.tvl) : '—'}</td>
-              <td>${renderRiskBadge(r.riskScore, r.riskLabel)}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
-}
+  // Sort
+  pools.sort((a, b) => {
+    const va = a[defiSortField] || 0;
+    const vb = b[defiSortField] || 0;
+    return defiSortAsc ? va - vb : vb - va;
+  });
 
-function renderRiskBadge(score, label) {
-  if (score == null) return '<span style="color:#64748b">—</span>';
-  const cls = `risk-${label || 'medium'}`;
-  return `<span class="risk-score ${cls}">${score.toFixed(1)}</span>`;
-}
+  // Update sort indicators
+  $('tvlSort').textContent = defiSortField === 'tvl' ? (defiSortAsc ? '\u25B2' : '\u25BC') : '';
+  $('apySort').textContent = defiSortField === 'apy' ? (defiSortAsc ? '\u25B2' : '\u25BC') : '';
 
-function chainBadge(chain) {
-  if (!chain || chain === '—') return '—';
-  const cls = 'c-' + chain.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-  return `<span class="chain-badge ${cls}">${chain}</span>`;
-}
-
-// --- Announcements ---
-
-function renderAnnouncements() {
-  if (!announcements) return;
-
-  renderAnnList('annBinance', announcements.binance || []);
-  renderAnnList('annOkx', announcements.okx || []);
-}
-
-function renderAnnList(containerId, items) {
-  const el = $(containerId);
-  if (!items || items.length === 0) {
-    el.innerHTML = '<div class="ann-empty">No announcements loaded</div>';
-    return;
+  function riskTagHtml(label) {
+    if (!label) return '<span class="risk-tag" style="background:#f3f4f6;color:#999">未知</span>';
+    const cls = label.includes('低风险') ? 'risk-low' : label.includes('中低') ? 'risk-med-low' : 'risk-med';
+    return `<span class="risk-tag ${cls}">${esc(label)}</span>`;
   }
 
-  el.innerHTML = items.map(a => `
-    <div class="ann-item ${a.highlighted ? 'highlighted' : ''}">
-      <a href="${a.url}" target="_blank" rel="noopener">${escapeHtml(a.title)}</a>
-      ${a.date ? `<div class="ann-date">${formatDate(a.date)}</div>` : ''}
-    </div>
+  body.innerHTML = pools.map((p, i) => `
+    <tr>
+      <td style="color:#999">${i + 1}</td>
+      <td>${p.inPortfolio ? '<span class="portfolio-dot" title="已持仓"></span>' : ''}</td>
+      <td><strong>${esc(p.project)}</strong></td>
+      <td style="font-size:12px">${esc(p.symbol)}</td>
+      <td><span class="chain-tag">${esc(p.chain)}</span></td>
+      <td>${fmtCompact(p.tvl)}</td>
+      <td><strong style="color:${p.apy >= 8 ? '#10b981' : p.apy >= 3 ? '#f59e0b' : '#999'}">${p.apy.toFixed(2)}%</strong></td>
+      <td>${riskTagHtml(p.riskLabel)}</td>
+    </tr>
   `).join('');
 }
 
-// --- Helpers ---
+// ═══════════ 1.3 CTA 双均线 ═══════════
+let ctaChart = null;
 
-function formatUSD(n) {
-  if (n == null) return '—';
-  return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
-}
+async function fetchCTA() {
+  const asset = $('ctaAsset').value;
+  const sp = $('ctaShort').value;
+  const lp = $('ctaLong').value;
+  const days = $('ctaDays').value;
 
-function formatCompact(n) {
-  if (n >= 1e9) return '$' + (n / 1e9).toFixed(1) + 'B';
-  if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
-  if (n >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'K';
-  return '$' + n.toFixed(0);
-}
+  $('ctaShortLabel').textContent = 'SMA ' + sp;
+  $('ctaLongLabel').textContent = 'SMA ' + lp;
 
-function formatDate(d) {
+  // Show loading
+  $('ctaSignalBadge').className = 'signal-badge signal-neutral';
+  $('ctaSignalBadge').innerHTML = '<span class="loading-spinner"></span>加载中';
+
   try {
-    return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  } catch { return d; }
+    const url = `/api/cta-signal?asset=${asset}&shortPeriod=${sp}&longPeriod=${lp}&historyDays=${days}`;
+    invalidateCache(url); // CTA params change, always fresh
+    const data = await fetchJSON(url);
+
+    $('ctaPrice').textContent = fmtUSD(data.currentPrice);
+    $('ctaShortSMA').textContent = fmtUSD(data.shortSMA);
+    $('ctaLongSMA').textContent = fmtUSD(data.longSMA);
+
+    // Signal badge
+    const badge = $('ctaSignalBadge');
+    const signalClass = data.signalColor === 'green' ? 'signal-bullish' : data.signalColor === 'red' ? 'signal-bearish' : 'signal-neutral';
+    badge.className = 'signal-badge ' + signalClass;
+    badge.textContent = data.signalLabel;
+
+    // Chart
+    renderCTAChart(data);
+  } catch (e) {
+    console.error('CTA fetch error:', e);
+    $('ctaSignalBadge').className = 'signal-badge signal-neutral';
+    $('ctaSignalBadge').textContent = '加载失败';
+  }
 }
 
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str || '';
-  return div.innerHTML;
+function renderCTAChart(data) {
+  const ctx = $('ctaChart').getContext('2d');
+  const history = data.history || [];
+  const crossovers = data.crossovers || [];
+
+  const labels = history.map(h => h.date.slice(5)); // MM-DD
+  const prices = history.map(h => h.price);
+  const shortSMA = history.map(h => h.shortSMA);
+  const longSMA = history.map(h => h.longSMA);
+
+  // Build crossover point arrays (null everywhere except crossover points)
+  const goldenPoints = new Array(history.length).fill(null);
+  const deathPoints = new Array(history.length).fill(null);
+  for (const c of crossovers) {
+    if (c.index >= 0 && c.index < history.length) {
+      if (c.type === 'golden') goldenPoints[c.index] = c.price;
+      else deathPoints[c.index] = c.price;
+    }
+  }
+
+  if (ctaChart) ctaChart.destroy();
+
+  ctaChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: data.asset + ' Price',
+          data: prices,
+          borderColor: '#6366f1',
+          backgroundColor: 'rgba(99,102,241,.05)',
+          fill: true,
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.3,
+        },
+        {
+          label: 'SMA ' + data.shortPeriod,
+          data: shortSMA,
+          borderColor: '#f59e0b',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          borderDash: [4, 2],
+          tension: 0.3,
+        },
+        {
+          label: 'SMA ' + data.longPeriod,
+          data: longSMA,
+          borderColor: '#ef4444',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          borderDash: [8, 4],
+          tension: 0.3,
+        },
+        {
+          label: '金叉',
+          data: goldenPoints,
+          borderColor: '#059669',
+          backgroundColor: '#10b981',
+          pointRadius: goldenPoints.map(v => v != null ? 7 : 0),
+          pointStyle: 'triangle',
+          pointBorderWidth: 2,
+          showLine: false,
+          borderWidth: 0,
+        },
+        {
+          label: '死叉',
+          data: deathPoints,
+          borderColor: '#dc2626',
+          backgroundColor: '#ef4444',
+          pointRadius: deathPoints.map(v => v != null ? 7 : 0),
+          pointStyle: 'crossRot',
+          pointBorderWidth: 2,
+          showLine: false,
+          borderWidth: 0,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } },
+        tooltip: {
+          backgroundColor: '#fff',
+          titleColor: '#1a1a1a',
+          bodyColor: '#666',
+          borderColor: '#e5e7eb',
+          borderWidth: 1,
+          cornerRadius: 8,
+          padding: 10,
+          filter: item => item.raw != null,
+          callbacks: {
+            label: ctx => ctx.dataset.label + ': $' + fmt(ctx.raw, 0),
+          }
+        },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#999', maxTicksLimit: 12, maxRotation: 0 } },
+        y: {
+          grid: { color: '#f3f4f6' },
+          ticks: {
+            font: { size: 10 },
+            color: '#999',
+            callback: v => fmtPriceCompact(v),
+            maxTicksLimit: 6,
+          },
+        },
+      },
+    },
+  });
 }
 
-// --- Auto refresh ---
-refreshAll();
-setInterval(refreshAll, 60 * 1000);
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+// ═══════════ 1.4 Delta Neutral 信号 ═══════════
+async function fetchDeltaNeutral() {
+  try {
+    const [jlp, hedge, calc, funding] = await Promise.all([
+      fetchJSON('/api/jlp-stats'),
+      fetchJSON('/api/hedge-funding'),
+      fetchJSON('/api/delta-neutral-calc'),
+      fetchJSON('/api/funding-rates'),
+    ]);
+
+    // JLP price & change
+    $('dnJlpPrice').textContent = '$' + (jlp.price || 0).toFixed(4);
+    const chg = jlp.change24h || 0;
+    $('dnJlpChange').textContent = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
+    $('dnJlpChange').style.color = chg >= 0 ? '#10b981' : '#ef4444';
+
+    // JLP APR
+    $('dnJlpApr').textContent = (jlp.apr7d || 0).toFixed(1) + '%';
+
+    // Hedge rate (weighted BTC+ETH+SOL)
+    $('dnHedgeRate').textContent = (hedge.ratePercent || '0') + '%';
+
+    // Net yield
+    const net = calc.netYield || 0;
+    $('dnNetYield').textContent = (net >= 0 ? '+' : '') + net.toFixed(1) + '%';
+    $('dnNetYield').className = 'stat-value ' + (net > 0 ? 'stat-green' : 'stat-red');
+
+    // Funding Top 5 - 正负分开显示
+    const allRates = funding.rates || [];
+    const positiveRates = allRates.filter(r => r.rate > 0).sort((a, b) => b.rate - a.rate).slice(0, 3);
+    const negativeRates = allRates.filter(r => r.rate < 0).sort((a, b) => a.rate - b.rate).slice(0, 3);
+    
+    // 正费率 Top 5
+    if (positiveRates.length > 0) {
+      $('dnFundingTop5Positive').innerHTML = positiveRates.map((r, i) => {
+        return `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f3f4f6">
+          <span>${i+1}. ${esc(r.symbol)} <span style="color:#999">${esc(r.exchange)}</span></span>
+          <span style="font-weight:600;color:#10b981">+${r.ratePercent}%</span>
+        </div>`;
+      }).join('');
+    } else {
+      $('dnFundingTop5Positive').innerHTML = '<div style="color:#999;padding:3px 0">暂无正费率数据</div>';
+    }
+    
+    // 负费率 Top 5
+    if (negativeRates.length > 0) {
+      $('dnFundingTop5Negative').innerHTML = negativeRates.map((r, i) => {
+        return `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f3f4f6">
+          <span>${i+1}. ${esc(r.symbol)} <span style="color:#999">${esc(r.exchange)}</span></span>
+          <span style="font-weight:600;color:#ef4444">${r.ratePercent}%</span>
+        </div>`;
+      }).join('');
+    } else {
+      $('dnFundingTop5Negative').innerHTML = '<div style="color:#999;padding:3px 0">暂无负费率数据</div>';
+    }
+  } catch (e) {
+    console.error('Delta Neutral fetch error:', e);
+  }
+}
+
+// ═══════════ 1.5 All Weather 全天候 ═══════════
+async function fetchAllWeather() {
+  try {
+    const [ctaRes, configRes, rebalRes] = await Promise.all([
+      fetchJSON('/api/allweather/cta-signal'),
+      fetchJSON('/api/allweather/config'),
+      fetchJSON('/api/allweather/rebalance'),
+    ]);
+
+    // AW suggested allocation
+    $('awPct').textContent = Math.round(ctaRes.suggestedAW * 100) + '%';
+    $('awPct').className = 'stat-value ' + (ctaRes.suggestedAW >= 0.5 ? 'stat-green' : 'stat-amber');
+
+    // CTA status
+    const statusColors = { golden_cross: '#10b981', bullish: '#10b981', death_cross: '#ef4444', bearish: '#ef4444' };
+    $('awCtaStatus').textContent = ctaRes.ctaStatus;
+    $('awCtaStatus').style.color = statusColors[ctaRes.ctaSignal] || '#999';
+
+    // Rebalance alerts count
+    const alertCount = rebalRes.alertCount || 0;
+    $('awAlertCount').textContent = alertCount;
+    $('awAlertCount').className = 'stat-value ' + (alertCount > 0 ? 'stat-red' : 'stat-green');
+
+    // Position count
+    $('awPositionCount').textContent = configRes.positionCount || '—';
+
+    // Badge
+    $('awBadge').textContent = alertCount > 0 ? `${alertCount} 需调仓` : '配置均衡';
+    $('awBadge').style.color = alertCount > 0 ? '#ef4444' : '#10b981';
+
+    // Sector mini bars
+    const sectorColors = { 'US Equities': '#3b82f6', 'China A-Shares': '#ef4444', 'HK Equities': '#eab308', 'Commodities': '#f59e0b', 'Crypto': '#8b5cf6', 'Bonds': '#10b981', 'Emerging Markets': '#6b7280' };
+    const sectorNames = { 'US Equities': '美股', 'China A-Shares': 'A股', 'HK Equities': '港股', 'Commodities': '商品', 'Crypto': '加密', 'Bonds': '债券', 'Emerging Markets': '新兴' };
+    const target = configRes.targetAllocation;
+    let barsHtml = '<div style="font-size:11px;color:#999;margin-bottom:8px">板块配置</div>';
+    for (const [key, val] of Object.entries(target)) {
+      const pct = Math.round(val * 100);
+      const color = sectorColors[key] || '#999';
+      const name = sectorNames[key] || key;
+      barsHtml += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:11px">
+        <span style="min-width:28px;color:#999">${esc(name)}</span>
+        <div style="flex:1;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${color};border-radius:3px"></div>
+        </div>
+        <span style="min-width:30px;text-align:right;font-weight:600;color:#1a1a1a">${pct}%</span>
+      </div>`;
+    }
+    $('awSectorBars').innerHTML = barsHtml;
+  } catch (e) {
+    console.error('All Weather fetch error:', e);
+  }
+}
+
+// ─── Init ───
+fetchOptionSignals();
+fetchDefi();
+fetchCTA();
+fetchDeltaNeutral();
+fetchAllWeather();
+
+// Auto refresh every 2 minutes (cache handles dedup)
+setInterval(() => {
+  // Invalidate cache for auto-refresh
+  Object.keys(apiCache).forEach(k => delete apiCache[k]);
+  fetchOptionSignals();
+  fetchDefi();
+  fetchCTA();
+  fetchDeltaNeutral();
+  fetchAllWeather();
+}, 120 * 1000);
 </script>
 </body>
 </html>

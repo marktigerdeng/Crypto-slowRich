@@ -1,0 +1,111 @@
+{
+  "totalCapital": 100000,
+  "rebalanceThreshold": 0.05,
+  "sectorThreshold": 0.10,
+  "sectors": [
+    {
+      "name": "美股",
+      "nameEn": "US Equities",
+      "targetWeight": 0.35,
+      "positions": [
+        { "symbol": "NVDA", "name": "英伟达", "category": "AI芯片", "targetWeight": 0.035, "currentWeight": 0.035, "shares": 0, "proxy": false },
+        { "symbol": "AVGO", "name": "博通", "category": "AI芯片", "targetWeight": 0.020, "currentWeight": 0.020, "shares": 0, "proxy": false },
+        { "symbol": "TSM", "name": "台积电", "category": "AI芯片", "targetWeight": 0.015, "currentWeight": 0.015, "shares": 0, "proxy": false },
+        { "symbol": "VST", "name": "Vistra Energy", "category": "AI基建", "targetWeight": 0.010, "currentWeight": 0.010, "shares": 0, "proxy": false },
+        { "symbol": "ANET", "name": "Arista Networks", "category": "AI基建", "targetWeight": 0.005, "currentWeight": 0.005, "shares": 0, "proxy": false },
+        { "symbol": "MSFT", "name": "微软", "category": "AI基建", "targetWeight": 0.005, "currentWeight": 0.005, "shares": 0, "proxy": false },
+        { "symbol": "BRK.B", "name": "伯克希尔", "category": "防御蓝筹", "targetWeight": 0.010, "currentWeight": 0.010, "shares": 0, "proxy": false },
+        { "symbol": "KO", "name": "可口可乐", "category": "防御蓝筹", "targetWeight": 0.005, "currentWeight": 0.005, "shares": 0, "proxy": false },
+        { "symbol": "SPY", "name": "标普500 ETF", "category": "宽基指数", "targetWeight": 0.020, "currentWeight": 0.020, "shares": 0, "proxy": false },
+        { "symbol": "QQQ", "name": "纳斯达克100 ETF", "category": "宽基指数", "targetWeight": 0.020, "currentWeight": 0.020, "shares": 0, "proxy": false },
+        { "symbol": "AAPL", "name": "苹果", "category": "科技龙头", "targetWeight": 0.015, "currentWeight": 0.015, "shares": 0, "proxy": false },
+        { "symbol": "GOOGL", "name": "谷歌", "category": "科技龙头", "targetWeight": 0.015, "currentWeight": 0.015, "shares": 0, "proxy": false },
+        { "symbol": "META", "name": "Meta", "category": "科技龙头", "targetWeight": 0.010, "currentWeight": 0.010, "shares": 0, "proxy": false },
+        { "symbol": "AMZN", "name": "亚马逊", "category": "科技龙头", "targetWeight": 0.010, "currentWeight": 0.010, "shares": 0, "proxy": false },
+        { "symbol": "UNH", "name": "联合健康", "category": "防御蓝筹", "targetWeight": 0.010, "currentWeight": 0.010, "shares": 0, "proxy": false },
+        { "symbol": "JPM", "name": "摩根大通", "category": "金融", "targetWeight": 0.010, "currentWeight": 0.010, "shares": 0, "proxy": false },
+        { "symbol": "VTI", "name": "全美股票ETF", "category": "宽基指数", "targetWeight": 0.015, "currentWeight": 0.015, "shares": 0, "proxy": false }
+      ]
+    },
+    {
+      "name": "A股",
+      "nameEn": "China A-Shares",
+      "targetWeight": 0.15,
+      "positions": [
+        { "symbol": "FXI", "name": "沪深300代理(FXI)", "category": "宽基指数", "targetWeight": 0.050, "currentWeight": 0.050, "shares": 0, "proxy": true, "proxyNote": "用FXI代理A股沪深300" },
+        { "symbol": "KWEB", "name": "中国互联网ETF", "category": "互联网", "targetWeight": 0.025, "currentWeight": 0.025, "shares": 0, "proxy": true, "proxyNote": "用KWEB代理A股互联网" },
+        { "symbol": "300750.SZ", "name": "宁德时代", "category": "新能源", "targetWeight": 0.020, "currentWeight": 0.020, "shares": 0, "proxy": true, "proxyNote": "用FXI+KWEB综合代理" },
+        { "symbol": "002594.SZ", "name": "比亚迪", "category": "新能源", "targetWeight": 0.015, "currentWeight": 0.015, "shares": 0, "proxy": true, "proxyNote": "用FXI代理" },
+        { "symbol": "688396.SH", "name": "中际旭创", "category": "AI/制造", "targetWeight": 0.010, "currentWeight": 0.010, "shares": 0, "proxy": true, "proxyNote": "用KWEB代理" },
+        { "symbol": "601138.SH", "name": "工业富联", "category": "AI/制造", "targetWeight": 0.010, "currentWeight": 0.010, "shares": 0, "proxy": true, "proxyNote": "用FXI代理" },
+        { "symbol": "600519.SH", "name": "贵州茅台", "category": "消费", "targetWeight": 0.015, "currentWeight": 0.015, "shares": 0, "proxy": true, "proxyNote": "用FXI代理" },
+        { "symbol": "000001.SH", "name": "上证指数", "category": "宽基指数", "targetWeight": 0.005, "currentWeight": 0.005, "shares": 0, "proxy": true, "proxyNote": "用FXI代理" }
+      ]
+    },
+    {
+      "name": "港股",
+      "nameEn": "HK Equities",
+      "targetWeight": 0.10,
+      "positions": [
+        { "symbol": "0700.HK", "name": "腾讯控股", "category": "互联网", "targetWeight": 0.020, "currentWeight": 0.020, "shares": 0, "proxy": true, "proxyNote": "用KWEB代理" },
+        { "symbol": "9988.HK", "name": "阿里巴巴", "category": "互联网", "targetWeight": 0.015, "currentWeight": 0.015, "shares": 0, "proxy": true, "proxyNote": "用KWEB代理" },
+        { "symbol": "3690.HK", "name": "美团", "category": "互联网", "targetWeight": 0.010, "currentWeight": 0.010, "shares": 0, "proxy": true, "proxyNote": "用KWEB代理" },
+        { "symbol": "0941.HK", "name": "中国移动", "category": "高股息", "targetWeight": 0.010, "currentWeight": 0.010, "shares": 0, "proxy": true, "proxyNote": "用FXI代理" },
+        { "symbol": "0883.HK", "name": "中海油", "category": "高股息", "targetWeight": 0.010, "currentWeight": 0.010, "shares": 0, "proxy": true, "proxyNote": "用FXI代理" },
+        { "symbol": "EWH", "name": "香港ETF", "category": "宽基指数", "targetWeight": 0.015, "currentWeight": 0.015, "shares": 0, "proxy": true, "proxyNote": "iShares MSCI Hong Kong ETF" },
+        { "symbol": "9618.HK", "name": "京东", "category": "互联网", "targetWeight": 0.010, "currentWeight": 0.010, "shares": 0, "proxy": true, "proxyNote": "用KWEB代理" },
+        { "symbol": "1810.HK", "name": "小米集团", "category": "科技制造", "targetWeight": 0.010, "currentWeight": 0.010, "shares": 0, "proxy": true, "proxyNote": "用KWEB代理" }
+      ]
+    },
+    {
+      "name": "大宗商品",
+      "nameEn": "Commodities",
+      "targetWeight": 0.15,
+      "positions": [
+        { "symbol": "GLD", "name": "黄金ETF", "category": "贵金属", "targetWeight": 0.060, "currentWeight": 0.060, "shares": 0, "proxy": false },
+        { "symbol": "COPX", "name": "铜矿ETF", "category": "工业金属", "targetWeight": 0.040, "currentWeight": 0.040, "shares": 0, "proxy": false },
+        { "symbol": "USO", "name": "原油ETF", "category": "能源", "targetWeight": 0.030, "currentWeight": 0.030, "shares": 0, "proxy": false },
+        { "symbol": "DBA", "name": "农产品ETF", "category": "农产品", "targetWeight": 0.020, "currentWeight": 0.020, "shares": 0, "proxy": false }
+      ]
+    },
+    {
+      "name": "数字货币",
+      "nameEn": "Crypto",
+      "targetWeight": 0.10,
+      "positions": [
+        { "symbol": "BTC", "name": "比特币", "category": "主流币", "targetWeight": 0.060, "currentWeight": 0.060, "shares": 0, "proxy": false, "dataSource": "coingecko" },
+        { "symbol": "ETH", "name": "以太坊", "category": "主流币", "targetWeight": 0.030, "currentWeight": 0.030, "shares": 0, "proxy": false, "dataSource": "coingecko" },
+        { "symbol": "SOL", "name": "Solana", "category": "公链", "targetWeight": 0.010, "currentWeight": 0.010, "shares": 0, "proxy": false, "dataSource": "coingecko" }
+      ]
+    },
+    {
+      "name": "债券",
+      "nameEn": "Bonds",
+      "targetWeight": 0.10,
+      "positions": [
+        { "symbol": "TLT", "name": "长期国债ETF", "category": "长期国债", "targetWeight": 0.040, "currentWeight": 0.040, "shares": 0, "proxy": false },
+        { "symbol": "IEF", "name": "中期国债ETF", "category": "中期国债", "targetWeight": 0.030, "currentWeight": 0.030, "shares": 0, "proxy": false },
+        { "symbol": "AGG", "name": "综合债券ETF", "category": "综合债券", "targetWeight": 0.030, "currentWeight": 0.030, "shares": 0, "proxy": false }
+      ]
+    },
+    {
+      "name": "新兴市场",
+      "nameEn": "Emerging Markets",
+      "targetWeight": 0.05,
+      "positions": [
+        { "symbol": "EEM", "name": "新兴市场ETF", "category": "宽基", "targetWeight": 0.030, "currentWeight": 0.030, "shares": 0, "proxy": false },
+        { "symbol": "IBIT", "name": "BTC现货ETF", "category": "数字资产ETF", "targetWeight": 0.020, "currentWeight": 0.020, "shares": 0, "proxy": false }
+      ]
+    }
+  ],
+  "ctaSynergy": {
+    "rules": [
+      { "ctaSignal": "golden_cross", "minDays": 0, "maxDays": 7, "awAllocation": 0.20, "ctaAllocation": 0.80, "label": "CTA金叉 → CTA主导" },
+      { "ctaSignal": "bearish", "minDays": 14, "maxDays": 9999, "awAllocation": 0.80, "ctaAllocation": 0.20, "label": "CTA空仓>14天 → AW主导" },
+      { "ctaSignal": "death_cross", "minDays": 7, "maxDays": 9999, "awAllocation": 1.00, "ctaAllocation": 0.00, "label": "CTA死叉>7天 → 全仓AW" },
+      { "ctaSignal": "bullish", "minDays": 0, "maxDays": 9999, "awAllocation": 0.40, "ctaAllocation": 0.60, "label": "CTA多头 → 均衡配置" }
+    ],
+    "defaultAW": 0.50,
+    "defaultCTA": 0.50
+  }
+}

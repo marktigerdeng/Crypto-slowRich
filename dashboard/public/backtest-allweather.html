@@ -7,87 +7,111 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
-.header{padding:20px 24px;border-bottom:1px solid #1e293b}
-.header h1{font-size:22px;font-weight:800;background:linear-gradient(90deg,#6366f1,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.header .sub{color:#64748b;font-size:13px;margin-top:4px}
-.nav{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap}
-.nav a{padding:4px 12px;border:1px solid #334155;border-radius:6px;font-size:12px;color:#94a3b8;text-decoration:none}
-.nav a:hover{border-color:#6366f1;color:#6366f1}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#fafafa;color:#1a1a1a;min-height:100vh;line-height:1.6}
+a{color:#10b981;text-decoration:none}
+a:hover{text-decoration:underline}
 
-.controls{display:flex;gap:16px;padding:16px 24px;flex-wrap:wrap;align-items:end;border-bottom:1px solid #1e293b}
-.ctrl{display:flex;flex-direction:column;gap:4px}
-.ctrl label{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-.ctrl input,.ctrl select{background:#1e293b;border:1px solid #334155;border-radius:6px;padding:6px 10px;color:#e2e8f0;font-size:13px;font-family:inherit}
-.ctrl input:focus,.ctrl select:focus{outline:none;border-color:#6366f1}
-.ctrl input[type=range]{padding:0;width:120px;accent-color:#6366f1}
+/* ─── Navbar (unified with index) ─── */
+.navbar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px;background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:100}
+.navbar-brand{font-size:20px;font-weight:800;color:#1a1a1a;letter-spacing:-.3px;text-decoration:none}
+.navbar-brand span{color:#10b981}
+.navbar-links{display:flex;gap:4px}
+.navbar-links a{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;color:#666;transition:all .2s}
+.navbar-links a:hover{color:#1a1a1a;background:#f3f4f6;text-decoration:none}
+.navbar-links a.active{color:#10b981;background:#ecfdf5}
+.page-subtitle{padding:10px 28px;background:#fff;border-bottom:1px solid #e5e7eb;font-size:13px;color:#999}
+.page-subtitle strong{color:#1a1a1a;font-size:15px}
 
-.weights-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 16px;padding:12px 24px;border-bottom:1px solid #1e293b}
+/* ─── Container ─── */
+.container{max-width:1200px;margin:0 auto;padding:16px 20px}
+
+.controls{display:flex;gap:10px;padding:12px 16px;flex-wrap:wrap;align-items:end;background:#fff;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:12px}
+.ctrl{display:flex;flex-direction:column;gap:3px}
+.ctrl label{font-size:11px;color:#999;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+.ctrl input,.ctrl select{background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:6px 10px;color:#1a1a1a;font-size:13px;font-family:inherit}
+.ctrl input:focus,.ctrl select:focus{outline:none;border-color:#10b981}
+.ctrl input[type=range]{padding:0;width:120px;accent-color:#10b981}
+
+.weights-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 16px;padding:12px 16px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:8px}
 .weight-item{display:flex;align-items:center;gap:8px;font-size:13px}
-.weight-item label{width:70px;color:#94a3b8;font-weight:500}
-.weight-item input[type=range]{flex:1;accent-color:#6366f1}
-.weight-item input[type=number]{width:56px;background:#1e293b;border:1px solid #334155;border-radius:4px;padding:3px 6px;color:#e2e8f0;font-size:12px;text-align:center}
-.weight-sum{padding:4px 24px 12px;font-size:12px;border-bottom:1px solid #1e293b}
+.weight-item label{width:70px;color:#999;font-weight:500}
+.weight-item input[type=range]{flex:1;accent-color:#10b981}
+.weight-item input[type=number]{width:56px;background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:3px 6px;color:#1a1a1a;font-size:12px;text-align:center}
+.weight-sum{padding:4px 16px 12px;font-size:12px}
 .weight-sum.ok{color:#10b981}
 .weight-sum.bad{color:#ef4444}
 
-.section{background:#1e293b;border:1px solid #334155;border-radius:12px;margin:16px 24px;overflow:hidden}
-.section-title{padding:16px 20px 12px;font-size:15px;font-weight:700;border-bottom:1px solid #334155}
+.section{background:#fff;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.section-title{padding:16px 20px 12px;font-size:15px;font-weight:700;border-bottom:1px solid #e5e7eb;color:#1a1a1a}
 
-.stats-row{display:flex;gap:12px;padding:16px 24px;flex-wrap:wrap}
-.stat{flex:1;min-width:140px;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;text-align:center}
-.stat .stat-label{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
-.stat .stat-value{font-size:18px;font-weight:700}
-.stat .stat-sub{font-size:11px;color:#64748b;margin-top:2px}
+.stats-row{display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.stat{flex:1;min-width:140px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.stat .stat-label{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.stat .stat-value{font-size:18px;font-weight:700;color:#1a1a1a}
+.stat .stat-sub{font-size:11px;color:#999;margin-top:2px}
 
 .chart-wrap{padding:16px 20px}
-canvas{width:100%;background:#0f172a;border-radius:8px}
+canvas{width:100%;background:#fff;border-radius:8px}
 
 .cmp-table{width:100%;border-collapse:collapse;font-size:13px}
-.cmp-table th{text-align:left;padding:10px 12px;color:#64748b;font-weight:600;font-size:11px;text-transform:uppercase;border-bottom:1px solid #334155}
-.cmp-table td{padding:10px 12px;border-bottom:1px solid #1e293b}
-.cmp-table tr:hover{background:#334155aa}
+.cmp-table th{text-align:left;padding:10px 12px;color:#999;font-weight:600;font-size:11px;text-transform:uppercase;background:#f9fafb;border-bottom:1px solid #e5e7eb}
+.cmp-table td{padding:10px 12px;border-bottom:1px solid #f3f4f6;color:#1a1a1a}
+.cmp-table tr:hover{background:#f9fafb}
 .cmp-best{color:#10b981;font-weight:700}
 
 .corr-table{border-collapse:collapse;margin:16px auto;font-size:12px}
-.corr-table th,.corr-table td{padding:8px 12px;text-align:center;border:1px solid #334155}
-.corr-table th{color:#94a3b8;font-weight:600;background:#0f172a}
+.corr-table th,.corr-table td{padding:8px 12px;text-align:center;border:1px solid #e5e7eb}
+.corr-table th{color:#1a1a1a;font-weight:600;background:#f9fafb}
 
 .log-wrap{max-height:400px;overflow-y:auto}
 .log-table{width:100%;border-collapse:collapse;font-size:11px}
-.log-table th{position:sticky;top:0;background:#1e293b;text-align:left;padding:8px;color:#64748b;font-weight:600;font-size:10px;text-transform:uppercase;border-bottom:1px solid #334155}
-.log-table td{padding:6px 8px;border-bottom:1px solid #1e293b22}
+.log-table th{position:sticky;top:0;background:#f9fafb;text-align:left;padding:8px;color:#999;font-weight:600;font-size:10px;text-transform:uppercase;border-bottom:1px solid #e5e7eb}
+.log-table td{padding:6px 8px;border-bottom:1px solid #f3f4f6;color:#1a1a1a}
 .tag-buy{color:#10b981;font-weight:600}
 .tag-sell{color:#ef4444;font-weight:600}
 
-.run-btn{background:linear-gradient(135deg,#6366f1,#06b6d4);color:#fff;border:none;padding:8px 24px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
-.run-btn:hover{opacity:.9}
+.run-btn{background:#10b981;color:#fff;border:none;padding:8px 24px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
+.run-btn:hover{background:#059669}
 .run-btn:disabled{opacity:.5;cursor:not-allowed}
 
-.loading{text-align:center;padding:40px;color:#64748b;font-size:14px}
+.loading{text-align:center;padding:40px;color:#999;font-size:14px}
 
-footer{text-align:center;padding:20px;color:#475569;font-size:11px}
+footer{text-align:center;padding:20px;color:#ccc;font-size:11px;background:#fff;border-top:1px solid #e5e7eb}
 
 @media(max-width:768px){
-  .weights-grid{grid-template-columns:1fr 1fr}
+  .navbar{flex-direction:column;gap:8px;padding:12px 16px}
+  .page-subtitle{padding:8px 16px}
+  .container{padding:12px}
+  .controls{flex-direction:column;padding:10px 12px}
+  .ctrl{width:100%}
+  .ctrl input,.ctrl select{width:100%}
+  .run-btn{width:100%;text-align:center}
+  .weights-grid{grid-template-columns:1fr}
   .stats-row{gap:8px}
   .stat{min-width:100px}
+  .chart-wrap{padding:10px}
 }
 </style>
 </head>
 <body>
 
-<header class="header">
-  <h1>Strategy #4 — All Weather Portfolio</h1>
-  <div class="sub">Multi-asset diversification with periodic rebalancing — ETFs + BTC</div>
-  <div class="nav">
-    <a href="/">Strategy #1: Stablecoin</a>
-    <a href="/backtest-wheel.html">Strategy #2: Options Wheel</a>
-    <a href="/backtest-dip.html">Strategy #3: Dip-Buying</a>
-    <a href="/backtest-allweather.html">Strategy #4: All Weather</a>
-    <a href="/options-monitor.html">Strategy #5: Options Monitor</a>
+<nav class="navbar">
+  <a class="navbar-brand" href="/">Slow<span>Rich</span></a>
+  <div class="navbar-links">
+    <a href="/" class="active">首页</a>
+    <a href="/sentiment.html">市场情绪</a>
+    <a href="/stable-portfolio.html">稳健组合</a>
+    <a href="/options-monitor.html">期权</a>
+    <a href="/delta-neutral.html">Delta Neutral</a>
+    <a href="/allweather.html">全天候</a>
+    <a href="/portfolio-summary.html">组合</a>
   </div>
-</header>
+</nav>
+<div class="page-subtitle">
+  <strong>All Weather Portfolio</strong> &mdash; Multi-asset diversification with periodic rebalancing
+</div>
+
+<div class="container">
 
 <div class="controls">
   <div class="ctrl"><label>Start Date</label><input type="date" id="startDate" value="2018-01-01"></div>
@@ -114,11 +138,11 @@ footer{text-align:center;padding:20px;color:#475569;font-size:11px}
 
 <div class="weights-grid" id="weightsGrid">
   <div class="weight-item"><label>SPY</label><input type="range" min="0" max="50" value="25" data-asset="SPY" oninput="syncWeight(this,'range')"><input type="number" min="0" max="100" value="25" data-asset="SPY" oninput="syncWeight(this,'num')"><span>%</span></div>
-  <div class="weight-item"><label>FXI</label><input type="range" min="0" max="50" value="10" data-asset="FXI" oninput="syncWeight(this,'range')"><input type="number" min="0" max="100" value="10" data-asset="FXI" oninput="syncWeight(this,'num')"><span>%</span></div>
+  <div class="weight-item"><label>QQQ</label><input type="range" min="0" max="50" value="10" data-asset="QQQ" oninput="syncWeight(this,'range')"><input type="number" min="0" max="100" value="10" data-asset="QQQ" oninput="syncWeight(this,'num')"><span>%</span></div>
   <div class="weight-item"><label>GLD</label><input type="range" min="0" max="50" value="20" data-asset="GLD" oninput="syncWeight(this,'range')"><input type="number" min="0" max="100" value="20" data-asset="GLD" oninput="syncWeight(this,'num')"><span>%</span></div>
-  <div class="weight-item"><label>SLV</label><input type="range" min="0" max="50" value="5" data-asset="SLV" oninput="syncWeight(this,'range')"><input type="number" min="0" max="100" value="5" data-asset="SLV" oninput="syncWeight(this,'num')"><span>%</span></div>
+  <div class="weight-item"><label>TLT</label><input type="range" min="0" max="50" value="20" data-asset="TLT" oninput="syncWeight(this,'range')"><input type="number" min="0" max="100" value="20" data-asset="TLT" oninput="syncWeight(this,'num')"><span>%</span></div>
   <div class="weight-item"><label>BTC</label><input type="range" min="0" max="50" value="15" data-asset="BTC" oninput="syncWeight(this,'range')"><input type="number" min="0" max="100" value="15" data-asset="BTC" oninput="syncWeight(this,'num')"><span>%</span></div>
-  <div class="weight-item"><label>TLT</label><input type="range" min="0" max="50" value="25" data-asset="TLT" oninput="syncWeight(this,'range')"><input type="number" min="0" max="100" value="25" data-asset="TLT" oninput="syncWeight(this,'num')"><span>%</span></div>
+  <div class="weight-item"><label title="港股代理ETF (模拟)">FXI ⓘ</label><input type="range" min="0" max="50" value="10" data-asset="FXI" oninput="syncWeight(this,'range')"><input type="number" min="0" max="100" value="10" data-asset="FXI" oninput="syncWeight(this,'num')"><span>%</span></div>
 </div>
 <div class="weight-sum ok" id="weightSum">Total: 100%</div>
 
@@ -160,13 +184,17 @@ footer{text-align:center;padding:20px;color:#475569;font-size:11px}
 
 <div class="loading" id="loadingMsg" style="display:none">Loading price data & running backtest...</div>
 
+</div>
+
 <footer>
-  Strategy #4 Backtest — ETF data from Yahoo Finance | BTC from CryptoCompare
+  Strategy #4 Backtest — SPY/QQQ/GLD/TLT: Yahoo Finance 真实数据 | BTC: CryptoCompare | FXI: US-listed 港股代理ETF
 </footer>
 
 <script>
-const ASSETS = ['SPY','FXI','GLD','SLV','BTC','TLT'];
-const COLORS = {SPY:'#3b82f6',FXI:'#ef4444',GLD:'#eab308',SLV:'#94a3b8',BTC:'#f97316',TLT:'#8b5cf6'};
+const ASSETS = ['SPY','QQQ','GLD','TLT','BTC','FXI'];
+const COLORS = {SPY:'#3b82f6',QQQ:'#06b6d4',GLD:'#eab308',TLT:'#8b5cf6',BTC:'#f97316',FXI:'#ef4444'};
+// Data source notes: SPY/QQQ/GLD/TLT = Yahoo Finance real data; BTC = CryptoCompare; FXI = Yahoo Finance (US-listed China ETF proxy)
+const DATA_NOTES = {FXI:'US-listed China ETF (港股代理)'};  // A股/港股暂无直接数据
 const BENCH_COLOR = '#64748b';
 const BENCH2_COLOR = '#06b6d4';
 
@@ -361,11 +389,12 @@ function shouldRebalance(prevDate, curDate, rule, alloc, targetWeights, threshPc
 
 // --- Benchmark Simulation ---
 function simBenchmark(aligned, capital, type) {
+  const zero = {};
+  ASSETS.forEach(a => zero[a] = 0);
   if (type === 'spy') {
-    return simulate(aligned, { SPY:1, FXI:0, GLD:0, SLV:0, BTC:0, TLT:0 }, capital, 'annual', 5);
+    return simulate(aligned, { ...zero, SPY:1 }, capital, 'annual', 5);
   } else {
-    // 60/40: SPY 60%, TLT 40%, rebalance quarterly
-    return simulate(aligned, { SPY:0.6, FXI:0, GLD:0, SLV:0, BTC:0, TLT:0.4 }, capital, 'quarterly', 5);
+    return simulate(aligned, { ...zero, SPY:0.6, TLT:0.4 }, capital, 'quarterly', 5);
   }
 }
 
@@ -480,7 +509,7 @@ function drawEquityCurve(portResult, benchResult, bench2Result, benchLabel, benc
   const padL = 70, padR = 20, padT = 30, padB = 40;
   const cw = W - padL - padR, ch = H - padT - padB;
 
-  ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
 
   const allVals = [
     ...portResult.equity.map(e => e.value),
@@ -496,12 +525,12 @@ function drawEquityCurve(portResult, benchResult, bench2Result, benchLabel, benc
   function y(v) { return padT + ch - ((v - minV) / (maxV - minV)) * ch; }
 
   // Grid
-  ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+  ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1;
   for (let i = 0; i <= 5; i++) {
     const val = minV + (maxV - minV) * (i / 5);
     const yy = y(val);
     ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(W - padR, yy); ctx.stroke();
-    ctx.fillStyle = '#475569'; ctx.font = '11px Inter'; ctx.textAlign = 'right';
+    ctx.fillStyle = '#999'; ctx.font = '11px Inter'; ctx.textAlign = 'right';
     ctx.fillText('$' + (val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val.toFixed(0)), padL - 8, yy + 4);
   }
 
@@ -509,12 +538,12 @@ function drawEquityCurve(portResult, benchResult, bench2Result, benchLabel, benc
   ctx.textAlign = 'center';
   const step = Math.max(1, Math.floor(n / 8));
   for (let i = 0; i < n; i += step) {
-    ctx.fillStyle = '#475569'; ctx.fillText(dates[i].slice(0, 7), x(i), H - 8);
+    ctx.fillStyle = '#999'; ctx.fillText(dates[i].slice(0, 7), x(i), H - 8);
   }
 
   // Rebalance markers
   const rebalDates = new Set(portResult.rebalLog.map(r => r.date));
-  ctx.fillStyle = '#6366f133';
+  ctx.fillStyle = '#10b98122';
   for (let i = 0; i < n; i++) {
     if (rebalDates.has(dates[i])) {
       ctx.fillRect(x(i) - 1, padT, 2, ch);
@@ -533,12 +562,12 @@ function drawEquityCurve(portResult, benchResult, bench2Result, benchLabel, benc
 
   drawLine(bench2Result.equity, BENCH2_COLOR);
   drawLine(benchResult.equity, BENCH_COLOR);
-  drawLine(portResult.equity, '#6366f1');
+  drawLine(portResult.equity, '#10b981');
 
   // Legend
   ctx.font = '12px Inter';
   const legends = [
-    { label: 'All Weather', color: '#6366f1' },
+    { label: 'All Weather', color: '#10b981' },
     { label: benchLabel, color: BENCH_COLOR },
     { label: bench2Label, color: BENCH2_COLOR },
   ];
@@ -564,7 +593,7 @@ function drawDriftChart(allocHist) {
   const padL = 50, padR = 20, padT = 30, padB = 40;
   const cw = W - padL - padR, ch = H - padT - padB;
 
-  ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
 
   // Sample to avoid too many points
   const sampleRate = Math.max(1, Math.floor(allocHist.length / 500));
@@ -574,7 +603,7 @@ function drawDriftChart(allocHist) {
   function x(i) { return padL + (i / (n - 1)) * cw; }
 
   // Stacked area — bottom to top
-  const order = ['TLT', 'BTC', 'SLV', 'GLD', 'FXI', 'SPY'];
+  const order = ['FXI', 'BTC', 'TLT', 'GLD', 'QQQ', 'SPY'];
   for (let ai = 0; ai < order.length; ai++) {
     const asset = order[ai];
     ctx.fillStyle = COLORS[asset] + '88';
@@ -599,11 +628,11 @@ function drawDriftChart(allocHist) {
   }
 
   // Y axis labels
-  ctx.fillStyle = '#475569'; ctx.font = '11px Inter'; ctx.textAlign = 'right';
+  ctx.fillStyle = '#999'; ctx.font = '11px Inter'; ctx.textAlign = 'right';
   for (let p = 0; p <= 100; p += 25) {
     const yy = padT + ch - (p / 100) * ch;
     ctx.fillText(p + '%', padL - 8, yy + 4);
-    ctx.strokeStyle = '#1e293b'; ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(W - padR, yy); ctx.stroke();
+    ctx.strokeStyle = '#e5e7eb'; ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(W - padR, yy); ctx.stroke();
   }
 
   // Date labels
@@ -636,7 +665,7 @@ function drawDrawdownChart(portDD, benchDD, bench2DD, benchLabel, bench2Label) {
   const padL = 60, padR = 20, padT = 30, padB = 40;
   const cw = W - padL - padR, ch = H - padT - padB;
 
-  ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
 
   const allDD = [...portDD.map(d => d.dd), ...benchDD.map(d => d.dd), ...bench2DD.map(d => d.dd)];
   const minDD = Math.min(...allDD) * 1.1;
@@ -646,12 +675,12 @@ function drawDrawdownChart(portDD, benchDD, bench2DD, benchLabel, bench2Label) {
   function y(dd) { return padT + (-dd / minDD) * ch; }
 
   // Grid
-  ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+  ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1;
   const gridSteps = [0, -0.1, -0.2, -0.3, -0.4, -0.5, -0.6, -0.7].filter(v => v >= minDD);
   for (const v of gridSteps) {
     const yy = y(v);
     ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(W - padR, yy); ctx.stroke();
-    ctx.fillStyle = '#475569'; ctx.font = '11px Inter'; ctx.textAlign = 'right';
+    ctx.fillStyle = '#999'; ctx.font = '11px Inter'; ctx.textAlign = 'right';
     ctx.fillText((v * 100).toFixed(0) + '%', padL - 8, yy + 4);
   }
 
@@ -659,7 +688,7 @@ function drawDrawdownChart(portDD, benchDD, bench2DD, benchLabel, bench2Label) {
   ctx.textAlign = 'center';
   const step = Math.max(1, Math.floor(n / 8));
   for (let i = 0; i < n; i += step) {
-    ctx.fillStyle = '#475569'; ctx.fillText(portDD[i].date.slice(0, 7), x(i), H - 8);
+    ctx.fillStyle = '#999'; ctx.fillText(portDD[i].date.slice(0, 7), x(i), H - 8);
   }
 
   function drawArea(data, color) {
@@ -678,12 +707,12 @@ function drawDrawdownChart(portDD, benchDD, bench2DD, benchLabel, bench2Label) {
 
   drawArea(bench2DD, BENCH2_COLOR);
   drawArea(benchDD, BENCH_COLOR);
-  drawArea(portDD, '#6366f1');
+  drawArea(portDD, '#10b981');
 
   // Legend
   ctx.font = '12px Inter';
   const legends = [
-    { label: 'All Weather', color: '#6366f1' },
+    { label: 'All Weather', color: '#10b981' },
     { label: benchLabel, color: BENCH_COLOR },
     { label: bench2Label, color: BENCH2_COLOR },
   ];
@@ -752,7 +781,7 @@ function renderCorrelation(corr) {
     for (const b of ASSETS) {
       const v = corr[a][b];
       const bg = corrColor(v);
-      html += `<td style="background:${bg};color:${Math.abs(v) > 0.5 ? '#fff' : '#e2e8f0'}">${v.toFixed(2)}</td>`;
+      html += `<td style="background:${bg};color:${Math.abs(v) > 0.5 ? '#fff' : '#1a1a1a'}">${v.toFixed(2)}</td>`;
     }
     html += '</tr>';
   }
@@ -761,19 +790,19 @@ function renderCorrelation(corr) {
 }
 
 function corrColor(v) {
-  // -1 (red) → 0 (gray) → +1 (green)
+  // -1 (red) → 0 (neutral) → +1 (green) — optimized for white background
   if (v >= 0) {
-    const g = Math.round(v * 180);
-    return `rgba(${40}, ${80 + g}, ${40 + g}, 0.6)`;
+    const intensity = Math.round(v * 200);
+    return `rgba(16, ${120 + intensity}, ${80 + intensity}, ${0.15 + v * 0.55})`;
   } else {
-    const r = Math.round(-v * 180);
-    return `rgba(${80 + r}, ${40}, ${40}, 0.6)`;
+    const intensity = Math.round(-v * 200);
+    return `rgba(${120 + intensity}, 40, 40, ${0.15 + (-v) * 0.55})`;
   }
 }
 
 function renderRebalLog(log) {
   if (!log.length) {
-    document.getElementById('logWrap').innerHTML = '<div style="padding:20px;color:#64748b">No rebalance events</div>';
+    document.getElementById('logWrap').innerHTML = '<div style="padding:20px;color:#999">No rebalance events</div>';
     return;
   }
   const fmt = v => '$' + (v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v.toFixed(0));

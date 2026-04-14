@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delta Neutral 策略监控 — SlowRich</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#fafafa;color:#1a1a1a;min-height:100vh;line-height:1.6}
+a{color:#10b981;text-decoration:none}
+a:hover{text-decoration:underline}
+
+.navbar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px;background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:100}
+.navbar-brand{font-size:20px;font-weight:800;color:#1a1a1a;letter-spacing:-.3px;text-decoration:none}
+.navbar-brand span{color:#10b981}
+.navbar-links{display:flex;gap:4px}
+.navbar-links a{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;color:#666;transition:all .2s}
+.navbar-links a:hover{color:#1a1a1a;background:#f3f4f6;text-decoration:none}
+.navbar-links a.active{color:#10b981;background:#ecfdf5}
+.page-subtitle{padding:10px 28px;background:#fff;border-bottom:1px solid #e5e7eb;font-size:13px;color:#999}
+.page-subtitle strong{color:#1a1a1a;font-size:15px}
+
+.container{max-width:1200px;margin:0 auto;padding:16px 20px}
+
+.summary-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 0}
+.stat{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;box-shadow:0 1px 2px rgba(0,0,0,.04);min-width:0;overflow:hidden}
+.stat.highlight{border-color:#10b981;background:#ecfdf5}
+.stat-label{font-size:11px;color:#999;text-transform:uppercase;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
+.stat-value{font-size:18px;font-weight:700;color:#1a1a1a;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.stat-sub{font-size:11px;color:#999;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.section{padding:16px 0}
+.section-title{font-size:16px;font-weight:700;margin-bottom:12px;color:#1a1a1a}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:768px){.grid-2{grid-template-columns:1fr}}
+
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.card-title{font-size:14px;font-weight:700;margin-bottom:12px;color:#1a1a1a}
+.card-subtitle{font-size:11px;color:#999;font-weight:400}
+
+.chart-wrap{position:relative;height:300px}
+
+/* Funding rate table */
+.rate-table{width:100%;border-collapse:collapse;font-size:13px}
+.rate-table th{padding:8px 12px;text-align:left;font-weight:600;color:#999;font-size:11px;text-transform:uppercase;border-bottom:1px solid #e5e7eb}
+.rate-table td{padding:8px 12px;border-bottom:1px solid #f3f4f6}
+.rate-table tr:last-child td{border-bottom:none}
+.rate-table tr:hover{background:#f9fafb}
+
+.tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500}
+.tag-green{background:#ecfdf5;color:#059669}
+.tag-red{background:#fef2f2;color:#dc2626}
+.tag-gray{background:#f3f4f6;color:#666}
+.tag-amber{background:#fffbeb;color:#d97706}
+
+/* Calculator */
+.calc-form{display:flex;flex-direction:column;gap:12px}
+.calc-row{display:flex;gap:12px;align-items:center}
+.calc-row label{font-size:12px;color:#666;font-weight:500;min-width:80px}
+.calc-row input{padding:6px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;font-family:inherit;width:140px}
+.calc-btn{background:#10b981;color:#fff;border:none;padding:8px 20px;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;font-family:inherit}
+.calc-btn:hover{background:#059669}
+.calc-result{margin-top:12px;padding:12px;background:#f9fafb;border-radius:8px}
+.calc-result-row{display:flex;justify-content:space-between;padding:4px 0;font-size:13px}
+.calc-result-row .val{font-weight:700}
+
+/* Composition bar */
+.comp-bar{display:flex;height:24px;border-radius:6px;overflow:hidden;margin-bottom:8px}
+.comp-segment{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;transition:width .3s}
+.comp-legend{display:flex;flex-wrap:wrap;gap:8px;font-size:11px;color:#666}
+.comp-legend-item{display:flex;align-items:center;gap:4px}
+.comp-dot{width:8px;height:8px;border-radius:50%}
+
+/* Risk factors */
+.risk-list{display:flex;flex-direction:column;gap:8px}
+.risk-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f9fafb;border-radius:8px}
+.risk-icon{font-size:16px}
+.risk-name{font-size:13px;font-weight:600;color:#1a1a1a}
+.risk-note{font-size:11px;color:#999}
+
+/* Data note */
+.data-note{display:flex;align-items:center;gap:6px;padding:8px 12px;background:#fffbeb;border-radius:8px;font-size:11px;color:#d97706;margin-top:12px}
+
+/* Skeleton */
+.skeleton{background:linear-gradient(90deg,#f3f4f6 25%,#e5e7eb 50%,#f3f4f6 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px;height:20px;width:80px;display:inline-block}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.loading-spinner{display:inline-block;width:14px;height:14px;border:2px solid #e5e7eb;border-top-color:#10b981;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+footer{padding:24px;text-align:center;color:#ccc;font-size:12px;border-top:1px solid #e5e7eb;margin-top:40px;background:#fff}
+
+@media(max-width:1200px){
+  .summary-bar{grid-template-columns:repeat(5,1fr);gap:8px}
+  .stat{padding:10px 10px}
+  .stat-value{font-size:16px}
+}
+@media(max-width:1024px){
+  .summary-bar{grid-template-columns:repeat(3,1fr)}
+  .stat-value{font-size:18px}
+}
+@media(max-width:640px){
+  .navbar{flex-direction:column;gap:8px;padding:12px 16px}
+  .container{padding:16px}
+  .summary-bar{grid-template-columns:repeat(2,1fr)}
+  .stat-value{font-size:16px}
+  .chart-wrap{height:220px}
+  .calc-row{flex-direction:column;align-items:flex-start}
+}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="/">Slow<span>Rich</span></a>
+  <div class="navbar-links">
+    <a href="/">首页</a>
+    <a href="/options-monitor.html">期权</a>
+    <a href="/delta-neutral.html" class="active">Delta Neutral</a>
+    <a href="/allweather.html">全天候</a>
+    <a href="/portfolio-summary.html">组合</a>
+  </div>
+</nav>
+
+<div class="page-subtitle">
+  <strong>Delta Neutral 策略监控</strong> &mdash; JLP 多头 + 永续合约空头对冲，赚取资金费率差
+</div>
+
+<div class="container">
+
+  <!-- Summary Bar -->
+  <div class="summary-bar">
+    <div class="stat">
+      <div class="stat-label">JLP 价格</div>
+      <div class="stat-value" id="jlpPrice"><span class="skeleton"></span></div>
+      <div class="stat-sub" id="jlpChange">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">JLP APR (7D)</div>
+      <div class="stat-value" id="jlpApr" style="color:#10b981"><span class="skeleton"></span></div>
+    </div>
+    <div class="stat">
+      <div class="stat-label" title="BTC+ETH+SOL 加权资金费率，每8小时结算">对冲费率(8H)</div>
+      <div class="stat-value" id="hedgeRate" style="color:#f59e0b"><span class="skeleton"></span></div>
+      <div class="stat-sub" id="hedgeAnn">—</div>
+    </div>
+    <div class="stat highlight">
+      <div class="stat-label">预估净收益 APR</div>
+      <div class="stat-value" id="netYield"><span class="skeleton"></span></div>
+      <div class="stat-sub" id="netLabel">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">JLP TVL</div>
+      <div class="stat-value" id="jlpTvl"><span class="skeleton"></span></div>
+    </div>
+  </div>
+
+  <!-- JLP Composition -->
+  <div class="section">
+    <div class="section-title">JLP 组成</div>
+    <div class="card">
+      <div id="compBar" class="comp-bar"></div>
+      <div id="compLegend" class="comp-legend"></div>
+      <div class="data-note" id="jlpNote" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="section">
+    <div class="grid-2">
+      <!-- Hedge Funding Rate History -->
+      <div class="card">
+        <div class="card-title">对冲资金费率趋势 (7天) <span class="card-subtitle" id="hedgeChartNote"></span></div>
+        <div class="chart-wrap">
+          <canvas id="astarChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Funding Rate Comparison -->
+      <div class="card">
+        <div class="card-title">交易所资金费率对比</div>
+        <div class="chart-wrap">
+          <canvas id="fundingCompChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Funding Rates Tables: Positive & Negative -->
+  <div class="section">
+    <div class="grid-2">
+      <div>
+        <div class="section-title" style="color:#10b981">正费率 Top 5 <span class="card-subtitle">Long Pay → 做空赚费率</span></div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <table class="rate-table">
+            <thead><tr><th>#</th><th>币种</th><th>交易所</th><th>费率/8h</th><th>年化</th></tr></thead>
+            <tbody id="fundingPosBody">
+              <tr><td colspan="5" style="text-align:center;padding:24px;color:#999"><span class="loading-spinner"></span>加载中...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <div class="section-title" style="color:#ef4444">负费率 Top 5 <span class="card-subtitle">Short Pay → 做多赚费率</span></div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <table class="rate-table">
+            <thead><tr><th>#</th><th>币种</th><th>交易所</th><th>费率/8h</th><th>年化</th></tr></thead>
+            <tbody id="fundingNegBody">
+              <tr><td colspan="5" style="text-align:center;padding:24px;color:#999"><span class="loading-spinner"></span>加载中...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- All Funding Rates -->
+  <div class="section">
+    <div class="section-title">全部资金费率</div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="rate-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>币种</th>
+            <th>交易所</th>
+            <th>费率/8h</th>
+            <th>年化</th>
+            <th>方向</th>
+          </tr>
+        </thead>
+        <tbody id="fundingBody">
+          <tr><td colspan="6" style="text-align:center;padding:24px;color:#999"><span class="loading-spinner"></span>加载中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Calculator + Risk -->
+  <div class="section">
+    <div class="grid-2">
+      <!-- Hedge Calculator -->
+      <div class="card">
+        <div class="card-title">对冲计算器</div>
+        <div class="calc-form">
+          <div class="calc-row">
+            <label>投入资金 (USD)</label>
+            <input type="number" id="calcCapital" value="10000" min="100" step="100">
+          </div>
+          <div class="calc-row">
+            <label>JLP APR (%)</label>
+            <input type="number" id="calcJlpApr" value="8.5" step="0.1">
+          </div>
+          <div class="calc-row">
+            <label>对冲费率年化 (%)</label>
+            <input type="number" id="calcHedgeApr" value="5.5" step="0.1">
+          </div>
+          <button class="calc-btn" onclick="runCalc()">计算收益</button>
+          <div class="calc-result" id="calcResult" style="display:none">
+            <div class="calc-result-row"><span>净收益 APR</span><span class="val" id="crNet">—</span></div>
+            <div class="calc-result-row"><span>年收益</span><span class="val" id="crAnnual">—</span></div>
+            <div class="calc-result-row"><span>月收益</span><span class="val" id="crMonthly">—</span></div>
+            <div class="calc-result-row"><span>日收益</span><span class="val" id="crDaily">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Risk Factors -->
+      <div class="card">
+        <div class="card-title">风险因素</div>
+        <div class="risk-list" id="riskList">
+          <div class="risk-item">
+            <span class="risk-icon">&#9888;</span>
+            <div>
+              <div class="risk-name">JLP 无常损失风险</div>
+              <div class="risk-note">JLP 组合资产价格波动可能导致无常损失</div>
+            </div>
+            <span class="tag tag-amber">中等</span>
+          </div>
+          <div class="risk-item">
+            <span class="risk-icon">&#128200;</span>
+            <div>
+              <div class="risk-name">资金费率波动</div>
+              <div class="risk-note">资金费率可能大幅波动，需持续监控</div>
+            </div>
+            <span class="tag tag-amber">中等</span>
+          </div>
+          <div class="risk-item">
+            <span class="risk-icon">&#128274;</span>
+            <div>
+              <div class="risk-name">智能合约风险</div>
+              <div class="risk-note">Jupiter 为成熟协议，但仍有合约风险</div>
+            </div>
+            <span class="tag tag-green">低</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Historical Backtest -->
+  <div class="section">
+    <div class="section-title">历史收益回测 (模拟)</div>
+    <div class="card">
+      <div class="chart-wrap" style="height:350px">
+        <canvas id="backtestChart"></canvas>
+      </div>
+      <div class="data-note">&#9432; 回测数据为模拟生成，仅供参考，不构成投资建议</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  SlowRich Dashboard &mdash; Delta Neutral Strategy Monitor &mdash; 非投资建议
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const apiCache = {};
+const CACHE_TTL = 5 * 60 * 1000;
+
+async function fetchJSON(url) {
+  const now = Date.now();
+  if (apiCache[url] && (now - apiCache[url].ts) < CACHE_TTL) return apiCache[url].data;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const data = await r.json();
+  apiCache[url] = { data, ts: now };
+  return data;
+}
+
+function fmt(n, d=0) { return n != null ? n.toLocaleString('en-US', {maximumFractionDigits:d}) : '—'; }
+function fmtCompact(n) {
+  if (n >= 1e9) return '$' + (n/1e9).toFixed(1) + 'B';
+  if (n >= 1e6) return '$' + (n/1e6).toFixed(0) + 'M';
+  return '$' + fmt(n);
+}
+function esc(s) { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
+
+const COMP_COLORS = ['#6366f1','#10b981','#f59e0b','#3b82f6','#ef4444','#8b5cf6','#ec4899'];
+
+// ═══════════ Load Data ═══════════
+
+async function loadAll() {
+  await Promise.allSettled([loadJLP(), loadHedge(), loadFunding(), loadCalcDefaults(), loadBacktest()]);
+}
+
+async function loadJLP() {
+  try {
+    const d = await fetchJSON('/api/jlp-stats');
+    $('jlpPrice').textContent = d.price != null ? '$' + d.price.toFixed(4) : 'N/A';
+    const chg = d.change24h || 0;
+    $('jlpChange').textContent = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
+    $('jlpChange').style.color = chg >= 0 ? '#10b981' : '#ef4444';
+    $('jlpApr').textContent = (d.apr7d || 0).toFixed(1) + '%';
+    $('jlpTvl').textContent = d.totalValue ? fmtCompact(d.totalValue) : 'N/A';
+
+    // Composition bar
+    if (d.composition && d.composition.length > 0) {
+      $('compBar').innerHTML = d.composition.map((c, i) =>
+        `<div class="comp-segment" style="width:${(c.weight*100).toFixed(0)}%;background:${COMP_COLORS[i%COMP_COLORS.length]}">${c.asset}</div>`
+      ).join('');
+      $('compLegend').innerHTML = d.composition.map((c, i) =>
+        `<div class="comp-legend-item"><span class="comp-dot" style="background:${COMP_COLORS[i%COMP_COLORS.length]}"></span>${c.asset} ${(c.weight*100).toFixed(0)}%</div>`
+      ).join('');
+    }
+
+    if (d.dataNote) {
+      $('jlpNote').style.display = 'flex';
+      $('jlpNote').innerHTML = '&#9432; ' + esc(d.dataNote);
+    }
+  } catch (e) { console.error('JLP error:', e); }
+}
+
+async function loadHedge() {
+  try {
+    const d = await fetchJSON('/api/hedge-funding');
+    $('hedgeRate').textContent = d.ratePercent + '%';
+    const ann = d.annualized || 0;
+    $('hedgeRate').style.color = ann >= 0 ? '#f59e0b' : '#10b981';
+    $('hedgeAnn').textContent = ann >= 0
+      ? '年化成本: ' + ann.toFixed(1) + '%'
+      : '年化收入: +' + Math.abs(ann).toFixed(1) + '% (负费率)';
+    // Show breakdown tooltip
+    if (d.breakdown && d.breakdown.length > 0) {
+      const tip = d.breakdown.map(b => `${b.asset}: ${b.ratePercent}% (权重${Math.round(b.weight*100)}%)`).join('\n');
+      $('hedgeRate').title = tip;
+      $('hedgeAnn').title = tip;
+    }
+    const noteEl = $('hedgeChartNote');
+    if (noteEl) noteEl.textContent = d.hedgeAsset || '';
+
+    // Net yield: JLP APR - hedge cost
+    const jlpD = await fetchJSON('/api/jlp-stats');
+    const hedgeCost = d.annualized || 0;
+    const net = (jlpD.apr7d || 0) - hedgeCost;
+    $('netYield').textContent = (net >= 0 ? '+' : '') + net.toFixed(1) + '%';
+    $('netYield').style.color = net > 0 ? '#10b981' : '#ef4444';
+    if (hedgeCost < 0) {
+      $('netLabel').textContent = 'JLP收益 + 负费率收入';
+    } else {
+      $('netLabel').textContent = net > 0 ? 'JLP APR > 对冲成本' : 'JLP APR < 对冲成本';
+    }
+
+    renderHedgeChart(d.history || []);
+  } catch (e) { console.error('Hedge error:', e); }
+}
+
+let hedgeChart = null;
+function renderHedgeChart(history) {
+  const ctx = $('astarChart').getContext('2d');
+  if (hedgeChart) hedgeChart.destroy();
+  hedgeChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: history.map(h => h.date.slice(5)),
+      datasets: [{
+        label: '加权费率/8h (%)',
+        data: history.map(h => (h.rate * 100)),
+        backgroundColor: history.map(h => h.rate >= 0 ? 'rgba(16,185,129,.6)' : 'rgba(239,68,68,.6)'),
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => c.raw.toFixed(4) + '%' } },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#999' } },
+        y: { grid: { color: '#f3f4f6' }, ticks: { font: { size: 10 }, color: '#999', callback: v => v.toFixed(4) + '%' } },
+      },
+    },
+  });
+}
+
+let fundingCompChart = null;
+async function loadFunding() {
+  try {
+    const d = await fetchJSON('/api/funding-rates');
+    const rates = d.rates || [];
+
+    // Split into positive & negative, sort by absolute rate
+    const posRates = rates.filter(r => r.rate > 0).sort((a, b) => b.rate - a.rate).slice(0, 5);
+    const negRates = rates.filter(r => r.rate < 0).sort((a, b) => a.rate - b.rate).slice(0, 5);
+
+    function renderTopTable(tbodyId, items, emptyMsg) {
+      if (items.length > 0) {
+        $(tbodyId).innerHTML = items.map((r, i) => {
+          const ann = (r.rate * 3 * 365 * 100).toFixed(2);
+          return `<tr>
+            <td style="color:#999">${i+1}</td>
+            <td><strong>${esc(r.symbol)}</strong></td>
+            <td><span class="tag tag-gray">${esc(r.exchange)}</span></td>
+            <td style="font-weight:600;color:${r.rate >= 0 ? '#10b981' : '#ef4444'}">${r.ratePercent}%</td>
+            <td>${ann}%</td>
+          </tr>`;
+        }).join('');
+      } else {
+        $(tbodyId).innerHTML = `<tr><td colspan="5" style="text-align:center;padding:16px;color:#999">${emptyMsg}</td></tr>`;
+      }
+    }
+
+    renderTopTable('fundingPosBody', posRates, '当前无正费率 — 市场偏空');
+    renderTopTable('fundingNegBody', negRates, '当前无负费率 — 市场偏多');
+
+    // Full table
+    if (rates.length > 0) {
+      $('fundingBody').innerHTML = rates.map((r, i) => {
+        const ann = (r.rate * 3 * 365 * 100).toFixed(2);
+        const dir = r.rate >= 0 ? 'Long Pay' : 'Short Pay';
+        const dirClass = r.rate >= 0 ? 'tag-green' : 'tag-red';
+        return `<tr>
+          <td style="color:#999">${i+1}</td>
+          <td><strong>${esc(r.symbol)}</strong></td>
+          <td><span class="tag tag-gray">${esc(r.exchange)}</span></td>
+          <td style="font-weight:600;color:${r.rate >= 0 ? '#10b981' : '#ef4444'}">${r.ratePercent}%</td>
+          <td>${ann}%</td>
+          <td><span class="tag ${dirClass}">${dir}</span></td>
+        </tr>`;
+      }).join('');
+    } else {
+      $('fundingBody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#999">暂无数据</td></tr>';
+    }
+
+    // Funding comparison chart — group by exchange
+    const exchanges = [...new Set(rates.map(r => r.exchange))];
+    const symbols = [...new Set(rates.map(r => r.symbol))].slice(0, 6);
+    const datasets = exchanges.map((ex, i) => ({
+      label: ex,
+      data: symbols.map(sym => {
+        const found = rates.find(r => r.symbol === sym && r.exchange === ex);
+        return found ? found.rate * 100 : null;
+      }),
+      backgroundColor: COMP_COLORS[i % COMP_COLORS.length] + 'aa',
+      borderRadius: 4,
+    }));
+
+    const ctx = $('fundingCompChart').getContext('2d');
+    if (fundingCompChart) fundingCompChart.destroy();
+    fundingCompChart = new Chart(ctx, {
+      type: 'bar',
+      data: { labels: symbols, datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 8 } },
+          tooltip: { callbacks: { label: c => c.dataset.label + ': ' + (c.raw != null ? c.raw.toFixed(4) : 'N/A') + '%' } },
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#666' } },
+          y: { grid: { color: '#f3f4f6' }, ticks: { font: { size: 10 }, color: '#999', callback: v => v.toFixed(3) + '%' } },
+        },
+      },
+    });
+  } catch (e) { console.error('Funding error:', e); }
+}
+
+async function loadCalcDefaults() {
+  try {
+    const d = await fetchJSON('/api/delta-neutral-calc');
+    $('calcJlpApr').value = d.jlpApr || 8.5;
+    $('calcHedgeApr').value = d.astarAnnualized || 5.5;
+  } catch (e) { /* ignore */ }
+}
+
+function runCalc() {
+  const capital = parseFloat($('calcCapital').value) || 10000;
+  const jlpApr = parseFloat($('calcJlpApr').value) || 0;
+  const hedgeApr = parseFloat($('calcHedgeApr').value) || 0;
+  const net = jlpApr - hedgeApr;
+  const annual = Math.round(capital * net / 100);
+  const monthly = Math.round(annual / 12);
+  const daily = Math.round(annual / 365);
+
+  $('calcResult').style.display = 'block';
+  $('crNet').textContent = net.toFixed(2) + '%';
+  $('crNet').style.color = net > 0 ? '#10b981' : '#ef4444';
+  $('crAnnual').textContent = '$' + fmt(annual);
+  $('crAnnual').style.color = annual > 0 ? '#10b981' : '#ef4444';
+  $('crMonthly').textContent = '$' + fmt(monthly);
+  $('crDaily').textContent = '$' + fmt(daily);
+}
+
+// ═══════════ Backtest Simulation ═══════════
+let backtestChartObj = null;
+
+function loadBacktest() {
+  // Simulate 90-day backtest
+  const days = 90;
+  const labels = [];
+  const cumReturn = [];
+  const jlpLine = [];
+  const costLine = [];
+  let cumJlp = 0, cumCost = 0;
+
+  for (let i = 0; i < days; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - (days - i));
+    labels.push(d.toISOString().slice(5, 10));
+
+    const dailyJlp = 8.5 / 365 + (Math.random() * 0.06 - 0.02); // ~8.5% APR with noise
+    const dailyCost = 5.5 / 365 + (Math.random() * 0.04 - 0.02); // ~5.5% APR with noise
+    cumJlp += dailyJlp;
+    cumCost += dailyCost;
+    jlpLine.push(Math.round(cumJlp * 100) / 100);
+    costLine.push(Math.round(cumCost * 100) / 100);
+    cumReturn.push(Math.round((cumJlp - cumCost) * 100) / 100);
+  }
+
+  const ctx = $('backtestChart').getContext('2d');
+  if (backtestChartObj) backtestChartObj.destroy();
+  backtestChartObj = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: '净收益 (%)',
+          data: cumReturn,
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16,185,129,.08)',
+          fill: true,
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.3,
+        },
+        {
+          label: 'JLP 收益 (%)',
+          data: jlpLine,
+          borderColor: '#6366f1',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          borderDash: [4,2],
+          tension: 0.3,
+        },
+        {
+          label: '对冲成本 (%)',
+          data: costLine,
+          borderColor: '#ef4444',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          borderDash: [4,2],
+          tension: 0.3,
+        },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } },
+        tooltip: {
+          backgroundColor: '#fff', titleColor: '#1a1a1a', bodyColor: '#666',
+          borderColor: '#e5e7eb', borderWidth: 1, cornerRadius: 8, padding: 10,
+          callbacks: { label: c => c.dataset.label + ': ' + c.raw.toFixed(2) + '%' },
+        },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#999', maxTicksLimit: 12, maxRotation: 0 } },
+        y: { grid: { color: '#f3f4f6' }, ticks: { font: { size: 10 }, color: '#999', callback: v => v.toFixed(1) + '%' } },
+      },
+    },
+  });
+}
+
+// ═══════════ Init ═══════════
+loadAll();
+setInterval(() => {
+  Object.keys(apiCache).forEach(k => delete apiCache[k]);
+  loadAll();
+}, 120 * 1000);
+</script>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>实时快讯 - SlowRich</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:#0a0a0a;color:#fff;min-height:100vh}
+
+/* Header */
+.header{background:#111;border-bottom:1px solid #222;padding:16px 20px;position:sticky;top:0;z-index:100}
+.header-content{max-width:800px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:20px;font-weight:800;color:#fff}
+.logo span{color:#10b981}
+.live-badge{display:flex;align-items:center;gap:6px;padding:6px 12px;background:#1a1a1a;border-radius:20px;font-size:12px}
+.pulse{width:8px;height:8px;background:#10b981;border-radius:50%;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Filters */
+.filters{max-width:800px;margin:0 auto;padding:16px 20px;display:flex;gap:8px;overflow-x:auto}
+.filter{padding:8px 16px;background:#1a1a1a;border:1px solid #333;border-radius:20px;font-size:13px;color:#999;cursor:pointer;white-space:nowrap;transition:all .2s}
+.filter:hover{border-color:#444;color:#ccc}
+.filter.active{background:#10b981;border-color:#10b981;color:#000;font-weight:600}
+
+/* News List */
+.container{max-width:800px;margin:0 auto;padding:0 20px 40px}
+.news-item{padding:20px 0;border-bottom:1px solid #222;display:flex;gap:16px;transition:all .2s}
+.news-item:hover{background:#111;margin:0 -20px;padding:20px}
+.news-time{min-width:60px;font-size:12px;color:#666;font-weight:500}
+.news-content{flex:1}
+.news-tag{display:inline-block;padding:2px 8px;background:#1a1a1a;border-radius:4px;font-size:11px;color:#10b981;margin-bottom:8px}
+.news-tag.important{background:#fef2f2;color:#ef4444}
+.news-text{font-size:15px;line-height:1.6;color:#e5e5e5}
+.news-text strong{color:#fff}
+.news-source{font-size:12px;color:#666;margin-top:8px}
+.news-source a{color:#666;text-decoration:none}
+.news-source a:hover{color:#10b981}
+
+/* Price Ticker */
+.ticker{background:#111;border-bottom:1px solid #222;padding:12px 0;overflow:hidden}
+.ticker-content{display:flex;gap:40px;animation:scroll 30s linear infinite;white-space:nowrap}
+@keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ticker-item{display:flex;align-items:center;gap:8px;font-size:14px}
+.ticker-item .name{color:#999}
+.ticker-item .price{font-weight:600}
+.ticker-item .change{font-size:12px}
+.up{color:#10b981}
+.down{color:#ef4444}
+
+/* Loading */
+.loading{text-align:center;padding:40px;color:#666}
+
+/* Refresh Button */
+.refresh-btn{position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:#10b981;border:none;border-radius:50%;color:#000;font-size:24px;cursor:pointer;box-shadow:0 4px 20px rgba(16,185,129,.3);transition:all .2s;display:flex;align-items:center;justify-content:center}
+.refresh-btn:hover{transform:scale(1.1)}
+.refresh-btn.spinning{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:600px){
+    .news-item:hover{margin:0;padding:20px 0}
+    .refresh-btn{bottom:16px;right:16px;width:48px;height:48px}
+}
+</style>
+</head>
+<body>
+
+<div class="ticker">
+    <div class="ticker-content" id="ticker">
+        <div class="ticker-item"><span class="name">BTC</span><span class="price" id="btc-price">$69,486</span><span class="change up" id="btc-change">+3.5%</span></div>
+        <div class="ticker-item"><span class="name">ETH</span><span class="price" id="eth-price">$2,028</span><span class="change up" id="eth-change">+2.6%</span></div>
+        <div class="ticker-item"><span class="name">SOL</span><span class="price">$142.5</span><span class="change down">-1.2%</span></div>
+        <div class="ticker-item"><span class="name">BNB</span><span class="price">$612.3</span><span class="change up">+0.8%</span></div>
+        <div class="ticker-item"><span class="name">XRP</span><span class="price">$2.41</span><span class="change down">-2.1%</span></div>
+        <div class="ticker-item"><span class="name">DOGE</span><span class="price">$0.182</span><span class="change up">+5.2%</span></div>
+    </div>
+</div>
+
+<header class="header">
+    <div class="header-content">
+        <div class="logo">Slow<span>Rich</span> 快讯</div>
+        <div class="live-badge"><span class="pulse"></span>LIVE</div>
+    </div>
+</header>
+
+<div class="filters">
+    <span class="filter active" data-cat="all">全部</span>
+    <span class="filter" data-cat="price">行情</span>
+    <span class="filter" data-cat="macro">宏观</span>
+    <span class="filter" data-cat="etf">ETF</span>
+    <span class="filter" data-cat="policy">监管</span>
+    <span class="filter" data-cat="onchain">链上</span>
+</div>
+
+<div class="container" id="news-container">
+    <!-- News items will be loaded here -->
+</div>
+
+<button class="refresh-btn" onclick="refreshNews()" id="refresh-btn">↻</button>
+
+<script>
+// Mock news data - replace with API in production
+const newsData = [
+    {
+        time: "12:30",
+        tag: "行情",
+        tagClass: "",
+        content: "<strong>BTC突破$70,000</strong>后快速回落，最低触及$69,200。24小时涨幅收窄至3.2%。",
+        source: "CoinGecko"
+    },
+    {
+        time: "12:15",
+        tag: "宏观",
+        tagClass: "important",
+        content: "特朗普表示美伊冲突<strong>"可能即将结束"</strong>，风险资产快速反弹。原油回落至$85以下。",
+        source: "Bloomberg"
+    },
+    {
+        time: "11:45",
+        tag: "链上",
+        tagClass: "",
+        content: "巨鲸地址过去24小时累计买入<strong>27万枚BTC</strong>（约$230亿），恐惧贪婪指数降至13（极度恐惧）。",
+        source: "Glassnode"
+    },
+    {
+        time: "11:20",
+        tag: "ETF",
+        tagClass: "",
+        content: "美国比特币ETF本月累计流入<strong>$7.2亿美元</strong>，贝莱德IBIT持仓再创新高。",
+        source: "Farside Investors"
+    },
+    {
+        time: "10:55",
+        tag: "监管",
+        tagClass: "",
+        content: "SEC主席表示现货以太坊ETF的<strong>质押功能</strong>仍在评估中，暂无时间表。",
+        source: "Reuters"
+    },
+    {
+        time: "10:30",
+        tag: "行情",
+        tagClass: "",
+        content: "ETH突破<strong>$2,050</strong>，24小时涨幅2.8%。Layer 2板块普遍上涨。",
+        source: "CoinGecko"
+    },
+    {
+        time: "09:45",
+        tag: "宏观",
+        tagClass: "important",
+        content: "美国2月非农数据降温，市场预期<strong>降息时间从6月提前至5月</strong>。",
+        source: "CNBC"
+    },
+    {
+        time: "09:15",
+        tag: "政策",
+        tagClass: "",
+        content: "美国战略比特币储备正式设立，但政府暂无<strong>新增购买计划</strong>，市场出现"卖新闻"反应。",
+        source: "The Block"
+    },
+    {
+        time: "08:30",
+        tag: "行情",
+        tagClass: "",
+        content: "亚洲早盘BTC低开至<strong>$67,500</strong>，随后快速反弹。日韩交易所溢价收窄。",
+        source: "CryptoQuant"
+    },
+    {
+        time: "08:00",
+        tag: "链上",
+        tagClass: "",
+        content: "比特币网络算力创历史新高，达到<strong>750 EH/s</strong>，网络安全度进一步提升。",
+        source: "Glassnode"
+    }
+];
+
+function renderNews(filter = 'all') {
+    const container = document.getElementById('news-container');
+    const filtered = filter === 'all' ? newsData : newsData.filter(n => {
+        const tagMap = {
+            'price': ['行情'],
+            'macro': ['宏观'],
+            'etf': ['ETF'],
+            'policy': ['监管', '政策'],
+            'onchain': ['链上']
+        };
+        return tagMap[filter]?.includes(n.tag);
+    });
+    
+    container.innerHTML = filtered.map(item => `
+        <div class="news-item" data-cat="${item.tag}">
+            <div class="news-time">${item.time}</div>
+            <div class="news-content">
+                <span class="news-tag ${item.tagClass}">${item.tag}</span>
+                <div class="news-text">${item.content}</div>
+                <div class="news-source">来源: ${item.source}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Filter click handlers
+document.querySelectorAll('.filter').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderNews(btn.dataset.cat);
+    });
+});
+
+// Refresh function
+function refreshNews() {
+    const btn = document.getElementById('refresh-btn');
+    btn.classList.add('spinning');
+    
+    // Simulate API call
+    setTimeout(() => {
+        btn.classList.remove('spinning');
+        // In real implementation, fetch new data here
+        console.log('Refreshed at', new Date().toLocaleTimeString());
+    }, 1000);
+}
+
+// Auto refresh prices
+async function updatePrices() {
+    try {
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true');
+        const data = await res.json();
+        
+        document.getElementById('btc-price').textContent = '$' + data.bitcoin.usd.toLocaleString();
+        document.getElementById('btc-change').textContent = (data.bitcoin.usd_24h_change > 0 ? '+' : '') + data.bitcoin.usd_24h_change.toFixed(2) + '%';
+        document.getElementById('btc-change').className = 'change ' + (data.bitcoin.usd_24h_change > 0 ? 'up' : 'down');
+        
+        document.getElementById('eth-price').textContent = '$' + data.ethereum.usd.toLocaleString();
+        document.getElementById('eth-change').textContent = (data.ethereum.usd_24h_change > 0 ? '+' : '') + data.ethereum.usd_24h_change.toFixed(2) + '%';
+        document.getElementById('eth-change').className = 'change ' + (data.ethereum.usd_24h_change > 0 ? 'up' : 'down');
+    } catch(e) {
+        console.log('Price update failed, using cached data');
+    }
+}
+
+// Init
+renderNews();
+updatePrices();
+setInterval(updatePrices, 30000); // Update prices every 30s
+</script>
+
+</body>
+</html>

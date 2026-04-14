@@ -7,43 +7,48 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',sans-serif;background:#0a0e17;color:#e2e8f0;min-height:100vh;line-height:1.6}
-a{color:#60a5fa;text-decoration:none}
-.header{padding:16px 24px;background:linear-gradient(135deg,#0f172a,#1e293b);border-bottom:1px solid #1e293b}
-.header h1{font-size:22px;font-weight:800;background:linear-gradient(90deg,#f97316,#ef4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.header .sub{color:#64748b;font-size:13px;margin-top:4px}
-.nav{display:flex;gap:12px;margin-top:8px}
-.nav a{padding:4px 12px;border:1px solid #334155;border-radius:6px;font-size:12px;color:#94a3b8}
-.nav a:hover{border-color:#f97316;color:#f97316}
+body{font-family:'Inter',sans-serif;background:#fafafa;color:#1a1a1a;min-height:100vh;line-height:1.6}
+a{color:#10b981;text-decoration:none}
+.navbar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px;background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:100}
+.navbar-brand{font-size:20px;font-weight:800;color:#1a1a1a;letter-spacing:-.3px;text-decoration:none}
+.navbar-brand span{color:#10b981}
+.navbar-links{display:flex;gap:4px}
+.navbar-links a{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;color:#666;transition:all .2s}
+.navbar-links a:hover{color:#1a1a1a;background:#f3f4f6;text-decoration:none}
+.navbar-links a.active{color:#10b981;background:#ecfdf5}
+.page-subtitle{padding:10px 28px;background:#fff;border-bottom:1px solid #e5e7eb;font-size:13px;color:#999}
+.page-subtitle strong{color:#1a1a1a;font-size:15px}
 
-.controls{display:flex;gap:16px;padding:16px 24px;flex-wrap:wrap;align-items:end;border-bottom:1px solid #1e293b}
+.container{max-width:1200px;margin:0 auto;padding:16px 20px}
+
+.controls{display:flex;gap:16px;padding:16px 20px;flex-wrap:wrap;align-items:end;background:#fff;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .ctrl{display:flex;flex-direction:column;gap:4px}
-.ctrl label{font-size:11px;color:#64748b;text-transform:uppercase}
-.ctrl input,.ctrl select{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:8px 12px;border-radius:8px;font-size:14px;font-family:inherit;width:140px}
-.run-btn{background:linear-gradient(135deg,#f97316,#ef4444);color:#fff;border:none;padding:10px 28px;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px;font-family:inherit;align-self:end}
+.ctrl label{font-size:11px;color:#999;text-transform:uppercase}
+.ctrl input,.ctrl select{background:#fff;border:1px solid #e5e7eb;color:#1a1a1a;padding:5px 10px;border-radius:8px;font-size:14px;font-family:inherit;width:140px}
+.run-btn{background:#10b981;color:#fff;border:none;padding:10px 28px;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px;font-family:inherit;align-self:end}
 .run-btn:hover{opacity:.9}
 
-.summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;padding:16px 24px}
-.stat{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px 18px}
+.summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;padding:16px 0}
+.stat{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px 14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .stat.good{border-color:#10b981}.stat.warn{border-color:#f59e0b}.stat.bad{border-color:#ef4444}
-.stat-label{font-size:11px;color:#64748b;text-transform:uppercase}
-.stat-value{font-size:22px;font-weight:700;color:#f1f5f9;margin-top:4px}
-.stat-sub{font-size:11px;color:#94a3b8;margin-top:2px}
+.stat-label{font-size:11px;color:#999;text-transform:uppercase}
+.stat-value{font-size:22px;font-weight:700;color:#1a1a1a;margin-top:4px}
+.stat-sub{font-size:11px;color:#999;margin-top:2px}
 
-.section{padding:16px 24px}
-.section-title{font-size:16px;font-weight:700;margin-bottom:12px}
+.section{padding:16px 0}
+.section-title{font-size:16px;font-weight:700;margin-bottom:12px;color:#1a1a1a}
 
 /* Chart */
-.chart-wrap{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;position:relative;overflow:hidden}
+.chart-wrap{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 canvas{width:100%!important;height:400px!important}
 #priceChart{height:480px!important}
 
 /* Trade log */
-.log-wrap{max-height:500px;overflow-y:auto;border-radius:12px;border:1px solid #334155}
+.log-wrap{max-height:500px;overflow-y:auto;border-radius:10px;border:1px solid #e5e7eb;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .log-table{width:100%;border-collapse:collapse;font-size:12px}
-.log-table th{background:#0f172a;padding:8px 12px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;position:sticky;top:0}
-.log-table td{padding:8px 12px;border-bottom:1px solid #1e293b}
-.log-table tr:hover{background:#33415520}
+.log-table th{background:#f9fafb;padding:8px 12px;text-align:left;font-weight:600;color:#999;font-size:11px;text-transform:uppercase;position:sticky;top:0}
+.log-table td{padding:8px 12px;border-bottom:1px solid #f3f4f6}
+.log-table tr:hover{background:#f9fafb}
 .pnl-pos{color:#10b981;font-weight:600}.pnl-neg{color:#ef4444;font-weight:600}
 .tag-put{background:#3b82f622;color:#3b82f6;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
 .tag-call{background:#f59e0b22;color:#f59e0b;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
@@ -52,36 +57,52 @@ canvas{width:100%!important;height:400px!important}
 .tag-adaptive{background:#8b5cf622;color:#a78bfa;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
 
 /* Strategy description */
-.strat-desc{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;margin-bottom:16px;font-size:13px;color:#94a3b8;line-height:1.8}
-.strat-desc strong{color:#e2e8f0}
+.strat-desc{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:10px;font-size:13px;color:#666;line-height:1.8;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.strat-desc strong{color:#1a1a1a}
 .strat-desc .step{display:flex;gap:8px;margin:4px 0}
-.strat-desc .num{background:#f9731622;color:#f97316;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.strat-desc .num{background:#10b98122;color:#10b981;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
 
 /* VRP indicator */
-.vrp-box{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px 20px;margin-bottom:16px}
-.vrp-title{font-size:13px;font-weight:600;margin-bottom:8px}
-.vrp-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:#94a3b8}
+.vrp-box{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px 20px;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.vrp-title{font-size:13px;font-weight:600;margin-bottom:8px;color:#1a1a1a}
+.vrp-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:#999}
 .vrp-legend span{display:flex;align-items:center;gap:4px}
 .vrp-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
 
-footer{padding:24px;text-align:center;color:#475569;font-size:12px;border-top:1px solid #1e293b;margin-top:40px}
-@media(max-width:768px){.controls{flex-direction:column}.ctrl input{width:100%}}
+footer{padding:24px;text-align:center;color:#ccc;font-size:12px;border-top:1px solid #e5e7eb;margin-top:40px;background:#fff}
+@media(max-width:768px){
+  .navbar{flex-direction:column;gap:8px;padding:12px 16px}
+  .page-subtitle{padding:8px 16px}
+  .container{padding:12px}
+  .controls{flex-direction:column;padding:10px 12px}
+  .ctrl{width:100%}
+  .ctrl input,.ctrl select{width:100%}
+  .run-btn{width:100%;text-align:center}
+  .summary-bar{grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+  .chart-wrap{padding:10px}
+  canvas{height:280px!important}
+}
 </style>
 </head>
 <body>
 
-<header class="header">
-  <h1>Strategy #2 — BTC Options Wheel</h1>
-  <div class="sub">Delta-Based Adaptive Wheel — Real Deribit DVOL + Black-Scholes Delta Targeting</div>
-  <div class="nav">
-    <a href="/">Strategy #1: Stablecoin</a>
-    <a href="/backtest-wheel.html">Strategy #2: Options Wheel</a>
-    <a href="/backtest-dip.html">Strategy #3: Dip-Buying</a>
-    <a href="/backtest-allweather.html">Strategy #4: All Weather</a>
-    <a href="/options-monitor.html">Strategy #5: Options Monitor</a>
-    <a href="/backtest-wheel-ibit.html">Strategy #6: IBIT Wheel</a>
+<nav class="navbar">
+  <a class="navbar-brand" href="/">Slow<span>Rich</span></a>
+  <div class="navbar-links">
+    <a href="/" class="active">首页</a>
+    <a href="/sentiment.html">市场情绪</a>
+    <a href="/stable-portfolio.html">稳健组合</a>
+    <a href="/options-monitor.html">期权</a>
+    <a href="/delta-neutral.html">Delta Neutral</a>
+    <a href="/allweather.html">全天候</a>
+    <a href="/portfolio-summary.html">组合</a>
   </div>
-</header>
+</nav>
+<div class="page-subtitle">
+  <strong>BTC Options Wheel</strong> &mdash; Backtest with Deribit DVOL
+</div>
+
+<div class="container">
 
 <div class="section">
   <div class="strat-desc">
@@ -92,7 +113,7 @@ footer{padding:24px;text-align:center;color:#475569;font-size:12px;border-top:1p
     <div class="step"><span class="num">4</span> VRP 0~10: Sell <strong>Δ base</strong> put (use base delta as-is)</div>
     <div class="step"><span class="num">5</span> VRP &lt; 0: Pause selling — IV underpriced, not worth the risk</div>
     <div class="step"><span class="num">6</span> If assigned (bought BTC): sell covered call at <strong>Δ0.20</strong> call, repeat until called away</div>
-    <div class="step" style="margin-top:8px;color:#64748b;font-size:12px"><span class="num" style="background:#3b82f622;color:#3b82f6">?</span> <em>Why Delta? — BS Delta auto-adjusts strike for volatility: high IV → strike further OTM; low IV → closer ATM. Same risk profile regardless of market regime.</em></div>
+    <div class="step" style="margin-top:8px;color:#999;font-size:12px"><span class="num" style="background:#3b82f622;color:#3b82f6">?</span> <em>Why Delta? — BS Delta auto-adjusts strike for volatility: high IV → strike further OTM; low IV → closer ATM. Same risk profile regardless of market regime.</em></div>
   </div>
   <div class="strat-desc" style="border-color:#8b5cf6;margin-top:8px">
     <strong style="color:#a78bfa">Risk Controls:</strong>
@@ -112,7 +133,7 @@ footer{padding:24px;text-align:center;color:#475569;font-size:12px;border-top:1p
       <option value="0.25">Δ0.25 (closer ATM)</option>
       <option value="0.30">Δ0.30 (near ATM)</option>
     </select>
-    <span style="font-size:10px;color:#64748b">≈ assignment probability</span>
+    <span style="font-size:10px;color:#999">≈ assignment probability</span>
   </div>
   <div class="ctrl"><label>Option Period</label>
     <select id="period">
@@ -145,7 +166,7 @@ footer{padding:24px;text-align:center;color:#475569;font-size:12px;border-top:1p
       <option value="0.75">75%</option>
       <option value="1.00">100%</option>
     </select>
-    <span style="font-size:10px;color:#64748b">% of cash per trade</span>
+    <span style="font-size:10px;color:#999">% of cash per trade</span>
   </div>
   <div class="ctrl"><label>Premium Reinvest</label>
     <select id="compound">
@@ -175,10 +196,10 @@ footer{padding:24px;text-align:center;color:#475569;font-size:12px;border-top:1p
   </div>
   <div class="ctrl"><label>Stop-Loss %</label>
     <input type="number" id="stopLoss" value="10" min="5" max="30" step="5">
-    <span style="font-size:10px;color:#64748b">% below entry → sell</span>
+    <span style="font-size:10px;color:#999">% below entry → sell</span>
   </div>
   <button class="run-btn" id="runBtn" onclick="runBacktest()">Run Backtest</button>
-  <button class="run-btn" id="gridBtn" onclick="runGridSearch()" style="background:linear-gradient(135deg,#8b5cf6,#6366f1)">Grid Search</button>
+  <button class="run-btn" id="gridBtn" onclick="runGridSearch()" style="background:#8b5cf6">Grid Search</button>
 </div>
 
 <div class="summary-bar" id="summaryBar" style="display:none"></div>
@@ -209,7 +230,7 @@ footer{padding:24px;text-align:center;color:#475569;font-size:12px;border-top:1p
 <div class="section" id="priceChartSection" style="display:none">
   <div class="section-title">BTC Price &amp; Trade Markers</div>
   <div class="chart-wrap"><canvas id="priceChart"></canvas></div>
-  <div style="display:flex;flex-wrap:wrap;gap:14px;padding:10px 4px 0;font-size:11px;color:#94a3b8">
+  <div style="display:flex;flex-wrap:wrap;gap:14px;padding:10px 4px 0;font-size:11px;color:#999">
     <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#60a5fa;vertical-align:middle;margin-right:4px"></span>BTC Price</span>
     <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10b981;vertical-align:middle;margin-right:4px"></span>Sell Put (profit)</span>
     <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ef4444;vertical-align:middle;margin-right:4px"></span>Sell Put (assigned)</span>
@@ -232,6 +253,8 @@ footer{padding:24px;text-align:center;color:#475569;font-size:12px;border-top:1p
     <th>#</th><th>Date</th><th>Action</th><th>BTC Price</th><th>Strike</th><th>Delta</th><th>IV / RV</th><th>VRP</th><th>Premium</th><th>P&L</th><th>Equity</th>
   </tr></thead><tbody id="logBody"></tbody></table></div>
 </div>
+
+</div><!-- /.container -->
 
 <footer>
   Strategy #2 Backtest — Delta-based strike selection | IV from Deribit DVOL | Black-Scholes pricing
@@ -615,7 +638,7 @@ async function runBacktest() {
     let baseline = null;
     if ((putSpreadOn || stopLossOn) && btcData && btcData.length > 35) {
       baseline = backtestEngine({
-        capital, baseDelta, periodDays, cashPctOverride: userCashPct, stratMode,
+        capital, baseDelta, periodDays, cashPctOverride: userCashPct, stratMode, ivMode,
         riskFreeRate, priceData: btcData, dvolMap,
         startDate, endDate, putSpreadOn: false, spreadWidth: 0, stopLossOn: false, stopLossPct: 0, compoundOn,
       });
@@ -691,13 +714,17 @@ function renderVRPChart(vrpHistory) {
   const toY = v => padT + cH - ((v - minY) / (maxY - minY)) * cH;
   const toX = i => padL + i * xStep;
 
+  // Background
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, W, H);
+
   // Grid
-  ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+  ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1;
   for (let i = 0; i < 5; i++) {
     const y = padT + (cH / 4) * i;
     ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
     const val = maxY - ((maxY - minY) / 4) * i;
-    ctx.fillStyle = '#64748b'; ctx.font = '11px Inter';
+    ctx.fillStyle = '#999'; ctx.font = '11px Inter';
     ctx.fillText(val.toFixed(0) + '%', 5, y + 4);
   }
 
@@ -732,7 +759,7 @@ function renderVRPChart(vrpHistory) {
   ctx.stroke();
 
   // Date labels
-  ctx.fillStyle = '#64748b'; ctx.font = '10px Inter';
+  ctx.fillStyle = '#999'; ctx.font = '10px Inter';
   const labelEvery = Math.max(1, Math.floor(vrpHistory.length / 10));
   for (let i = 0; i < vrpHistory.length; i += labelEvery) {
     ctx.save();
@@ -781,13 +808,17 @@ function renderPriceChart(curve, trades) {
   const dateToIdx = {};
   curve.forEach((pt, i) => { dateToIdx[pt.date] = i; });
 
+  // Background
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, W, H);
+
   // Grid
-  ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+  ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1;
   for (let i = 0; i < 6; i++) {
     const y = padT + (cH / 5) * i;
     ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
     const val = maxY - ((maxY - minY) / 5) * i;
-    ctx.fillStyle = '#64748b'; ctx.font = '11px Inter';
+    ctx.fillStyle = '#999'; ctx.font = '11px Inter';
     ctx.fillText('$' + (val / 1000).toFixed(0) + 'K', 5, y + 4);
   }
 
@@ -846,7 +877,7 @@ function renderPriceChart(curve, trades) {
   });
 
   // Date labels
-  ctx.fillStyle = '#64748b'; ctx.font = '10px Inter';
+  ctx.fillStyle = '#999'; ctx.font = '10px Inter';
   const labelEvery = Math.max(1, Math.floor(curve.length / 8));
   for (let i = 0; i < curve.length; i += labelEvery) {
     ctx.save();
@@ -884,18 +915,22 @@ function renderChart(curve, capital, startPrice) {
   const toY = v => padT + cH - ((v - minY) / (maxY - minY)) * cH;
   const toX = i => padL + i * xStep;
 
+  // Background
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, W, H);
+
   // Grid
-  ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+  ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1;
   for (let i = 0; i < 5; i++) {
     const y = padT + (cH / 4) * i;
     ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
     const val = maxY - ((maxY - minY) / 4) * i;
-    ctx.fillStyle = '#64748b'; ctx.font = '11px Inter';
+    ctx.fillStyle = '#999'; ctx.font = '11px Inter';
     ctx.fillText('$' + (val/1000).toFixed(0) + 'K', 5, y + 4);
   }
 
   // Buy & Hold line
-  ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.5;
+  ctx.strokeStyle = '#999'; ctx.lineWidth = 1.5;
   ctx.setLineDash([4, 4]);
   ctx.beginPath();
   for (let i = 0; i < curve.length; i++) {
@@ -915,7 +950,7 @@ function renderChart(curve, capital, startPrice) {
   ctx.stroke();
 
   // Starting capital line
-  ctx.strokeStyle = '#334155'; ctx.lineWidth = 1;
+  ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1;
   ctx.setLineDash([2, 4]);
   const capY = toY(capital);
   ctx.beginPath(); ctx.moveTo(padL, capY); ctx.lineTo(W-padR, capY); ctx.stroke();
@@ -925,11 +960,11 @@ function renderChart(curve, capital, startPrice) {
   ctx.font = '12px Inter';
   ctx.fillStyle = '#f97316'; ctx.fillRect(padL + 10, padT + 10, 16, 3);
   ctx.fillText('Wheel Strategy', padL + 32, padT + 15);
-  ctx.fillStyle = '#64748b'; ctx.fillRect(padL + 150, padT + 10, 16, 3);
+  ctx.fillStyle = '#999'; ctx.fillRect(padL + 150, padT + 10, 16, 3);
   ctx.fillText('Buy & Hold', padL + 172, padT + 15);
 
   // Date labels
-  ctx.fillStyle = '#64748b'; ctx.font = '10px Inter';
+  ctx.fillStyle = '#999'; ctx.font = '10px Inter';
   const labelEvery = Math.max(1, Math.floor(curve.length / 8));
   for (let i = 0; i < curve.length; i += labelEvery) {
     ctx.save();
@@ -965,21 +1000,21 @@ function renderTradeLog(trades) {
       : `<span class="tag-call">Sell Call</span>${t.exercised ? ' <span class="tag-exercise">Exercised</span>' : ''}`;
     const pnlCls = t.pnl >= 0 ? 'pnl-pos' : 'pnl-neg';
     const cpnlCls = t.cumulPnl >= 0 ? 'pnl-pos' : 'pnl-neg';
-    const vrpCls = t.vrp > 20 ? 'color:#10b981' : t.vrp > 10 ? 'color:#f59e0b' : t.vrp > 0 ? 'color:#94a3b8' : 'color:#ef4444';
+    const vrpCls = t.vrp > 20 ? 'color:#10b981' : t.vrp > 10 ? 'color:#f59e0b' : t.vrp > 0 ? 'color:#999' : 'color:#ef4444';
     const deltaStr = t.delta != null
-      ? `<span style="color:#a78bfa;font-weight:700">Δ${Math.abs(t.delta).toFixed(2)}</span><br><span style="color:#475569;font-size:10px">tgt: Δ${(t.targetDelta||0).toFixed(2)}</span>`
-      : '<span style="color:#64748b">—</span>';
+      ? `<span style="color:#a78bfa;font-weight:700">Δ${Math.abs(t.delta).toFixed(2)}</span><br><span style="color:#999;font-size:10px">tgt: Δ${(t.targetDelta||0).toFixed(2)}</span>`
+      : '<span style="color:#999">—</span>';
     const otmPct = t.btcPrice > 0 ? ((1 - t.strike / t.btcPrice) * 100).toFixed(1) : '—';
     return `<tr>
-      <td style="color:#64748b">${i + 1}</td>
-      <td>${t.date}<br><span style="color:#475569;font-size:10px">→ ${t.expiry}</span></td>
+      <td style="color:#999">${i + 1}</td>
+      <td>${t.date}<br><span style="color:#999;font-size:10px">→ ${t.expiry}</span></td>
       <td>${actionTag}</td>
-      <td>${fmt(t.btcPrice)}<br><span style="color:#475569;font-size:10px">exp: ${fmt(t.expiryPrice)}</span></td>
-      <td>${fmt(t.strike)}<br><span style="color:#475569;font-size:10px">${otmPct}% OTM</span></td>
+      <td>${fmt(t.btcPrice)}<br><span style="color:#999;font-size:10px">exp: ${fmt(t.expiryPrice)}</span></td>
+      <td>${fmt(t.strike)}<br><span style="color:#999;font-size:10px">${otmPct}% OTM</span></td>
       <td>${deltaStr}</td>
       <td><span style="color:#f97316">${t.iv.toFixed(0)}%</span> / <span style="color:#3b82f6">${t.rv.toFixed(0)}%</span></td>
       <td style="${vrpCls};font-weight:600">${t.vrp > 0 ? '+' : ''}${t.vrp.toFixed(0)}</td>
-      <td>${fmt(t.premium)}<br><span style="color:#475569;font-size:10px">${t.numContracts.toFixed(1)} BTC</span></td>
+      <td>${fmt(t.premium)}<br><span style="color:#999;font-size:10px">${t.numContracts.toFixed(1)} BTC</span></td>
       <td class="${pnlCls}">${fmtPnl(t.pnl)}<br><span class="${cpnlCls}" style="font-size:10px">cum: ${fmtPnl(t.cumulPnl)}</span></td>
       <td style="font-weight:600">${fmt(t.equity)}</td>
     </tr>`;
@@ -988,7 +1023,7 @@ function renderTradeLog(trades) {
 
 // ===== GRID SEARCH: run backtest engine with different params =====
 function backtestEngine(params) {
-  const { capital, baseDelta, periodDays, cashPctOverride, stratMode, riskFreeRate, priceData, dvolMap, putSpreadOn, spreadWidth, stopLossOn, stopLossPct, compoundOn } = params;
+  const { capital, baseDelta, periodDays, cashPctOverride, stratMode, ivMode, riskFreeRate, priceData, dvolMap, putSpreadOn, spreadWidth, stopLossOn, stopLossPct, compoundOn } = params;
 
   let cash = capital;
   let holdingBTC = false;
@@ -1015,15 +1050,23 @@ function backtestEngine(params) {
     const openDate = priceData[idx].date;
     const rv = calcRealizedVol(priceData, idx, 30);
 
-    let iv = dvolMap[openDate];
-    if (!iv) {
-      for (let d = 1; d <= 3 && !iv; d++) {
-        const prev = new Date(openDate);
-        prev.setDate(prev.getDate() - d);
-        iv = dvolMap[prev.toISOString().slice(0, 10)];
+    // Determine IV — match runBacktest logic exactly
+    let iv;
+    if (ivMode === 'dvol' || !ivMode) {
+      iv = dvolMap[openDate];
+      if (!iv) {
+        for (let d = 1; d <= 3 && !iv; d++) {
+          const prev = new Date(openDate);
+          prev.setDate(prev.getDate() - d);
+          iv = dvolMap[prev.toISOString().slice(0, 10)];
+        }
       }
+      if (!iv) iv = rv * 1.15;
+    } else if (ivMode === 'realized') {
+      iv = rv;
+    } else {
+      iv = parseFloat(ivMode) / 100;
     }
-    if (!iv) iv = rv * 1.15;
     iv = Math.max(0.15, Math.min(2.0, iv));
 
     const vrp = (iv - rv) * 100;
@@ -1033,7 +1076,7 @@ function backtestEngine(params) {
     const expiryPrice = priceData[expiryIdx].price;
 
     let targetDelta = baseDelta;
-    let cashPct = cashPctOverride || 1.0;
+    let cashPct = cashPctOverride != null ? cashPctOverride : 1.0;
     let skipTrade = false;
 
     if (stratMode === 'adaptive' && !holdingBTC) {
@@ -1057,12 +1100,12 @@ function backtestEngine(params) {
       // Put Spread
       let hedgeCost = 0, hedgeStrike = 0;
       if (putSpreadOn) {
-        hedgeStrike = strike * (1 - (spreadWidth || 0.15));
+        hedgeStrike = strike * (1 - spreadWidth);
         hedgeCost = bsPrice(openPrice, hedgeStrike, T, riskFreeRate, iv, 'put');
       }
       const premium = rawPremium - hedgeCost;
 
-      const sizingCash = compoundOn !== false ? cash : Math.min(capital, cash);
+      const sizingCash = compoundOn ? cash : Math.min(capital, cash);
       const deployable = sizingCash * cashPct;
       const nc = Math.floor((deployable / strike) * 10) / 10;
       if (nc < 0.1) { idx = expiryIdx; continue; }
@@ -1087,8 +1130,7 @@ function backtestEngine(params) {
       }
     } else {
       // Stop-loss check
-      const slPct = stopLossPct || 0;
-      if (stopLossOn && slPct > 0 && openPrice <= entryPrice * (1 - slPct)) {
+      if (stopLossOn && stopLossPct > 0 && openPrice <= entryPrice * (1 - stopLossPct)) {
         cash = cash + openPrice * btcQty;
         holdingBTC = false;
         btcQty = 0;
@@ -1186,9 +1228,9 @@ async function runGridSearch() {
     btn.textContent = 'Running grid search...';
     await new Promise(r => setTimeout(r, 50)); // let UI update
 
-    // Parameter grid — Delta-based
+    // Parameter grid — Delta-based (cashPctValues aligned with UI dropdown)
     const deltaValues = [0.05, 0.10, 0.15, 0.20, 0.25, 0.30];
-    const cashPctValues = [0.20, 0.30, 0.40, 0.50, 0.75, 1.0];
+    const cashPctValues = [0.25, 0.35, 0.50, 0.75, 1.0];
     const periodValues = [7, 14, 30];
     const modeValues = ['adaptive', 'fixed'];
 
@@ -1200,7 +1242,7 @@ async function runGridSearch() {
           for (const mode of modeValues) {
             const r = backtestEngine({
               capital, baseDelta: delta, periodDays: period,
-              cashPctOverride: cashPct, stratMode: mode,
+              cashPctOverride: cashPct, stratMode: mode, ivMode,
               riskFreeRate, priceData, dvolMap,
               startDate, endDate,
               putSpreadOn: gridPutSpreadOn, spreadWidth: gridSpreadWidth, stopLossOn: gridStopLossOn, stopLossPct: gridStopLoss, compoundOn,
@@ -1228,11 +1270,11 @@ async function runGridSearch() {
       const ddCls = r.maxDD > 0.3 ? 'pnl-neg' : r.maxDD > 0.15 ? 'color:#f59e0b' : 'pnl-pos';
       const highlight = i < 3 ? 'background:#10b98108' : '';
       return `<tr style="${highlight}">
-        <td style="color:${i < 3 ? '#10b981' : '#64748b'};font-weight:700">${i + 1}</td>
+        <td style="color:${i < 3 ? '#10b981' : '#999'};font-weight:700">${i + 1}</td>
         <td style="color:#a78bfa;font-weight:700">Δ${r.delta.toFixed(2)}</td>
         <td>${r.cashPct}%</td>
         <td>${periodLabel(r.period)}</td>
-        <td><span style="font-size:10px;${r.mode === 'adaptive' ? 'color:#a78bfa' : 'color:#94a3b8'}">${r.mode}</span></td>
+        <td><span style="font-size:10px;${r.mode === 'adaptive' ? 'color:#a78bfa' : 'color:#999'}">${r.mode}</span></td>
         <td style="font-weight:600">${fmt(r.finalEquity)}</td>
         <td class="${retCls}" style="font-weight:700">${pct(r.annReturn)}</td>
         <td style="${ddCls}">${pct(r.maxDD * 100)}</td>
